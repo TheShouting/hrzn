@@ -143,24 +143,33 @@ namespace hrzn {
 	******************************************************************************************************************/
 	
 	template <typename T>
-	void copy(IMatrix<T>& a, const IMatrix<T>& b) {
-		Rect area = hrzn::intersect(a, b);
+	void transfer(IMatrix<T>* to, const IMatrix<T>& from) {
+		Rect area = hrzn::intersect(*to, from);
 		for (int y = area.y1; y <= area.y2; ++y)
 			for (int x = area.x1; x <= area.x2; ++x)
-				a.at(x, y) = b.at(x, y);
+				to->at(x, y) = from.at(x, y);
+	}
+
+	template <typename Ta, typename Tb>
+	MatrixContainer<Ta> copy(const IMatrix<Tb>& mat, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
+		MatrixContainer<Ta> dup(mat);
+		for (int y = mat.y1; y <= mat.y2; ++y)
+			for (int x = mat.x1; x <= mat.x2; ++x)
+				dup.at(x, y) = cast(mat.at(x, y));
+		return dup;
 	}
 
 	template <typename T>
-	void fill(IMatrix<T>& mat, const Rect area, const T& fill_obj) {
-		Rect fill_area = hrzn::intersect(mat, area);
+	void fill(IMatrix<T>* mat, const Rect area, const T& fill_obj) {
+		Rect fill_area = hrzn::intersect(*mat, area);
 		for (int y = fill_area.y1; y <= fill_area.y2; ++y)
 			for (int x = fill_area.x1; x <= fill_area.x2; ++x)
-				mat.at(x, y) = fill_obj;
+				mat->at(x, y) = fill_obj;
 	}
 
 	template <typename T>
-	void maskfill(IMatrix<T>& mat, const IMatrix<bool>& mask, const T& fill_obj) {
-		Rect fill_area = hrzn::intersect(mat, mask);
+	void maskfill(IMatrix<T>* mat, const IMatrix<bool>& mask, const T& fill_obj) {
+		Rect fill_area = hrzn::intersect(*mat, mask);
 		for (int y = fill_area.y1; y <= fill_area.y2; ++y)
 			for (int x = fill_area.x1; x <= fill_area.x2; ++x)
 				if (mask.at(x, y)) mat.at(x, y) = fill_obj;
