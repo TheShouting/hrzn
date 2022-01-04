@@ -23,5 +23,11 @@
     <ClInclude Include="include\hrzn\hrzn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\hrzn\stringify.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hrzn\utility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
