@@ -503,8 +503,6 @@ namespace hrzn {
 	template <typename T>
 	class Region;
 
-	template <typename A, typename B>
-	class MatrixAccessor;
 
 	/// <summary>
 	/// Abstract class for all Matrix-like containers and accessors.
@@ -546,7 +544,6 @@ namespace hrzn {
 			throw std::out_of_range("invalid matrix index");
 		}
 	}; // class IMatrix<T>
-
 
 
 	/// <summary>
@@ -721,61 +718,9 @@ namespace hrzn {
 
 
 	/// <summary>
-	/// Helper class that can be used to access and iterate a single field from the container type.
+	/// A helper class used for operating on the sub region of an abstract Matrix parent class.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	/// <typeparam name="TParent"></typeparam>
-	template <typename T, typename TParent>
-	class MatrixAccessor : public IMatrix<T> {
-	public:
-
-		using accessor = T TParent::*;
-
-		using IMatrix<T>::operator[];
-		using IMatrix<T>::at;
-		using base = IMatrix<T>;
-
-	private:
-		TParent** m_content_link = nullptr;
-		accessor m_accessor;
-
-	public:
-
-		MatrixAccessor(MatrixContainer<TParent>& mat, accessor access)
-			: base(mat), m_content_link(&mat.m_contents), m_accessor(access)
-		{}
-
-		operator bool() const override {
-			if (m_content_link) {
-				return *m_content_link;
-			}
-			return m_content_link;
-		}
-
-		T& at(hType_i x, hType_i y) override {
-			if (*m_content_link) {
-				return (*m_content_link)[base::m_Index(x, y)].*m_accessor;
-			}
-			throw std::runtime_error("source matrix has been deallocated");
-		}
-
-		const T& at(hType_i x, hType_i y) const override {
-			if (*m_content_link) {
-				return (*m_content_link)[base::m_Index(x, y)].*m_accessor;
-			}
-			throw std::runtime_error("source matrix has been deallocated");
-		}
-
-		void set(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
-			throw std::runtime_error("MatrixView cannot be resized");
-		}
-
-	}; // class MatrixAccessor<T>
-
-
-	/**********************************************************************************************
-	 * \brief A helper class used for operating on the sub region of an abstract Matrix parent class.
-	**********************************************************************************************/
 	template <typename T>
 	class SubMatrix : public IMatrix<T> {
 	private:
@@ -799,9 +744,7 @@ namespace hrzn {
 	}; // class SubMatrix<T>
 
 
-	/**********************************************************************************************
-	 * \brief Type alias for \code MatrixContainer<bool>
-	**********************************************************************************************/
+	// Type alias for MatrixContainer<bool>
 	using Mask = MatrixContainer<bool>;
 
 
