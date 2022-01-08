@@ -147,7 +147,7 @@ namespace hrzn {
 		Rect area = hrzn::intersect(*to, from);
 		for (int y = area.y1; y <= area.y2; ++y)
 			for (int x = area.x1; x <= area.x2; ++x)
-				to->at(x, y) = from.at(x, y);
+				to->set(x, y, from.at(x, y));
 	}
 
 	template <typename Ta, typename Tb>
@@ -155,7 +155,7 @@ namespace hrzn {
 		MatrixContainer<Ta> dup(mat);
 		for (int y = mat.y1; y <= mat.y2; ++y)
 			for (int x = mat.x1; x <= mat.x2; ++x)
-				dup.at(x, y) = cast(mat.at(x, y));
+				dup.set(x, y, cast(mat.at(x, y)));
 		return dup;
 	}
 
@@ -164,7 +164,7 @@ namespace hrzn {
 		Rect fill_area = hrzn::intersect(*mat, area);
 		for (int y = fill_area.y1; y <= fill_area.y2; ++y)
 			for (int x = fill_area.x1; x <= fill_area.x2; ++x)
-				mat->at(x, y) = fill_obj;
+				mat->set(x, y, fill_obj);
 	}
 
 	template <typename T>
@@ -172,13 +172,14 @@ namespace hrzn {
 		Rect fill_area = hrzn::intersect(*mat, mask);
 		for (int y = fill_area.y1; y <= fill_area.y2; ++y)
 			for (int x = fill_area.x1; x <= fill_area.x2; ++x)
-				if (mask.at(x, y)) mat.at(x, y) = fill_obj;
+				if (mask.at(x, y)) 
+					mat.set(x, y, fill_obj);
 	}
 
 	template <typename T>
 	void floodFillArea(hPoint start, IMatrix<T>* region, IMatrix<bool>* result, bool edge = false, bool use8 = false) {
 		Rect area = hrzn::intersect(*region, *result);
-		result->at(start) = true;
+		result->set(start, true);
 
 		for (int i = 0; i < (use8 ? 8 : 4); ++i) {
 			hPoint pos = start + (use8 ? neighborhood8 : neighborhood4)[i];
@@ -186,7 +187,7 @@ namespace hrzn {
 				if (region->at(pos) == region->at(start))
 					hrzn::floodFillArea(pos, region, result, edge, use8);
 				else if (edge)
-					result->at(pos) = true;
+					result->set(pos.x, true);
 			}
 		}
 
@@ -206,17 +207,17 @@ namespace hrzn {
 				if (mask->at(pos))
 					++n_count;
 			}
-			neighbor_counts.at(cell) = n_count;
+			neighbor_counts.set((hPoint)cell, n_count);
 		}
 		for (auto cell : mask->region())
-			*cell = neighbor_counts.at(cell) >= birth_rate;
+			mask->set((hPoint)cell, neighbor_counts.at(cell) >= birth_rate);
 	}
 
 	template <typename T>
 	void scatter(IMatrix<T>* mat, T val, double threshold) {
 		for (auto i : mat->region()) {
 			if (((double)std::rand() / (double)RAND_MAX) > threshold)
-				*i = val;
+				mat->set((hPoint)i, val);
 		}
 	}
 
