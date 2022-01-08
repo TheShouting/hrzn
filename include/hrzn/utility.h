@@ -52,13 +52,13 @@ namespace hrzn {
 		Tuple Operations
 	******************************************************************************************************************/
 
-	hPoint wrapPoint(const hPoint& p, const Rect& area) {
+	hPoint wrapPoint(const hPoint& p, const Area& area) {
 		hType_i x = std::min(std::max(p.x, area.x1), area.x2);
 		hType_i y = std::min(std::max(p.y, area.y1), area.y2);
 		return { x, y };
 	}
 
-	hPoint clampPoint(const hPoint& p, const Rect& area) {
+	hPoint clampPoint(const hPoint& p, const Area& area) {
 		hType_i x = (p.x % area.width() + area.width()) % area.width();
 		hType_i y = (p.y % area.height() + area.height()) % area.height();
 		return { x, y };
@@ -94,28 +94,28 @@ namespace hrzn {
 		Area Operations
 	******************************************************************************************************************/
 
-	bool overlapping(const Rect& a, const Rect& b) {
+	bool overlapping(const Area& a, const Area& b) {
 		return !(a.x1 > b.x2 || a.y1 > b.y2 || b.x1 > a.x2 || b.y1 > a.y2);
 	}
 
-	bool contains(const Rect& a, const Rect& b) {
+	bool contains(const Area& a, const Area& b) {
 		return b.x1 >= a.x1 && b.y1 >= a.y1 && b.x2 <= a.x2 && b.y2 <= a.x2;
 	}
 
-	bool contains(const Rect& a, const hPoint& b) {
+	bool contains(const Area& a, const hPoint& b) {
 		return b.x >= a.x1 && b.y >= a.y1 && b.x <= a.x2 && b.y <= a.x2;
 	}
 
-	bool isEdgePoint(const Rect& rec, const hPoint& pos) {
+	bool isEdgePoint(const Area& rec, const hPoint& pos) {
 		return pos.x == rec.x1 || pos.x == rec.x2 || pos.y == rec.y1 || pos.y == rec.y2;
 	}
 
-	Rect intersect(const Rect& a, const Rect& b) {
-		return Rect(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
+	Area intersect(const Area& a, const Area& b) {
+		return Area(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
 	}
 
-	Rect makeBoundary(const Rect& a, const Rect& b) {
-		return Rect(std::min(a.x1, b.x1), std::min(a.y1, b.y1), std::max(a.x2, b.x2), std::max(a.y2, b.y2));
+	Area makeBoundary(const Area& a, const Area& b) {
+		return Area(std::min(a.x1, b.x1), std::min(a.y1, b.y1), std::max(a.x2, b.x2), std::max(a.y2, b.y2));
 	}
 
 	/// <summary>
@@ -123,19 +123,19 @@ namespace hrzn {
 	/// </summary>
 	/// <param name="rec">The <type>Urect</type> area to be split</param>
 	/// <returns>A container with the new URect objects. If <paramref name="rec"/> is only a single cell (width and height are equal to 1), then both are simply a copy of the orignal parameter. </returns>
-	std::pair<Rect, Rect> split(const Rect& rec) {
-		Rect r1 = rec;
-		Rect r2 = rec;
-		hPoint cp = rec.center();
-		if (rec.height() > 1 && rec.height() > rec.width()) {
-			r1.y2 = cp.y;
-			r2.y1 = cp.y + 1;
+	std::pair<Area, Area> split(const Area& area) {
+		Area a1 = area;
+		Area a2 = area;
+		hPoint cp = area.center();
+		if (area.height() > 1 && area.height() > area.width()) {
+			a1.y2 = cp.y;
+			a2.y1 = cp.y + 1;
 		}
-		else if (rec.width() > 1) {
-			r1.x2 = cp.x;
-			r2.x1 = cp.x + 1;
+		else if (area.width() > 1) {
+			a1.x2 = cp.x;
+			a2.x1 = cp.x + 1;
 		}
-		return std::make_pair(r1, r2);
+		return std::make_pair(a1, a2);
 	}
 
 	/******************************************************************************************************************
@@ -144,7 +144,7 @@ namespace hrzn {
 	
 	template <typename T>
 	void transfer(IMatrix<T>* to, const IMatrix<T>& from) {
-		Rect area = hrzn::intersect(*to, from);
+		Area area = hrzn::intersect(*to, from);
 		for (int y = area.y1; y <= area.y2; ++y)
 			for (int x = area.x1; x <= area.x2; ++x)
 				to->set(x, y, from.at(x, y));
@@ -160,8 +160,8 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	void fill(IMatrix<T>* mat, const Rect area, const T& fill_obj) {
-		Rect fill_area = hrzn::intersect(*mat, area);
+	void fill(IMatrix<T>* mat, const Area area, const T& fill_obj) {
+		Area fill_area = hrzn::intersect(*mat, area);
 		for (int y = fill_area.y1; y <= fill_area.y2; ++y)
 			for (int x = fill_area.x1; x <= fill_area.x2; ++x)
 				mat->set(x, y, fill_obj);
@@ -169,7 +169,7 @@ namespace hrzn {
 
 	template <typename T>
 	void maskfill(IMatrix<T>* mat, const IMatrix<bool>& mask, const T& fill_obj) {
-		Rect fill_area = hrzn::intersect(*mat, mask);
+		Area fill_area = hrzn::intersect(*mat, mask);
 		for (int y = fill_area.y1; y <= fill_area.y2; ++y)
 			for (int x = fill_area.x1; x <= fill_area.x2; ++x)
 				if (mask.at(x, y)) 
@@ -178,7 +178,7 @@ namespace hrzn {
 
 	template <typename T>
 	void floodFillArea(hPoint start, IMatrix<T>* region, IMatrix<bool>* result, bool edge = false, bool use8 = false) {
-		Rect area = hrzn::intersect(*region, *result);
+		Area area = hrzn::intersect(*region, *result);
 		result->set(start, true);
 
 		for (int i = 0; i < (use8 ? 8 : 4); ++i) {
@@ -194,7 +194,7 @@ namespace hrzn {
 	}
 
 	void cellularAutomata(IMatrix<bool>* mask, int birth_rate, bool wrap_position) {
-		MatrixContainer<int> neighbor_counts((Rect)(*mask), 0);
+		MatrixContainer<int> neighbor_counts((Area)(*mask), 0);
 		for (auto cell : mask->region()) {
 			int n_count = 0;
 			for (const auto& dir : neighborhood8) {
