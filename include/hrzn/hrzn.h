@@ -277,22 +277,22 @@ namespace hrzn {
 	}; // hRotation
 
 
-	struct IterableRect; // Forward declaration
+	struct IterableArea; // Forward declaration
 
-	struct Rect {
+	struct Area {
 
 		hType_i x1, y1, x2, y2;
 
-		Rect() : x1(0), y1(0), x2(0), y2(0) {}
+		Area() : x1(0), y1(0), x2(0), y2(0) {}
 
-		Rect(std::size_t w, std::size_t h) {
+		Area(std::size_t w, std::size_t h) {
 			x1 = 0;
 			y1 = 0;
 			x2 = (hType_i)w - 1;
 			y2 = (hType_i)h - 1;
 		}
 
-		Rect(hType_i x_1, hType_i y_1, hType_i x_2, hType_i y_2)
+		Area(hType_i x_1, hType_i y_1, hType_i x_2, hType_i y_2)
 		{
 			x1 = std::min(x_1, x_2);
 			x2 = std::max(x_1, x_2);
@@ -300,28 +300,21 @@ namespace hrzn {
 			y2 = std::max(y_1, y_2);
 		}
 
-		explicit Rect(hPoint pos, hPoint sz) {
+		explicit Area(hPoint pos, hPoint sz) {
 			x1 = pos.x;
 			y1 = pos.y;
 			x2 = pos.x + sz.x - 1;
 			y2 = pos.y + sz.y - 1;
 		}
 
-		IterableRect iterable();
+		IterableArea iterable();
 
-		virtual void set(hType_i x_1, hType_i y_1, hType_i x_2, hType_i y_2) {
-			x1 = std::min(x_1, x_2);
-			x2 = std::max(x_1, x_2);
-			y1 = std::min(y_1, y_2);
-			y2 = std::max(y_1, y_2);
-		}
-
-		Rect& operator +=(hPoint dist) {
+		Area& operator +=(hPoint dist) {
 			move(dist.x, dist.y);
 			return *this;
 		}
 
-		Rect& operator -=(hPoint dist) {
+		Area& operator -=(hPoint dist) {
 			move(-dist.x, -dist.y);
 			return *this;
 		}
@@ -331,6 +324,19 @@ namespace hrzn {
 			y1 += move_y;
 			x2 += move_x;
 			y2 += move_y;
+		}
+
+		virtual void resize(hType_i x_1, hType_i y_1, hType_i x_2, hType_i y_2) {
+			x1 = std::min(x_1, x_2);
+			x2 = std::max(x_1, x_2);
+			y1 = std::min(y_1, y_2);
+			y2 = std::max(y_1, y_2);
+		}
+
+		void resize(const hPoint& _s) {
+			if (_s) {
+				resize(std::min(x1, x1 + _s.x), std::min(y1, y1 + _s.y), std::max(x1, x1 + _s.x) - 1, std::max(y1, y1 + _s.y) - 1);
+			}
 		}
 
 		void resizeFromCenter(hPoint size) {
@@ -343,17 +349,11 @@ namespace hrzn {
 
 		void resizeFromCenter(unsigned w, unsigned h) {
 			hPoint ctr = center();
-			set(ctr.x - w / 2, ctr.y - h / 2, x1 + w - 1, y1 + h - 1);
+			resize(ctr.x - w / 2, ctr.y - h / 2, x1 + w - 1, y1 + h - 1);
 		}
 
-		void resize(const hPoint& _s) {
-			if (_s) {
-				set(std::min(x1, x1 + _s.x), std::min(y1, y1 + _s.y), std::max(x1, x1 + _s.x) - 1, std::max(y1, y1 + _s.y) - 1);
-			}
-		}
-
-		Rect normalize() {
-			return Rect(0, 0, x2 - x1, y2 - y1);
+		Area normalize() {
+			return Area(0, 0, x2 - x1, y2 - y1);
 		}
 
 		hPoint getClampedValue(const hPoint& pt) const {
@@ -418,13 +418,13 @@ namespace hrzn {
 			return x >= x1 && x <= x2 && y >= y1 && y <= y2;
 		}
 
-		/// Create a Rect object using position, width, and height.
-		static Rect build(hType_i x, hType_i y, hType_i width, hType_i height) {
-			return Rect(x, y, x + width - 1, y + height - 1);
+		/// Create a Area object using position, width, and height.
+		static Area build(hType_i x, hType_i y, hType_i width, hType_i height) {
+			return Area(x, y, x + width - 1, y + height - 1);
 		}
 
-		static Rect buildBoundary(std::initializer_list<hPoint> pts) {
-			Rect r (pts.begin()->x, pts.begin()->y, pts.begin()->x, pts.begin()->y);
+		static Area buildBoundary(std::initializer_list<hPoint> pts) {
+			Area r (pts.begin()->x, pts.begin()->y, pts.begin()->x, pts.begin()->y);
 			for (auto p : pts) {
 				r.x1 = std::min(r.x1, p.x);
 				r.y1 = std::min(r.y1, p.y);
@@ -434,17 +434,17 @@ namespace hrzn {
 			return r;
 		}
 
-		static Rect buildRadius(hType_i x, hType_i y, hType_i radius) {
-			return Rect(x - radius, y - radius, x + radius, y + radius);
+		static Area buildRadius(hType_i x, hType_i y, hType_i radius) {
+			return Area(x - radius, y - radius, x + radius, y + radius);
 		}
 
-		static Rect intersect(const Rect& a, const Rect& b) {
-			return Rect(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
+		static Area intersect(const Area& a, const Area& b) {
+			return Area(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
 		}
 
-	}; // struct Rect
+	}; // struct Area
 
-	struct IterableRect : public Rect {
+	struct IterableArea : public Area {
 
 		struct iterator : public hPoint {
 			using iterator_category = std::forward_iterator_tag;
@@ -483,7 +483,7 @@ namespace hrzn {
 			const hType_i m_w, m_x, m_y;
 		};
 
-		IterableRect(const Rect& _rect) : Rect(_rect) {}
+		IterableArea(const Area& _area) : Area(_area) {}
 
 		iterator begin() {
 			return iterator(0, width(), x1, y1);
@@ -495,51 +495,52 @@ namespace hrzn {
 
 	}; // struct IterableRect
 
-	IterableRect Rect::iterable() {
-		return IterableRect(*this);
+	IterableArea Area::iterable() {
+		return IterableArea(*this);
 	}
 
 
 	template <typename T>
 	class Region;
 
-	template <typename A, typename B>
-	class MatrixAccessor;
 
 	/// <summary>
 	/// Abstract class for all Matrix-like containers and accessors.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	template <typename T>
-	class IMatrix : public Rect {
+	class IMatrix : public Area {
 	public:
 
 		using fill_func = T(*)();
 		//using fill_func = std::function<T()>; // TODO add ifdef block to check for cpp compiler version
 
-		IMatrix(const Rect& rect) : Rect(rect) {}
+		IMatrix(const Area& area) : Area(area) {}
 
 		virtual ~IMatrix() {}
 
 		// Common inherited methods
 		Region<T> region();
-		Region<T> region(const Rect& area);
+		Region<T> region(const Area& area);
 
 		T& operator[](hPoint pt) { return at(pt.x, pt.y); }
-		const T& operator[](hPoint pt) const { return at(pt.x, pt.y); }
+		T operator[](hPoint pt) const { return at(pt.x, pt.y); }
 
 		T& at(hPoint p) { return at(p.x, p.y); }
-		const T& at(hPoint p) const { return at(p.x, p.y); }
+		T at(hPoint p) const { return at(p.x, p.y); }
+		void set(hPoint p, const T& val) { set(p.x, p.y, val); }
+
 
 		void fill(const T& obj);
 		void fill(fill_func f);
 
 		// Abstract methods
-		virtual T& at(hType_i x, hType_i y) = 0;
-		virtual const T& at(hType_i x, hType_i y) const = 0;
 		virtual operator bool() const = 0;
+		virtual T& at(hType_i x, hType_i y) = 0;
+		virtual T at(hType_i x, hType_i y) const = 0;
+		virtual void set(hType_i x, hType_i y, const T& val) = 0;
 
-	protected:
+	//protected:
 		std::size_t m_Index(hType_i x, hType_i y) const {
 			if (contains(x, y))
 				return (x - x1) + (y - y1) * width();
@@ -548,13 +549,12 @@ namespace hrzn {
 	}; // class IMatrix<T>
 
 
-
 	/// <summary>
 	/// Helper class for iterating through a specified region of a Matrix class
 	/// </summary>
 	/// <typeparam name="T">Element Type of the reference Matrix</typeparam>
 	template<typename T>
-	class Region : public Rect {
+	class Region : public Area {
 
 	public:
 		struct RegionPoint : public hPoint {
@@ -573,12 +573,12 @@ namespace hrzn {
 
 		private:
 			IMatrix<T>* m_source;
-			Rect m_area;
+			Area m_area;
 			std::size_t m_index;
 			RegionPoint m_container;
 
 		public:
-			RegionIterator(IMatrix<T>* source, Rect area, std::size_t i = 0) : m_source(source), m_area(area), m_index(i) {
+			RegionIterator(IMatrix<T>* source, Area area, std::size_t i = 0) : m_source(source), m_area(area), m_index(i) {
 				m_container.x = m_area.x1 + (hType_i)m_index % m_area.width();
 				m_container.y = m_area.y1 + (hType_i)(m_index / m_area.width());
 				if (source && i != area.area())
@@ -626,8 +626,8 @@ namespace hrzn {
 		IMatrix<T>* m_source;
 
 	public:
-		Region(Rect area, IMatrix<T>* source) :
-			Rect(area), m_source(source) {}
+		Region(Area area, IMatrix<T>* source) :
+			Area(area), m_source(source) {}
 
 		RegionIterator begin() { return RegionIterator(m_source, *this, 0); }
 		RegionIterator end() { return RegionIterator(m_source, *this, this->area()); }
@@ -645,6 +645,7 @@ namespace hrzn {
 
 		using IMatrix<T>::operator[];
 		using IMatrix<T>::at;
+		using IMatrix<T>::set;
 		using base = IMatrix<T>;
 
 	private:
@@ -653,11 +654,11 @@ namespace hrzn {
 
 	public:
 
-		MatrixContainer() : base(Rect()) {}
-		MatrixContainer(std::size_t w, std::size_t h) : base(Rect(w, h)), m_contents(new T[w * h]) {}
-		MatrixContainer(std::size_t w, std::size_t h, const T& obj) : base(Rect(w, h)), m_contents(new T[w * h]) { for (auto& i : (*this)) i = obj; }
-		MatrixContainer(const Rect& rect) : base(rect), m_contents(new T[rect.area()]) {}
-		MatrixContainer(const Rect& rect, const T& obj) : base(rect), m_contents(new T[rect.area()]) { for (auto& i : (*this)) i = obj; }
+		MatrixContainer() : base(Area()) {}
+		MatrixContainer(std::size_t w, std::size_t h) : base(Area(w, h)), m_contents(new T[w * h]) {}
+		MatrixContainer(std::size_t w, std::size_t h, const T& obj) : base(Area(w, h)), m_contents(new T[w * h]) { for (auto& i : (*this)) i = obj; }
+		MatrixContainer(const Area& rect) : base(rect), m_contents(new T[rect.area()]) {}
+		MatrixContainer(const Area& rect, const T& obj) : base(rect), m_contents(new T[rect.area()]) { for (auto& i : (*this)) i = obj; }
 
 		MatrixContainer(const MatrixContainer<T>& other) : base(other), m_contents(new T[other.area()]) {
 			std::copy(other.m_contents, other.m_contents + other.area(), m_contents);
@@ -676,7 +677,7 @@ namespace hrzn {
 				delete[] m_contents;
 				m_contents = new T[other.area()];
 				std::copy(other.m_contents, other.m_contents + other.area(), m_contents);
-				Rect::set(other.x1, other.y1, other.x2, other.y2);
+				Area::resize(other.x1, other.y1, other.x2, other.y2);
 			}
 			return *this;
 		}
@@ -691,91 +692,39 @@ namespace hrzn {
 			return m_contents[this->m_Index(x, y)];
 		}
 
-		const T& at(hType_i x, hType_i y) const override {
+		T at(hType_i x, hType_i y) const override {
 			return m_contents[this->m_Index(x, y)];
 		}
 
-		void set(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
-			set(xa, ya, xb, yb, T());
+		void set(hType_i x, hType_i y, const T& val) override {
+			m_contents[this->m_Index(x, y)] = val;
 		}
 
-		void set(hType_i xa, hType_i ya, hType_i xb, hType_i yb, const T& fill_obj) {
+		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
+			resize(xa, ya, xb, yb, T());
+		}
+
+		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb, const T& fill_obj) {
 			assert(m_contents != nullptr);
-			Rect new_rect(xa, ya, xb, yb);
+			Area new_rect(xa, ya, xb, yb);
 				T* new_block = new T[new_rect.area()];
 				for (hType_i y = new_rect.y1; y <= new_rect.y2; ++y)
 					for (hType_i x = new_rect.x1; x <= new_rect.x2; ++x) {
 						hType_i i = (x - new_rect.x1) + (y - new_rect.y1) * (hType_i)new_rect.width();
-						new_block[i] = Rect::contains(x, y) ? std::move(m_contents[base::m_Index(x, y)]) : fill_obj;
+						new_block[i] = Area::contains(x, y) ? std::move(m_contents[base::m_Index(x, y)]) : fill_obj;
 					}
 				delete[]m_contents;
 				m_contents = new_block;
-			Rect::set(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
+			Area::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
 		}
-
-	public:
-		template <typename A, typename B>
-		friend class MatrixAccessor;
 
 	}; // class MatrixContainer<T>
 
 
 	/// <summary>
-	/// Helper class that can be used to access and iterate a single field from the container type.
+	/// A helper class used for operating on the sub region of an abstract Matrix parent class.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	/// <typeparam name="TParent"></typeparam>
-	template <typename T, typename TParent>
-	class MatrixAccessor : public IMatrix<T> {
-	public:
-
-		using accessor = T TParent::*;
-
-		using IMatrix<T>::operator[];
-		using IMatrix<T>::at;
-		using base = IMatrix<T>;
-
-	private:
-		TParent** m_content_link = nullptr;
-		accessor m_accessor;
-
-	public:
-
-		MatrixAccessor(MatrixContainer<TParent>& mat, accessor access)
-			: base(mat), m_content_link(&mat.m_contents), m_accessor(access)
-		{}
-
-		operator bool() const override {
-			if (m_content_link) {
-				return *m_content_link;
-			}
-			return m_content_link;
-		}
-
-		T& at(hType_i x, hType_i y) override {
-			if (*m_content_link) {
-				return (*m_content_link)[base::m_Index(x, y)].*m_accessor;
-			}
-			throw std::runtime_error("source matrix has been deallocated");
-		}
-
-		const T& at(hType_i x, hType_i y) const override {
-			if (*m_content_link) {
-				return (*m_content_link)[base::m_Index(x, y)].*m_accessor;
-			}
-			throw std::runtime_error("source matrix has been deallocated");
-		}
-
-		void set(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
-			throw std::runtime_error("MatrixView cannot be resized");
-		}
-
-	}; // class MatrixAccessor<T>
-
-
-	/**********************************************************************************************
-	 * \brief A helper class used for operating on the sub region of an abstract Matrix parent class.
-	**********************************************************************************************/
 	template <typename T>
 	class SubMatrix : public IMatrix<T> {
 	private:
@@ -784,47 +733,211 @@ namespace hrzn {
 
 		using IMatrix<T>::operator[];
 		using IMatrix<T>::at;
+		using IMatrix<T>::set;
 		using base = IMatrix<T>;
 
-		SubMatrix(const Rect& area, base& mat) : base(area), m_source(&mat) {}
+		SubMatrix(const Area& area, base& mat) : base(area), m_source(&mat) {}
 
 		operator bool() const override { return m_source->operator bool(); }
 
-		T& at(hType_i x, hType_i y) { return m_source->at(x, y); }
+		void set(hType_i x, hType_i y, T val) override {
+			m_source->set(x, y, val);
+		}
 
-		const T& at(hType_i x, hType_i y) const { return m_source->at(x, y); }
+		T& at(hType_i x, hType_i y) override { return m_source->at(x, y); }
+
+		T at(hType_i x, hType_i y) const override { return m_source->at(x, y); }
 
 		base* source() { return m_source; }
+		
+		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
+			Area new_rect = Area::intersect(*this, { xa, ya, xb, yb });
+			Area::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
+		}
 
 	}; // class SubMatrix<T>
 
+	/// <summary>
+	/// A extension of a boolean Matrix class that provides additional methods and increased performance.
+	/// </summary>
+	class MatrixMask : public IMatrix<bool> {
 
-	/**********************************************************************************************
-	 * \brief Type alias for \code MatrixContainer<bool>
-	**********************************************************************************************/
-	using Mask = MatrixContainer<bool>;
+	public:
+		using block_type = std::uint64_t;
+
+		using IMatrix<bool>::operator[];
+		using IMatrix<bool>::at;
+		using IMatrix<bool>::set;
+		using base = IMatrix<bool>;
+
+	private:
+
+		const hType_u c_bit_interval = sizeof(block_type) * CHAR_BIT;
+
+		std::size_t m_size = 0;
+		block_type* m_blocks = nullptr;
+		bool m_dummy = false;
+
+	public:
+
+		MatrixMask(int w, int h) : base(Area(w, h)), m_size((this->area() / c_bit_interval) + 1), m_blocks(new block_type[m_size]) {
+			for (int i = 0; i < m_size; ++i)
+				m_blocks[i] = 0;
+		}
+
+		MatrixMask(Area area) : base(Area(area)), m_size((this->area() / c_bit_interval) + 1), m_blocks(new block_type[m_size]) {
+			for (int i = 0; i < m_size; ++i)
+				m_blocks[i] = 0;
+		}
+
+		MatrixMask(const IMatrix<bool>& obj) : base(obj), m_size((obj.area() / c_bit_interval) + 1), m_blocks(new block_type[m_size]) {
+			for (int y = obj.y1; y <= obj.y2; ++y) {
+				for (int x = obj.x1; x <= obj.x2; ++x) {
+					this->set(x, y, obj.at(x, y));
+				}
+			}
+		}
+
+		MatrixMask(const MatrixMask& obj) : base(obj), m_size((obj.area() / c_bit_interval) + 1), m_blocks(new block_type[m_size]) {
+			std::copy(obj.m_blocks, obj.m_blocks + m_size, m_blocks);
+		}
+
+		~MatrixMask() {
+			delete[] m_blocks;
+		}
+
+		MatrixMask& operator =(const IMatrix<bool>& other) {
+			if (this != &other) {
+				delete[] m_blocks;
+				Area::resize(other.x1, other.y1, other.x2, other.y2);
+				m_size = (other.area() / c_bit_interval) + 1;
+				m_blocks = new block_type[m_size];
+				for (int y = other.y1; y <= other.y2; ++y) {
+					for (int x = other.x1; x <= other.x2; ++x) {
+						this->set(x, y, other.at(x, y));
+					}
+				}
+			}
+			return *this;
+		}
+
+		MatrixMask& operator =(const MatrixMask& other) {
+			if (this != &other) {
+				delete[] m_blocks;
+				Area::resize(other.x1, other.y1, other.x2, other.y2);
+				m_size = (other.area() / c_bit_interval) + 1;
+				m_blocks = new block_type[m_size];
+				std::copy(other.m_blocks, other.m_blocks + m_size, m_blocks);
+			}
+			return *this;
+		}
+
+		operator bool() const override {
+			return m_blocks;
+		}
+
+		void set(hType_i x, hType_i y, const bool& val) override {
+			hType_u index = m_Index(x, y);
+			hType_u block_id = index / c_bit_interval;			
+			block_type offset = 1ULL << (index % c_bit_interval);
+			m_blocks[block_id] = (m_blocks[block_id] & ~offset) | (offset * val);
+		}
+
+		bool& at(int x, int y) override {
+			m_dummy = f_get(x, y);
+			return m_dummy;
+		}
+
+		bool at(int x, int y) const override {
+			return f_get(x, y);
+		}
+
+		MatrixContainer<bool> expandedCopy() const {
+			MatrixContainer<bool> obj((Area)*this);
+			for (int y = obj.y1; y <= obj.y2; ++y)
+				for (int x = obj.x1; x <= obj.x2; ++x)
+					obj.set(x, y, this->at(x, y));
+			return obj;
+		}
+
+		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
+			throw std::exception("MatrixMask::resize not implmemented.");
+			//resize(xa, ya, xb, yb, false);
+		}
+
+
+	private:
+		
+		bool f_get(int x, int y) const {
+			hType_u index = m_Index(x, y);
+			hType_u block_id = index / c_bit_interval;
+			block_type offset = 1ULL << (index % c_bit_interval);
+			return (m_blocks[block_id] & offset) == offset;
+		}
+
+	}; // class MatrixMask : IMatrix<bool>
+
+
+
+	// Bitwise AND operation between two boolean Matrices
+	MatrixMask operator & (const IMatrix<bool>& a, const IMatrix<bool>& b) {
+		MatrixMask result(Area::intersect(a, b));
+		for (int y = result.y1; y <= result.y2; ++y)
+			for (int x = result.x1; x <= result.x2; ++x)
+				result.set(x, y, a.at(x, y) && b.at(x, y));
+		return result;
+	}
+
+	// Bitwise OR operation between two boolean Matrices
+	MatrixMask operator | (const IMatrix<bool>& a, const IMatrix<bool>& b) {
+		MatrixMask result(Area::intersect(a, b));
+		for (int y = result.y1; y <= result.y2; ++y)
+			for (int x = result.x1; x <= result.x2; ++x)
+				result.set(x, y, a.at(x, y) || b.at(x, y));
+		return result;
+	}
+
+	// Bitwise XOR operation between two boolean Matrices
+	MatrixMask operator ^ (const IMatrix<bool>& a, const IMatrix<bool>& b) {
+		MatrixMask result(Area::intersect(a, b));
+		for (int y = result.y1; y <= result.y2; ++y)
+			for (int x = result.x1; x <= result.x2; ++x)
+				result.set(x, y, a.at(x, y) && b.at(x, y));
+		return result;
+	}
+
+	// Bitwise Invert operation between on a boolean Matrix
+	MatrixMask operator ~ (const IMatrix<bool>& a) {
+		MatrixMask result((Area)a);
+		for (int y = a.y1; y <= a.y2; ++y)
+			for (int x = a.x1; x <= a.x2; ++x)
+				result.set(x, y, !a.at(x, y));
+		return result;
+	}
 
 
 	template<typename T>
 	inline Region<T> IMatrix<T>::region() {
-		return Region<T>(Rect(*this), this);
+		return Region<T>(Area(*this), this);
 	}
 
 	template<typename T>
-	inline Region<T> IMatrix<T>::region(const Rect& area) {
-		return Region<T>(Rect::intersect(*this, area), this);
+	inline Region<T> IMatrix<T>::region(const Area& area) {
+		return Region<T>(Area::intersect(*this, area), this);
 	}
 
 	template<typename T>
 	inline void IMatrix<T>::fill(const T& obj) {
-		for (auto& i : this->region())
-			*i = obj;
+		for (hType_i y = y1; y <= y2; ++y)
+			for (hType_i x = x1; x <= x2; ++x)
+				set(x, y, obj);
 	}
 
 	template<typename T>
 	inline void IMatrix<T>::fill(fill_func f) {
-		for (auto& i : this->region())
-			*i = f();
+		for (hType_i y = y1; y <= y2; ++y)
+			for (hType_i x = x1; x <= x2; ++x)
+				set(x, y, f());
 	}
 
 } // hrzn

@@ -52,12 +52,12 @@ namespace hrzn {
 		return input;
 	}
 
-	std::ostream& operator<<(std::ostream& output, const Rect& rect) {
+	std::ostream& operator<<(std::ostream& output, const Area& rect) {
 		output << rect.x1 << rect.y1 << rect.x2 << rect.y2;
 		return output;
 	}
 
-	std::istream& operator>>(std::istream& input, Rect& rect) {
+	std::istream& operator>>(std::istream& input, Area& rect) {
 		input >> rect.x1 >> rect.y1 >> rect.x2 >> rect.y2;
 		return input;
 	}
@@ -75,7 +75,7 @@ namespace hrzn {
 		return ss.str();
 	}
 
-	std::string toString(const Rect& rect) {
+	std::string toString(const Area& rect) {
 		std::stringstream ss;
 		ss << "Rect{" << rect.x1 << ',' << rect.y1 << ',' << rect.x2 << ',' << rect.y2 << '}';
 		return ss.str();
@@ -164,33 +164,31 @@ namespace hrzn {
 
 		std::stringstream ss;
 
-		int w = mat.width();
-		int h = mat.height();
 		int rail_pad = (int)(siding != 0);
 
 
 		if (top_line)
-			ss << makeStringLine((w + 1 + enumerate) * padding + rail_pad, top_line, corner, corner) << '\n';
+			ss << makeStringLine((mat.width() + enumerate) * padding + rail_pad, top_line, corner, corner) << '\n';
 
 		if (enumerate) {
 			ss << siding << std::setw(padding) << "";
-			for (int x = 0; x < h; x++)
+			for (int x = mat.x1; x < mat.x2; x++)
 				ss << std::setw(padding) << x;
 			ss << std::setw(padding) << siding << '\n';
 		}
 
-		for (int y = 0; y < w; y++) {
+		for (int y = mat.y1; y <= mat.y2; y++) {
 			ss << siding;
 			if (enumerate) {
 				ss << std::setw(padding) << y;
 			}
-			for (int x = 0; x < h; x++)
+			for (int x = mat.x1; x < mat.x2; x++)
 				ss << std::setw(padding) << mat.at(x, y);
 			ss << std::setw(padding) << siding << '\n';
 		}
 
 		if (bottom_line)
-			ss << makeStringLine((w + 1 + enumerate) * padding + rail_pad, bottom_line, corner, corner) << '\n';
+			ss << makeStringLine((mat.width() + enumerate) * padding + rail_pad, bottom_line, corner, corner) << '\n';
 
 		return ss.str();
 	}
