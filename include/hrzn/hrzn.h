@@ -31,21 +31,29 @@ SOFTWARE.
 #include <iterator>
 #include <cstddef>
 
-#define U_PI 3.1415926535897932384626433832795_hf
-#define U_DEGTORAD 0.017453_hf
-#define U_RADTODEG 57.29578_hf
-#define U_DEG 360.0_hf
-#define U_RAD 6.283185307179586476925286766559_hf
-#define U_EPSILON 1.192092896e-07_hf
+#define H_PI 3.1415926535897932384626433832795_hf
+#define H_DEGTORAD 0.017453_hf
+#define H_RADTODEG 57.29578_hf
+#define H_DEG 360.0_hf
+#define H_RAD 6.283185307179586476925286766559_hf
+#define H_EPSILON 1.192092896e-07_hf
 
 namespace hrzn {
 
+	// Aliased FLOAT type
 	typedef float hType_f;
+	// Aliased INT type
 	typedef int hType_i;
+	// Aliased UNSIGNED INT type
 	typedef unsigned int hType_u;
 
 	constexpr hType_f operator "" _hf(long double val) { return static_cast<hType_f>(val); }
 	constexpr hType_i operator "" _hi(unsigned long long int val) { return static_cast<hType_i>(val); }
+
+
+	/******************************************************************************************************************
+		Transform data types (Vectors/Tuples and Rotations)
+	******************************************************************************************************************/
 
 	/// <summary>
 	/// A templated vector class for managing any 2D numeric data.
@@ -102,12 +110,18 @@ namespace hrzn {
 
 		T lengthManhattan() const { return std::abs(this->x) + std::abs(this->y); }
 
+		ITuple<T> normal() const {
+			double l = length();
+			if (l < H_EPSILON)
+				return { 0._hf, 0._hf };
+			double il = 1.0 / l;
+			return { static_cast<T>(this->x * il), static_cast<T>(this->y * il) };
+		}
+
 		double normalize() {
 			double l = length();
-			if (l < U_EPSILON)
-			{
+			if (l < H_EPSILON)
 				return 0.0;
-			}
 			double il = 1.0 / l;
 			this->x = static_cast<T>(this->x * il);
 			this->y = static_cast<T>(this->y * il);
@@ -118,10 +132,9 @@ namespace hrzn {
 
 
 	// Operator overloads for ITuple objects
+
 	template <typename T>
-	ITuple<T> operator - (const ITuple<T>& a) {
-		return ITuple<T>(-a.x, -a.y);
-	}
+	ITuple<T> operator - (const ITuple<T>& a) { return ITuple<T>(-a.x, -a.y); }
 
 	template <typename T, typename TCast>
 	bool operator ==(const ITuple<T>& a, const ITuple<TCast>& b) { return a.x == static_cast<T>(b.x) && a.y == static_cast<T>(b.y); }
@@ -173,8 +186,9 @@ namespace hrzn {
 		return ITuple<T>(a.x / static_cast<T>(val), a.y / static_cast<T>(val));
 	}
 
-	// Type aliases for float-like tuples and int-like tuples
+	// Type aliases for Tuples of FLOAT types.
 	using hVector = ITuple<hType_f>;
+	// Type alias for Tuples of INT types.
 	using hPoint = ITuple<hType_i>;
 
 	/// <summary>
@@ -186,9 +200,9 @@ namespace hrzn {
 
 		hRotation() : tau(0.f) {}
 
-		hRotation(hType_f a) : tau(a - std::floor(a)) {}
+		hRotation(hType_f a) : tau(a) {}
 
-		hRotation operator-() const { return hRotation(tau + U_DEG * 0.5f); }
+		hRotation operator-() const { return hRotation(-tau); }
 
 		hRotation operator + (hRotation const& other) const { return hRotation(tau + other.tau); }
 		hRotation operator - (hRotation const& other) const { return hRotation(tau - other.tau); }
@@ -208,40 +222,49 @@ namespace hrzn {
 		hRotation operator / (T const& val) const { return hRotation(tau / static_cast<hType_f>(val)); }
 
 		auto addDeg(hType_f deg) {
-			hType_f val = tau + (deg / U_DEG);
-			tau = val - std::floor(val);
-			return tau * U_DEG;
+			tau += (deg / H_DEG);
+			return tau * H_DEG;
 		}
 
 		auto addRad(hType_f rad) {
-			hType_f val = tau + (rad / U_RAD);
-			tau = val - std::floor(val);
-			return tau * U_RAD;
+			tau += (rad / H_RAD);
+			return tau * H_RAD;
 		}
 
 		void setDeg(hType_f deg) {
-			hType_f a = deg / U_DEG;
-			tau = a - std::floor(a);
+			tau = deg / H_DEG;
 		}
 
 		void setRad(hType_f rad) {
-			hType_f a = rad / U_RAD;
-			tau = a - std::floor(a);
+			tau = rad / H_RAD;
 		}
 
-		inline hType_f deg() const { return tau * U_DEG; }
-		inline hType_f rad() const { return tau * U_RAD; }
+		inline auto deg() const { return tau * H_DEG; }
 
-		hRotation flipped() const {
-			return hRotation(tau + 0.5_hf);
+		inline auto rad() const { return tau * H_RAD; }
+
+		inline void spin(hType_f t) {
+			tau += t;
+		}
+
+		hRotation angle() const {
+			return std::fmod(tau - std::trunc(tau) + 1._hf, 1._hf);
+		}
+
+		hRotation revolutions() const {
+			return std::trunc(tau);
+		}
+
+		hRotation flip() const {
+			return hRotation(tau + 0.5_hf).angle();
 		}
 
 		hRotation inverse() const {
-			return hRotation(1.0_hf - tau);
+			return hRotation(1.0_hf - angle().tau);
 		}
 
 		void setWithVector(hVector vec) {
-			tau = std::atan2(vec.y, vec.x) / U_RAD;
+			tau = std::atan2(vec.y, vec.x) / H_RAD;
 			tau = tau - std::floor(tau);
 		}
 
@@ -250,35 +273,69 @@ namespace hrzn {
 		}
 
 		hVector getRightVector(hType_f length = 1._hf) const {
-			return hVector(std::cos(rad() + U_PI) * length, std::sin(rad() + U_PI) * length);
+			return hVector(std::cos(rad() + H_PI) * length, std::sin(rad() + H_PI) * length);
 		}
 
 		hVector rotate(hVector const& vec) const {
-			hType_f x = std::cos(rad()) * vec.x - std::sin(rad()) * vec.y;
-			hType_f y = std::sin(rad()) * vec.x + std::cos(rad()) * vec.y;
+			hType_f a = angle().rad();
+			hType_f x = std::cos(a) * vec.x - std::sin(a) * vec.y;
+			hType_f y = std::sin(a) * vec.x + std::cos(a) * vec.y;
 			return hVector(x, y);
 		}
 
 		hVector unrotate(hVector const& vec) const {
-			hType_f x = std::cos(-rad()) * vec.x - std::sin(-rad()) * vec.y;
-			hType_f y = std::sin(-rad()) * vec.x + std::cos(-rad()) * vec.y;
+			hType_f a = angle().rad();
+			hType_f x = std::cos(-a) * vec.x - std::sin(-a) * vec.y;
+			hType_f y = std::sin(-a) * vec.x + std::cos(-a) * vec.y;
 			return hVector(x, y);
 		}
 
 		static hRotation difference(hRotation a, hRotation b) {
-			hType_f diff = a.tau - b.tau + 0.5f;
-			return hRotation(diff - std::floor(diff) - 0.5f);
+			hType_f diff = a.angle().tau - b.angle().tau + 0.5_hf;
+			return hRotation(diff - std::floor(diff) - 0.5_hf);
 		}
 
-		static hRotation makeDeg(hType_f deg) { return hRotation(deg / U_DEG); }
+		static hRotation Degrees(hType_f deg) { return hRotation(deg / H_DEG); }
 
-		static hRotation makeRad(hType_f rad) { return hRotation(rad / U_RAD); }
+		static hRotation Radians(hType_f rad) { return hRotation(rad / H_RAD); }
 
-	}; // hRotation
+	}; // struct hRotation
 
+
+	/// <summary>
+	/// A class holding position, rotation, and scale values for use in transformation of various other coordinates in 2D space.
+	/// </summary>
+	struct hTransform {
+		hVector position = { 0._hf, 0._hf };
+		hRotation rotation = { 0._hf };
+		hVector scale = { 0._hf, 0._hf };
+
+		hTransform transform(hTransform xform) {
+			hTransform nf;
+			nf.position = rotation.rotate(xform.position - position) + position;
+			nf.rotation = xform.rotation + rotation;
+			nf.scale = xform.scale * scale;
+		}
+
+		hTransform transform(hVector pos, hRotation rot = { 0._hf }, hVector sc = { 1._hf, 1._hf }) {
+			hTransform nf;
+			nf.position = rotation.rotate(pos - position) + position;
+			nf.rotation = rot + rotation;
+			nf.scale = sc * scale;
+		}
+
+	}; // struct hTransform
+
+
+	/******************************************************************************************************************
+		Area data types
+	******************************************************************************************************************/
 
 	struct IterableArea; // Forward declaration
-
+	
+	/// <summary>
+	/// A class for managing coordinates of a 2D area.
+	/// </summary>
 	struct Area {
 
 		hType_i x1, y1, x2, y2;
@@ -418,11 +475,12 @@ namespace hrzn {
 			return x >= x1 && x <= x2 && y >= y1 && y <= y2;
 		}
 
-		/// Create a Area object using position, width, and height.
+		/// Create an Area object using position, width, and height.
 		static Area build(hType_i x, hType_i y, hType_i width, hType_i height) {
 			return Area(x, y, x + width - 1, y + height - 1);
 		}
 
+		// Create an Area object that contains all listed points.
 		static Area buildBoundary(std::initializer_list<hPoint> pts) {
 			Area r (pts.begin()->x, pts.begin()->y, pts.begin()->x, pts.begin()->y);
 			for (auto p : pts) {
@@ -444,6 +502,9 @@ namespace hrzn {
 
 	}; // struct Area
 
+	/// <summary>
+	/// A helper class for iterating through all points in an area.
+	/// </summary>
 	struct IterableArea : public Area {
 
 		struct iterator : public hPoint {
@@ -500,9 +561,12 @@ namespace hrzn {
 	}
 
 
+	/******************************************************************************************************************
+		Matrix container types
+	******************************************************************************************************************/
+
 	template <typename T>
 	class Region;
-
 
 	/// <summary>
 	/// Abstract class for all Matrix-like containers and accessors.
@@ -758,7 +822,7 @@ namespace hrzn {
 	}; // class SubMatrix<T>
 
 	/// <summary>
-	/// A extension of a boolean Matrix class that provides additional methods and increased performance.
+	/// A extension of a boolean Matrix class that provides additional methods and increased performance for boolean masks.
 	/// </summary>
 	class MatrixMask : public IMatrix<bool> {
 
@@ -860,7 +924,7 @@ namespace hrzn {
 			return obj;
 		}
 
-		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
+		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override { // TODO implement
 			throw std::exception("MatrixMask::resize not implmemented.");
 			//resize(xa, ya, xb, yb, false);
 		}
@@ -940,4 +1004,4 @@ namespace hrzn {
 				set(x, y, f());
 	}
 
-} // hrzn
+} // namespace hrzn

@@ -49,7 +49,7 @@ namespace hrzn {
 	};
 
 	/******************************************************************************************************************
-		Tuple Operations
+		Transform Operations
 	******************************************************************************************************************/
 
 	hPoint wrapPoint(const hPoint& p, const Area& area) {
@@ -82,11 +82,15 @@ namespace hrzn {
 
 	hVector getNormalized(hVector const& vec) {
 		double l = vec.length();
-		if (l < U_EPSILON) {
+		if (l < H_EPSILON) {
 			return hVector();
 		}
 		double il = 1.0f / l;
 		return hVector(vec.x * il, vec.y * il);
+	}
+
+	hRotation findRotation(hVector v) {
+		return hRotation::Radians(std::atan2(v.y, v.x));
 	}
 
 
