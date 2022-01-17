@@ -29,7 +29,7 @@ SOFTWARE.
 #include <algorithm>
 #include <stdexcept>
 #include <iterator>
-#include <cstddef>
+//#include <cstddef>
 
 #define H_PI 3.1415926535897932384626433832795_hf
 #define H_DEGTORAD 0.017453_hf
@@ -105,6 +105,8 @@ namespace hrzn {
 		void scale(T mag) { this->x *= mag; this->y *= mag; }
 
 		double length() const { return std::sqrt(this->x * this->x + this->y * this->y); }
+
+		ITuple<T> swizzle() const { return { this->y, this->x }; }
 
 		T lengthSqr() const { return this->x * this->x + this->y * this->y; }
 
@@ -185,6 +187,9 @@ namespace hrzn {
 		static_assert(std::is_arithmetic_v<TCast>, "An arithmetic type is required for Tuple operations");
 		return ITuple<T>(a.x / static_cast<T>(val), a.y / static_cast<T>(val));
 	}
+
+	template <typename T>
+	ITuple<T> operator ~ (const ITuple<T>& a) { return ITuple<T>(a.y, a.x); }
 
 	// Type aliases for Tuples of FLOAT types.
 	using hVector = ITuple<hType_f>;
