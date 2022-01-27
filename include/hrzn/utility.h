@@ -147,6 +147,16 @@ namespace hrzn {
 	******************************************************************************************************************/
 	
 	template <typename T>
+	bool compare(const IMatrix<T> & a, const IMatrix<T> & b) {
+		Area area = hrzn::intersect(a, b);
+		for (int y = area.y1; y <= area.y2; ++y)
+			for (int x = area.x1; x <= area.x2; ++x)
+				if (a.at(x, y) != b.at(x, y))
+					return false;
+		return true;
+	}
+
+	template <typename T>
 	void transfer(IMatrix<T>* to, const IMatrix<T>& from) {
 		Area area = hrzn::intersect(*to, from);
 		for (int y = area.y1; y <= area.y2; ++y)
