@@ -168,11 +168,11 @@ namespace hrzn {
 
 
 		if (top_line)
-			ss << makeStringLine((mat.width() + enumerate) * padding + rail_pad, top_line, corner, corner) << '\n';
+			ss << makeStringLine((mat.width() + enumerate + 1) * padding + rail_pad, top_line, corner, corner) << '\n';
 
 		if (enumerate) {
 			ss << siding << std::setw(padding) << "";
-			for (int x = mat.x1; x < mat.x2; x++)
+			for (int x = mat.x1; x <= mat.x2; x++)
 				ss << std::setw(padding) << x;
 			ss << std::setw(padding) << siding << '\n';
 		}
@@ -182,16 +182,66 @@ namespace hrzn {
 			if (enumerate) {
 				ss << std::setw(padding) << y;
 			}
-			for (int x = mat.x1; x < mat.x2; x++)
+			for (int x = mat.x1; x <= mat.x2; x++)
 				ss << std::setw(padding) << mat.at(x, y);
 			ss << std::setw(padding) << siding << '\n';
 		}
 
 		if (bottom_line)
-			ss << makeStringLine((mat.width() + enumerate) * padding + rail_pad, bottom_line, corner, corner) << '\n';
+			ss << makeStringLine((mat.width() + enumerate + 1) * padding + rail_pad, bottom_line, corner, corner) << '\n';
 
 		return ss.str();
 	}
 
+	/// <summary>
+	/// Convert a Mask of boolean values to a formatted table in a string.
+	/// </summary>
+	/// <param name="mat">A reference to the Mask object to be used for outputting.</param>
+	/// <param name="padding">Specifies the amount of space between each column.</param>
+	/// <param name="enumerate">Show Column and Row index numbers.</param>
+	/// <param name="filled">Character to represent filled cells.</param>
+	/// <param name="empty"><Character to represent empty cells/param>
+	/// <param name="top_line">Character to use for the top border of the table.</param>
+	/// <param name="siding">Character to use for the left and right borders of the table.</param>
+	/// <param name="corner">Character to use for each corner of the table.</param>
+	/// <param name="bottom_line">Character to use for the bottom border of the table.</param>
+	/// <returns>A string containing the formatted table ready for printing or writing.</returns>
+	/// <returns></returns>
+	std::string toStringMask(const IMatrix<bool>& mat, int padding,
+		bool enumerate = false,
+		char filled = '#', char empty = '.',
+		char top_line = '-', char siding = '|', char corner = '+', char bottom_line = '-')
+	{
+
+		std::stringstream ss;
+
+		int rail_pad = (int)(siding != 0);
+
+
+		if (top_line)
+			ss << makeStringLine((mat.width() + enumerate + 1) * padding + rail_pad, top_line, corner, corner) << '\n';
+
+		if (enumerate) {
+			ss << siding << std::setw(padding) << "";
+			for (int x = mat.x1; x <= mat.x2; x++)
+				ss << std::setw(padding) << x;
+			ss << std::setw(padding) << siding << '\n';
+		}
+
+		for (int y = mat.y1; y <= mat.y2; y++) {
+			ss << siding;
+			if (enumerate) {
+				ss << std::setw(padding) << y;
+			}
+			for (int x = mat.x1; x <= mat.x2; x++)
+				ss << std::setw(padding) << (mat.at(x, y) ? filled : empty);
+			ss << std::setw(padding) << siding << '\n';
+		}
+
+		if (bottom_line)
+			ss << makeStringLine((mat.width() + enumerate + 1) * padding + rail_pad, bottom_line, corner, corner) << '\n';
+
+		return ss.str();
+	}
 
 } // namespace hrzn
