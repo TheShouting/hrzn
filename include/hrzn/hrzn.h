@@ -29,7 +29,6 @@ SOFTWARE.
 #include <algorithm>
 #include <stdexcept>
 #include <iterator>
-//#include <cstddef>
 
 #define H_PI 3.1415926535897932384626433832795_hf
 #define H_DEGTORAD 0.017453_hf
@@ -511,6 +510,10 @@ namespace hrzn {
 
 	}; // struct Area
 
+	bool operator==(const Area& a, const Area& b) {
+		return a.x1 == b.x1 && a.y1 == b.y1 && a.x2 == b.x2 && a.y2 == b.y2;
+	}
+
 	/// <summary>
 	/// A helper class for iterating through all points in an area.
 	/// </summary>
@@ -603,9 +606,24 @@ namespace hrzn {
 		T at(hPoint p) const { return at(p.x, p.y); }
 		void set(hPoint p, const T& val) { set(p.x, p.y, val); }
 
+		virtual void fill(const T& obj) {
+			for (hType_i y = y1; y <= y2; ++y)
+				for (hType_i x = x1; x <= x2; ++x)
+					set(x, y, obj);
+		}
 
-		void fill(const T& obj);
-		void fill(fill_func f);
+		void fill(fill_func f) {
+			for (hType_i y = y1; y <= y2; ++y)
+				for (hType_i x = x1; x <= x2; ++x)
+					set(x, y, f());
+		}
+
+
+
+
+		virtual std::size_t mem_size() const {
+			return sizeof(T) * area();
+		}
 
 		// Abstract methods
 		virtual operator bool() const = 0;
@@ -613,11 +631,11 @@ namespace hrzn {
 		virtual T at(hType_i x, hType_i y) const = 0;
 		virtual void set(hType_i x, hType_i y, const T& val) = 0;
 
-	//protected:
-		std::size_t m_Index(hType_i x, hType_i y) const {
+	protected:
+		std::size_t f_index(hType_i x, hType_i y) const {
 			if (contains(x, y))
 				return (x - x1) + (y - y1) * width();
-			throw std::out_of_range("invalid matrix index");
+			throw std::out_of_range("Point not located in Matrix.");
 		}
 	}; // class IMatrix<T>
 
@@ -762,15 +780,15 @@ namespace hrzn {
 		const T& operator[](std::size_t i) const { return m_contents[i]; }
 
 		T& at(hType_i x, hType_i y) override {
-			return m_contents[this->m_Index(x, y)];
+			return m_contents[this->f_index(x, y)];
 		}
 
 		T at(hType_i x, hType_i y) const override {
-			return m_contents[this->m_Index(x, y)];
+			return m_contents[this->f_index(x, y)];
 		}
 
 		void set(hType_i x, hType_i y, const T& val) override {
-			m_contents[this->m_Index(x, y)] = val;
+			m_contents[this->f_index(x, y)] = val;
 		}
 
 		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
@@ -784,7 +802,7 @@ namespace hrzn {
 				for (hType_i y = new_rect.y1; y <= new_rect.y2; ++y)
 					for (hType_i x = new_rect.x1; x <= new_rect.x2; ++x) {
 						hType_i i = (x - new_rect.x1) + (y - new_rect.y1) * (hType_i)new_rect.width();
-						new_block[i] = Area::contains(x, y) ? std::move(m_contents[base::m_Index(x, y)]) : fill_obj;
+						new_block[i] = Area::contains(x, y) ? std::move(m_contents[base::f_index(x, y)]) : fill_obj;
 					}
 				delete[]m_contents;
 				m_contents = new_block;
@@ -813,13 +831,12 @@ namespace hrzn {
 
 		operator bool() const override { return m_source->operator bool(); }
 
-		void set(hType_i x, hType_i y, T val) override {
-			m_source->set(x, y, val);
-		}
-
 		T& at(hType_i x, hType_i y) override { return m_source->at(x, y); }
 
 		T at(hType_i x, hType_i y) const override { return m_source->at(x, y); }
+
+		void set(hType_i x, hType_i y, const T& val) override { m_source->set(x, y, val); }
+
 
 		base* source() { return m_source; }
 		
@@ -833,7 +850,7 @@ namespace hrzn {
 	/// <summary>
 	/// A extension of a boolean Matrix class that provides additional methods and increased performance for boolean masks.
 	/// </summary>
-	class MatrixMask : public IMatrix<bool> {
+	class HMask : public IMatrix<bool> {
 
 	public:
 		using block_type = std::uint64_t;
@@ -845,7 +862,7 @@ namespace hrzn {
 
 	private:
 
-		const hType_u c_bit_interval = sizeof(block_type) * CHAR_BIT;
+		static const hType_u s_bit_interval = sizeof(block_type) * CHAR_BIT;
 
 		std::size_t m_size = 0;
 		block_type* m_blocks = nullptr;
@@ -853,17 +870,17 @@ namespace hrzn {
 
 	public:
 
-		MatrixMask(int w, int h) : base(Area(w, h)), m_size((this->area() / c_bit_interval) + 1), m_blocks(new block_type[m_size]) {
+		HMask(int w, int h) : base(Area(w, h)), m_size((this->area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
 			for (int i = 0; i < m_size; ++i)
 				m_blocks[i] = 0;
 		}
 
-		MatrixMask(Area area) : base(Area(area)), m_size((this->area() / c_bit_interval) + 1), m_blocks(new block_type[m_size]) {
+		HMask(Area area) : base(Area(area)), m_size((this->area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
 			for (int i = 0; i < m_size; ++i)
 				m_blocks[i] = 0;
 		}
 
-		MatrixMask(const IMatrix<bool>& obj) : base(obj), m_size((obj.area() / c_bit_interval) + 1), m_blocks(new block_type[m_size]) {
+		HMask(const IMatrix<bool>& obj) : base(obj), m_size((obj.area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
 			for (int y = obj.y1; y <= obj.y2; ++y) {
 				for (int x = obj.x1; x <= obj.x2; ++x) {
 					this->set(x, y, obj.at(x, y));
@@ -871,19 +888,20 @@ namespace hrzn {
 			}
 		}
 
-		MatrixMask(const MatrixMask& obj) : base(obj), m_size((obj.area() / c_bit_interval) + 1), m_blocks(new block_type[m_size]) {
+		HMask(const HMask& obj) : base(obj), m_size((obj.area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
 			std::copy(obj.m_blocks, obj.m_blocks + m_size, m_blocks);
 		}
 
-		~MatrixMask() {
+		~HMask() {
 			delete[] m_blocks;
+			m_blocks = nullptr;
 		}
 
-		MatrixMask& operator =(const IMatrix<bool>& other) {
+		HMask& operator =(const IMatrix<bool>& other) {
 			if (this != &other) {
 				delete[] m_blocks;
 				Area::resize(other.x1, other.y1, other.x2, other.y2);
-				m_size = (other.area() / c_bit_interval) + 1;
+				m_size = (other.area() / s_bit_interval) + 1;
 				m_blocks = new block_type[m_size];
 				for (int y = other.y1; y <= other.y2; ++y) {
 					for (int x = other.x1; x <= other.x2; ++x) {
@@ -894,11 +912,11 @@ namespace hrzn {
 			return *this;
 		}
 
-		MatrixMask& operator =(const MatrixMask& other) {
+		HMask& operator =(const HMask& other) {
 			if (this != &other) {
 				delete[] m_blocks;
 				Area::resize(other.x1, other.y1, other.x2, other.y2);
-				m_size = (other.area() / c_bit_interval) + 1;
+				m_size = (other.area() / s_bit_interval) + 1;
 				m_blocks = new block_type[m_size];
 				std::copy(other.m_blocks, other.m_blocks + m_size, m_blocks);
 			}
@@ -910,9 +928,9 @@ namespace hrzn {
 		}
 
 		void set(hType_i x, hType_i y, const bool& val) override {
-			hType_u index = m_Index(x, y);
-			hType_u block_id = index / c_bit_interval;			
-			block_type offset = 1ULL << (index % c_bit_interval);
+			hType_u index = f_index(x, y);
+			hType_u block_id = index / s_bit_interval;			
+			block_type offset = 1ULL << (index % s_bit_interval);
 			m_blocks[block_id] = (m_blocks[block_id] & ~offset) | (offset * val);
 		}
 
@@ -925,7 +943,17 @@ namespace hrzn {
 			return f_get(x, y);
 		}
 
-		MatrixContainer<bool> expandedCopy() const {
+		void fill(const bool& obj) override {
+			block_type v = ~block_type() * obj;
+			for (int i = 0; i < m_size; ++i)
+				m_blocks[i] = v;
+		}
+
+		std::size_t mem_size() const override {
+			return sizeof(m_blocks[0]) * m_size;
+		}
+
+		MatrixContainer<bool> expand() const {
 			MatrixContainer<bool> obj((Area)*this);
 			for (int y = obj.y1; y <= obj.y2; ++y)
 				for (int x = obj.x1; x <= obj.x2; ++x)
@@ -938,13 +966,17 @@ namespace hrzn {
 			//resize(xa, ya, xb, yb, false);
 		}
 
+		void flip() {
+			for (int i = 0; i < m_size; ++i)
+				m_blocks[i] = ~m_blocks[i];
+		}
 
 	private:
 		
 		bool f_get(int x, int y) const {
-			hType_u index = m_Index(x, y);
-			hType_u block_id = index / c_bit_interval;
-			block_type offset = 1ULL << (index % c_bit_interval);
+			hType_u index = f_index(x, y);
+			hType_u block_id = index / s_bit_interval;
+			block_type offset = 1ULL << (index % s_bit_interval);
 			return (m_blocks[block_id] & offset) == offset;
 		}
 
@@ -953,8 +985,8 @@ namespace hrzn {
 
 
 	// Bitwise AND operation between two boolean Matrices
-	MatrixMask operator & (const IMatrix<bool>& a, const IMatrix<bool>& b) {
-		MatrixMask result(Area::intersect(a, b));
+	HMask operator & (const IMatrix<bool>& a, const IMatrix<bool>& b) {
+		HMask result(Area::intersect(a, b));
 		for (int y = result.y1; y <= result.y2; ++y)
 			for (int x = result.x1; x <= result.x2; ++x)
 				result.set(x, y, a.at(x, y) && b.at(x, y));
@@ -962,8 +994,8 @@ namespace hrzn {
 	}
 
 	// Bitwise OR operation between two boolean Matrices
-	MatrixMask operator | (const IMatrix<bool>& a, const IMatrix<bool>& b) {
-		MatrixMask result(Area::intersect(a, b));
+	HMask operator | (const IMatrix<bool>& a, const IMatrix<bool>& b) {
+		HMask result(Area::intersect(a, b));
 		for (int y = result.y1; y <= result.y2; ++y)
 			for (int x = result.x1; x <= result.x2; ++x)
 				result.set(x, y, a.at(x, y) || b.at(x, y));
@@ -971,8 +1003,8 @@ namespace hrzn {
 	}
 
 	// Bitwise XOR operation between two boolean Matrices
-	MatrixMask operator ^ (const IMatrix<bool>& a, const IMatrix<bool>& b) {
-		MatrixMask result(Area::intersect(a, b));
+	HMask operator ^ (const IMatrix<bool>& a, const IMatrix<bool>& b) {
+		HMask result(Area::intersect(a, b));
 		for (int y = result.y1; y <= result.y2; ++y)
 			for (int x = result.x1; x <= result.x2; ++x)
 				result.set(x, y, a.at(x, y) && b.at(x, y));
@@ -980,8 +1012,8 @@ namespace hrzn {
 	}
 
 	// Bitwise Invert operation between on a boolean Matrix
-	MatrixMask operator ~ (const IMatrix<bool>& a) {
-		MatrixMask result((Area)a);
+	HMask operator ~ (const IMatrix<bool>& a) {
+		HMask result((Area)a);
 		for (int y = a.y1; y <= a.y2; ++y)
 			for (int x = a.x1; x <= a.x2; ++x)
 				result.set(x, y, !a.at(x, y));
@@ -999,18 +1031,5 @@ namespace hrzn {
 		return Region<T>(Area::intersect(*this, area), this);
 	}
 
-	template<typename T>
-	inline void IMatrix<T>::fill(const T& obj) {
-		for (hType_i y = y1; y <= y2; ++y)
-			for (hType_i x = x1; x <= x2; ++x)
-				set(x, y, obj);
-	}
-
-	template<typename T>
-	inline void IMatrix<T>::fill(fill_func f) {
-		for (hType_i y = y1; y <= y2; ++y)
-			for (hType_i x = x1; x <= x2; ++x)
-				set(x, y, f());
-	}
 
 } // namespace hrzn
