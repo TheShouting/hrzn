@@ -38,6 +38,10 @@ SOFTWARE.
 #define H_RAD 6.283185307179586476925286766559_hf
 #define H_EPSILON 1.192092896e-07_hf
 
+#define _TO_STRING_DEFERRED(n) #n
+#define _TO_STRING(n) _TO_STRING_DEFERRED(n)
+#define THROW_NOT_IMPLEMENTED(m) throw std::runtime_error(m " not implemented at line: " _TO_STRING(__LINE__) ", " _TO_STRING(__FILE__))
+
 namespace hrzn {
 
 	// Aliased FLOAT type
@@ -930,7 +934,7 @@ namespace hrzn {
 		}
 
 		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override { // TODO implement
-			throw std::exception("MatrixMask::resize not implmemented.");
+			THROW_NOT_IMPLEMENTED("HMask::resize");
 			//resize(xa, ya, xb, yb, false);
 		}
 

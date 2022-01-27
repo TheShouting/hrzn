@@ -351,3 +351,4 @@ MigrationBackup/
 
 # Exclude build directory
 build/*
+premake5.exe
