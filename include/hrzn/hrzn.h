@@ -618,13 +618,6 @@ namespace hrzn {
 					set(x, y, f());
 		}
 
-
-
-
-		virtual std::size_t mem_size() const {
-			return sizeof(T) * area();
-		}
-
 		// Abstract methods
 		virtual operator bool() const = 0;
 		virtual T& at(hType_i x, hType_i y) = 0;
@@ -949,10 +942,6 @@ namespace hrzn {
 				m_blocks[i] = v;
 		}
 
-		std::size_t mem_size() const override {
-			return sizeof(m_blocks[0]) * m_size;
-		}
-
 		MatrixContainer<bool> expand() const {
 			MatrixContainer<bool> obj((Area)*this);
 			for (int y = obj.y1; y <= obj.y2; ++y)
@@ -978,6 +967,45 @@ namespace hrzn {
 			hType_u block_id = index / s_bit_interval;
 			block_type offset = 1ULL << (index % s_bit_interval);
 			return (m_blocks[block_id] & offset) == offset;
+		}
+
+	private:
+		static block_type s_offsetBlock(const HMask & mask, hType_u x, hType_u y) {
+			hType_u i = mask.f_index(x, y);
+			hType_u offset_x = i % s_bit_interval;
+			hType_u offset_y = i / s_bit_interval;
+			block_type block = mask.m_blocks[offset_y];
+			if (offset_x) {
+				block = block << offset_x;
+				block |= mask.m_blocks[offset_y + 1] >> (s_bit_interval - offset_x);
+			}
+			return block;
+		}
+
+	public:
+		
+		static HMask AND(const HMask& a, const HMask& b) {
+			THROW_NOT_IMPLEMENTED("HMask::AND");
+			HMask v(Area::intersect(a, b));
+			return v;
+		}
+
+		static HMask OR(const HMask& a, const HMask& b) {
+			THROW_NOT_IMPLEMENTED("HMask::OR");
+			HMask v(Area::intersect(a, b));
+			return v;
+		}
+
+		static HMask XOR(const HMask& a, const HMask& b) {
+			THROW_NOT_IMPLEMENTED("HMask::XOR");
+			HMask v(Area::intersect(a, b));
+			return v;
+		}
+
+		static HMask NOT(const HMask& a) {
+			HMask v(a);
+			v.flip();
+			return v;
 		}
 
 	}; // class MatrixMask : IMatrix<bool>
