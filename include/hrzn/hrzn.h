@@ -310,78 +310,47 @@ namespace hrzn {
 	}; // struct hRotation
 
 
-	/// <summary>
-	/// A class holding position, rotation, and scale values for use in transformation of various other coordinates in 2D space.
-	/// </summary>
-	struct hTransform {
-		hVector position = { 0._hf, 0._hf };
-		hRotation rotation = { 0._hf };
-		hVector scale = { 0._hf, 0._hf };
-
-		hTransform transform(hTransform xform) {
-			hTransform nf;
-			nf.position = rotation.rotate(xform.position - position) + position;
-			nf.rotation = xform.rotation + rotation;
-			nf.scale = xform.scale * scale;
-		}
-
-		hTransform transform(hVector pos, hRotation rot = { 0._hf }, hVector sc = { 1._hf, 1._hf }) {
-			hTransform nf;
-			nf.position = rotation.rotate(pos - position) + position;
-			nf.rotation = rot + rotation;
-			nf.scale = sc * scale;
-		}
-
-	}; // struct hTransform
-
-
 	/******************************************************************************************************************
-		Area data types
+		hArea data types
 	******************************************************************************************************************/
 
-	struct IterableArea; // Forward declaration
+	struct hArea_iterable; // Forward declaration
 	
 	/// <summary>
 	/// A class for managing coordinates of a 2D area.
 	/// </summary>
-	struct Area {
+	struct hArea {
 
 		hType_i x1, y1, x2, y2;
 
-		Area() : x1(0), y1(0), x2(0), y2(0) {}
+		hArea() : x1(INT_MAX), y1(INT_MAX), x2(INT_MIN), y2(INT_MIN) {}
 
-		Area(std::size_t w, std::size_t h) {
-			x1 = 0;
-			y1 = 0;
-			x2 = (hType_i)w - 1;
-			y2 = (hType_i)h - 1;
-		}
+		hArea(hType_u w, hType_u h) : x1(0), y1(0), x2((hType_i)w - 1), y2((hType_i)h - 1) {}
 
-		Area(hType_i x_1, hType_i y_1, hType_i x_2, hType_i y_2)
-		{
-			x1 = std::min(x_1, x_2);
-			x2 = std::max(x_1, x_2);
-			y1 = std::min(y_1, y_2);
-			y2 = std::max(y_1, y_2);
-		}
+		hArea(hType_i x_1, hType_i y_1, hType_i x_2, hType_i y_2) : x1(x_1), y1(y_1), x2(x_2), y2(y_2) {}
 
-		explicit Area(hPoint pos, hPoint sz) {
-			x1 = pos.x;
-			y1 = pos.y;
-			x2 = pos.x + sz.x - 1;
-			y2 = pos.y + sz.y - 1;
-		}
+		explicit hArea(hPoint p1, hPoint p2) : x1(p1.x), y1(p1.y), x2(p2.x), y2(p2.y) {}
 
-		IterableArea iterable();
+		hArea_iterable iterable() const;
+		hArea_iterable iterate_x(int y) const;
+		hArea_iterable iterate_y(int x) const;
 
-		Area& operator +=(hPoint dist) {
+		hArea& operator +=(hPoint dist) {
 			move(dist.x, dist.y);
 			return *this;
 		}
 
-		Area& operator -=(hPoint dist) {
+		hArea& operator -=(hPoint dist) {
 			move(-dist.x, -dist.y);
 			return *this;
+		}
+
+		operator bool() const {
+			return x1 <= x2 && y1 <= y2;
+		}
+
+		bool valid() const {
+			return x1 <= x2 && y1 <= y2;
 		}
 
 		void move(hType_i move_x, hType_i move_y) {
@@ -398,9 +367,9 @@ namespace hrzn {
 			y2 = std::max(y_1, y_2);
 		}
 
-		void resize(const hPoint& _s) {
-			if (_s) {
-				resize(std::min(x1, x1 + _s.x), std::min(y1, y1 + _s.y), std::max(x1, x1 + _s.x) - 1, std::max(y1, y1 + _s.y) - 1);
+		void resize(const hPoint& size) {
+			if (size) {
+				resize(std::min(x1, x1 + size.x), std::min(y1, y1 + size.y), std::max(x1, x1 + size.x) - 1, std::max(y1, y1 + size.y) - 1);
 			}
 		}
 
@@ -408,35 +377,40 @@ namespace hrzn {
 			resizeFromCenter(size.x, size.y);
 		}
 
-		void resizeFromCenter(unsigned size) {
+		void resizeFromCenter(hType_u size) {
 			resizeFromCenter(size, size);
 		}
 
-		void resizeFromCenter(unsigned w, unsigned h) {
-			hPoint ctr = center();
-			resize(ctr.x - w / 2, ctr.y - h / 2, x1 + w - 1, y1 + h - 1);
+		void resizeFromCenter(hType_u w, hType_u h) {
+			if (valid()) {
+				hPoint ctr = center();
+				resize(ctr.x - w / 2, ctr.y - h / 2, x1 + w - 1, y1 + h - 1);
+			}
 		}
 
-		Area normalize() {
-			return Area(0, 0, x2 - x1, y2 - y1);
+		hArea normalize() const {
+			if (valid())
+				return hArea(0, 0, x2 - x1, y2 - y1);
+			else
+				return hArea();
 		}
 
-		hPoint getClampedValue(const hPoint& pt) const {
+		hPoint clamp(const hPoint& pt) const {
 			return { std::min(x2, std::max(x1, pt.x)), std::min(y2, std::max(y1, pt.y)) };
 		}
 
-		hPoint getWrapValue(const hPoint& pt) const {
-			hType_i x = ((hType_i)width() + ((pt.x - x1) % (hType_i)width())) % (hType_i)width();
-			hType_i y = ((hType_i)height() + ((pt.y - y1) % (hType_i)height())) % (hType_i)height();
+		hPoint wrap(const hPoint& pt) const {
+			hType_i x = ((hType_i)width() + ((pt.x - x1) % (hType_i)width())) % (hType_i)width() + x1;
+			hType_i y = ((hType_i)height() + ((pt.y - y1) % (hType_i)height())) % (hType_i)height() + y1;
 			return { x, y };
 		}
 
 		std::size_t width() const {
-			return x2 - x1 + 1;
+			return std::max(x2 - x1 + 1_hi, 0_hi);
 		}
 
 		std::size_t height() const {
-			return y2 - y1 + 1;
+			return std::max(y2 - y1 + 1_hi, 0_hi);
 		}
 
 		hPoint dimensions() const {
@@ -452,7 +426,7 @@ namespace hrzn {
 		}
 
 		hPoint end() const {
-			return { x2 + 1, y2 + 1 };
+			return { x2 + 1_hi, y2 + 1_hi };
 		}
 
 		hPoint center() const {
@@ -483,14 +457,14 @@ namespace hrzn {
 			return x >= x1 && x <= x2 && y >= y1 && y <= y2;
 		}
 
-		/// Create an Area object using position, width, and height.
-		static Area build(hType_i x, hType_i y, hType_i width, hType_i height) {
-			return Area(x, y, x + width - 1, y + height - 1);
+		/// Create an hArea object using position, width, and height.
+		static hArea build(hType_i x, hType_i y, hType_i width, hType_i height) {
+			return hArea(x, y, x + width - 1, y + height - 1);
 		}
 
-		// Create an Area object that contains all listed points.
-		static Area buildBoundary(std::initializer_list<hPoint> pts) {
-			Area r (pts.begin()->x, pts.begin()->y, pts.begin()->x, pts.begin()->y);
+		// Create an hArea object that contains all listed points.
+		static hArea buildBoundary(std::initializer_list<hPoint> pts) {
+			hArea r; // (pts.begin()->x, pts.begin()->y, pts.begin()->x, pts.begin()->y);
 			for (auto p : pts) {
 				r.x1 = std::min(r.x1, p.x);
 				r.y1 = std::min(r.y1, p.y);
@@ -500,24 +474,25 @@ namespace hrzn {
 			return r;
 		}
 
-		static Area buildRadius(hType_i x, hType_i y, hType_i radius) {
-			return Area(x - radius, y - radius, x + radius, y + radius);
+		static hArea buildRadius(hType_i x, hType_i y, hType_i radius) {
+			return hArea(x - radius, y - radius, x + radius, y + radius);
 		}
 
-		static Area intersect(const Area& a, const Area& b) {
-			return Area(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
+		static hArea intersect(const hArea& a, const hArea& b) {
+			return hArea(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
 		}
 
-	}; // struct Area
+	}; // struct hArea
 
-	bool operator==(const Area& a, const Area& b) {
+	bool operator==(const hArea& a, const hArea& b) {
 		return a.x1 == b.x1 && a.y1 == b.y1 && a.x2 == b.x2 && a.y2 == b.y2;
 	}
+
 
 	/// <summary>
 	/// A helper class for iterating through all points in an area.
 	/// </summary>
-	struct IterableArea : public Area {
+	struct hArea_iterable : public hArea {
 
 		struct iterator : public hPoint {
 			using iterator_category = std::forward_iterator_tag;
@@ -556,7 +531,7 @@ namespace hrzn {
 			const hType_i m_w, m_x, m_y;
 		};
 
-		IterableArea(const Area& _area) : Area(_area) {}
+		hArea_iterable(const hArea& _area) : hArea(_area) {}
 
 		iterator begin() {
 			return iterator(0, width(), x1, y1);
@@ -568,37 +543,66 @@ namespace hrzn {
 
 	}; // struct IterableRect
 
-	IterableArea Area::iterable() {
-		return IterableArea(*this);
+	hArea_iterable hArea::iterable() const {
+		return hArea_iterable(*this);
 	}
+
+	hArea_iterable hArea::iterate_x(int y) const {
+		return hArea_iterable({this->x1, y, this->x2, y});
+	}
+
+	hArea_iterable hArea::iterate_y(int x) const {
+		return hArea_iterable({ x, this->y1, x, this->y2 });
+	}
+
+
+	/// <summary>
+	/// A class holding position, rotation, and scale values for use in transformation of various other coordinates in 2D space.
+	/// </summary>
+	struct hTransform {
+		hVector position = { 0._hf, 0._hf };
+		hRotation rotation = { 0._hf };
+		hVector scale = { 0._hf, 0._hf };
+
+		hTransform transform(hTransform xform) {
+			hTransform nf;
+			nf.position = rotation.rotate(xform.position - position) + position;
+			nf.rotation = xform.rotation + rotation;
+			nf.scale = xform.scale * scale;
+		}
+
+		hTransform transform(hVector pos, hRotation rot = { 0._hf }, hVector sc = { 1._hf, 1._hf }) {
+			hTransform nf;
+			nf.position = rotation.rotate(pos - position) + position;
+			nf.rotation = rot + rotation;
+			nf.scale = sc * scale;
+		}
+
+	}; // struct hTransform
 
 
 	/******************************************************************************************************************
 		Matrix container types
 	******************************************************************************************************************/
 
-	template <typename T>
-	class Region;
-
 	/// <summary>
 	/// Abstract class for all Matrix-like containers and accessors.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	template <typename T>
-	class IMatrix : public Area {
+	class IMap : public hArea {
 	public:
 
 		using fill_func = T(*)();
 		//using fill_func = std::function<T()>; // TODO add ifdef block to check for cpp compiler version
 
-		IMatrix(const Area& area) : Area(area) {}
+		bool repeat_boundary = false;
 
-		virtual ~IMatrix() {}
+		IMap(const hArea& area) : hArea(area) {}
+
+		virtual ~IMap() {}
 
 		// Common inherited methods
-		Region<T> region();
-		Region<T> region(const Area& area);
-
 		T& operator[](hPoint pt) { return at(pt.x, pt.y); }
 		T operator[](hPoint pt) const { return at(pt.x, pt.y); }
 
@@ -630,107 +634,57 @@ namespace hrzn {
 				return (x - x1) + (y - y1) * width();
 			throw std::out_of_range("Point not located in Matrix.");
 		}
-	}; // class IMatrix<T>
+	}; // class IMap<T>
 
 
 	/// <summary>
-	/// Helper class for iterating through a specified region of a Matrix class
-	/// </summary>
-	/// <typeparam name="T">Element Type of the reference Matrix</typeparam>
-	template<typename T>
-	class Region : public Area {
-
-	public:
-		struct RegionPoint : public hPoint {
-			T* data = nullptr;
-			T* operator ->() { return data; }
-			T& operator *() { return *data; }
-		};
-
-		/// <summary>
-		/// Iterator object for iterating through a Region object.
-		/// </summary>
-		class RegionIterator {
-		public:
-			using iterator_category = std::forward_iterator_tag;
-			using difference_type = std::ptrdiff_t;
-
-		private:
-			IMatrix<T>* m_source;
-			Area m_area;
-			std::size_t m_index;
-			RegionPoint m_container;
-
-		public:
-			RegionIterator(IMatrix<T>* source, Area area, std::size_t i = 0) : m_source(source), m_area(area), m_index(i) {
-				m_container.x = m_area.x1 + (hType_i)m_index % m_area.width();
-				m_container.y = m_area.y1 + (hType_i)(m_index / m_area.width());
-				if (source && i != area.area())
-					m_container.data = &(m_source->at(m_container.x, m_container.y));
-			}
-
-			RegionPoint* operator ->() {
-				return &m_container;
-			}
-			RegionPoint& operator *() {
-				return m_container;
-			}
-
-			// Prefix increment
-			RegionIterator& operator++() {
-				m_index++;
-				m_container.x = m_area.x1 + (hType_i)(m_index % m_area.width());
-				m_container.y = m_area.y1 + (hType_i)(m_index / m_area.width());
-
-				if (m_index != m_area.area())
-					m_container.data = &(m_source->at(m_container.x, m_container.y));
-				else
-					m_container.data = nullptr;
-
-				return *this;
-			}
-
-			// Postfix increment
-			RegionIterator operator++(int) {
-				RegionIterator tmp = *this;
-				++(*this);
-				return tmp;
-			}
-
-			friend bool operator== (const RegionIterator& a, const RegionIterator& b) {
-				return (a.m_source == b.m_source) && (a.m_index == b.m_index);
-			};
-			friend bool operator!= (const RegionIterator& a, const RegionIterator& b) {
-				return !(a == b);
-			};
-
-		}; // class RegionIterator
-
-	private:
-		IMatrix<T>* m_source;
-
-	public:
-		Region(Area area, IMatrix<T>* source) :
-			Area(area), m_source(source) {}
-
-		RegionIterator begin() { return RegionIterator(m_source, *this, 0); }
-		RegionIterator end() { return RegionIterator(m_source, *this, this->area()); }
-
-	}; // class Region<T>
-
-
-	/// <summary>
-	/// Matrix container for storing any variables by position in a 2 dimensional grid.
+	/// A helper class used for operating on the sub region of an abstract Matrix parent class.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	template <typename T>
-	class MatrixContainer : public IMatrix<T> {
+	class ISubMap : public IMap<T> {
+	private:
+		IMap<T>* m_source;
 	public:
 
-		using IMatrix<T>::operator[];
-		using IMatrix<T>::at;
-		using IMatrix<T>::set;
-		using base = IMatrix<T>;
+		using IMap<T>::operator[];
+		using IMap<T>::at;
+		using IMap<T>::set;
+		using base = IMap<T>;
+
+		ISubMap(const hArea& area, base& mat) : base(area), m_source(&mat) {}
+
+		operator bool() const override { return m_source->operator bool(); }
+
+		T& at(hType_i x, hType_i y) override { return m_source->at(x, y); }
+
+		T at(hType_i x, hType_i y) const override { return m_source->at(x, y); }
+
+		void set(hType_i x, hType_i y, const T& val) override { m_source->set(x, y, val); }
+
+		base* source() { return m_source; }
+
+		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
+			//hArea new_rect = hArea::intersect(*this, { xa, ya, xb, yb });
+			//hArea::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
+			hArea::resize(xa, ya, xb, yb);
+		}
+
+	}; // class ISubMap<T>
+
+
+	/// <summary>
+	/// Map container for storing any variables by position in a 2 dimensional grid.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	template <typename T>
+	class HMap : public IMap<T> {
+	public:
+
+		using IMap<T>::operator[];
+		using IMap<T>::at;
+		using IMap<T>::set;
+		using base = IMap<T>;
 
 	private:
 
@@ -738,17 +692,17 @@ namespace hrzn {
 
 	public:
 
-		MatrixContainer() : base(Area()) {}
-		MatrixContainer(std::size_t w, std::size_t h) : base(Area(w, h)), m_contents(new T[w * h]) {}
-		MatrixContainer(std::size_t w, std::size_t h, const T& obj) : base(Area(w, h)), m_contents(new T[w * h]) { for (auto& i : (*this)) i = obj; }
-		MatrixContainer(const Area& rect) : base(rect), m_contents(new T[rect.area()]) {}
-		MatrixContainer(const Area& rect, const T& obj) : base(rect), m_contents(new T[rect.area()]) { for (auto& i : (*this)) i = obj; }
+		HMap() : base(hArea()) {}
+		HMap(std::size_t w, std::size_t h) : base(hArea(w, h)), m_contents(new T[w * h]) {}
+		HMap(std::size_t w, std::size_t h, const T& obj) : base(hArea(w, h)), m_contents(new T[w * h]) { for (auto& i : (*this)) i = obj; }
+		HMap(const hArea& rect) : base(rect), m_contents(new T[rect.area()]) {}
+		HMap(const hArea& rect, const T& obj) : base(rect), m_contents(new T[rect.area()]) { for (auto& i : (*this)) i = obj; }
 
-		MatrixContainer(const MatrixContainer<T>& other) : base(other), m_contents(new T[other.area()]) {
+		HMap(const HMap<T>& other) : base(other), m_contents(new T[other.area()]) {
 			std::copy(other.m_contents, other.m_contents + other.area(), m_contents);
 		}
 
-		~MatrixContainer() {
+		~HMap() {
 			delete[] m_contents;
 			m_contents = nullptr;
 		}
@@ -756,12 +710,12 @@ namespace hrzn {
 		T* begin() { return m_contents; }
 		T* end() { return &m_contents[this->area()]; }
 
-		MatrixContainer<T>& operator =(const MatrixContainer<T>& other) {
+		HMap<T>& operator =(const HMap<T>& other) {
 			if (this != &other) {
 				delete[] m_contents;
 				m_contents = new T[other.area()];
 				std::copy(other.m_contents, other.m_contents + other.area(), m_contents);
-				Area::resize(other.x1, other.y1, other.x2, other.y2);
+				hArea::resize(other.x1, other.y1, other.x2, other.y2);
 			}
 			return *this;
 		}
@@ -790,68 +744,32 @@ namespace hrzn {
 
 		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb, const T& fill_obj) {
 			assert(m_contents != nullptr);
-			Area new_rect(xa, ya, xb, yb);
+			hArea new_rect(xa, ya, xb, yb);
 				T* new_block = new T[new_rect.area()];
 				for (hType_i y = new_rect.y1; y <= new_rect.y2; ++y)
 					for (hType_i x = new_rect.x1; x <= new_rect.x2; ++x) {
 						hType_i i = (x - new_rect.x1) + (y - new_rect.y1) * (hType_i)new_rect.width();
-						new_block[i] = Area::contains(x, y) ? std::move(m_contents[base::f_index(x, y)]) : fill_obj;
+						new_block[i] = hArea::contains(x, y) ? std::move(m_contents[base::f_index(x, y)]) : fill_obj;
 					}
 				delete[]m_contents;
 				m_contents = new_block;
-			Area::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
+			hArea::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
 		}
 
-	}; // class MatrixContainer<T>
-
-
-	/// <summary>
-	/// A helper class used for operating on the sub region of an abstract Matrix parent class.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	template <typename T>
-	class SubMatrix : public IMatrix<T> {
-	private:
-		IMatrix<T>* m_source;
-	public:
-
-		using IMatrix<T>::operator[];
-		using IMatrix<T>::at;
-		using IMatrix<T>::set;
-		using base = IMatrix<T>;
-
-		SubMatrix(const Area& area, base& mat) : base(area), m_source(&mat) {}
-
-		operator bool() const override { return m_source->operator bool(); }
-
-		T& at(hType_i x, hType_i y) override { return m_source->at(x, y); }
-
-		T at(hType_i x, hType_i y) const override { return m_source->at(x, y); }
-
-		void set(hType_i x, hType_i y, const T& val) override { m_source->set(x, y, val); }
-
-
-		base* source() { return m_source; }
-		
-		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
-			Area new_rect = Area::intersect(*this, { xa, ya, xb, yb });
-			Area::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
-		}
-
-	}; // class SubMatrix<T>
+	}; // class HMap<T>
 
 	/// <summary>
 	/// A extension of a boolean Matrix class that provides additional methods and increased performance for boolean masks.
 	/// </summary>
-	class HMask : public IMatrix<bool> {
+	class HMask : public IMap<bool> {
 
 	public:
 		using block_type = std::uint64_t;
 
-		using IMatrix<bool>::operator[];
-		using IMatrix<bool>::at;
-		using IMatrix<bool>::set;
-		using base = IMatrix<bool>;
+		using IMap<bool>::operator[];
+		using IMap<bool>::at;
+		using IMap<bool>::set;
+		using base = IMap<bool>;
 
 	private:
 
@@ -863,17 +781,17 @@ namespace hrzn {
 
 	public:
 
-		HMask(int w, int h) : base(Area(w, h)), m_size((this->area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
+		HMask(int w, int h) : base(hArea(w, h)), m_size((this->area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
 			for (int i = 0; i < m_size; ++i)
 				m_blocks[i] = 0;
 		}
 
-		HMask(Area area) : base(Area(area)), m_size((this->area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
+		HMask(hArea area) : base(hArea(area)), m_size((this->area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
 			for (int i = 0; i < m_size; ++i)
 				m_blocks[i] = 0;
 		}
 
-		HMask(const IMatrix<bool>& obj) : base(obj), m_size((obj.area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
+		HMask(const IMap<bool>& obj) : base(obj), m_size((obj.area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
 			for (int y = obj.y1; y <= obj.y2; ++y) {
 				for (int x = obj.x1; x <= obj.x2; ++x) {
 					this->set(x, y, obj.at(x, y));
@@ -890,10 +808,10 @@ namespace hrzn {
 			m_blocks = nullptr;
 		}
 
-		HMask& operator =(const IMatrix<bool>& other) {
+		HMask& operator =(const IMap<bool>& other) {
 			if (this != &other) {
 				delete[] m_blocks;
-				Area::resize(other.x1, other.y1, other.x2, other.y2);
+				hArea::resize(other.x1, other.y1, other.x2, other.y2);
 				m_size = (other.area() / s_bit_interval) + 1;
 				m_blocks = new block_type[m_size];
 				for (int y = other.y1; y <= other.y2; ++y) {
@@ -908,7 +826,7 @@ namespace hrzn {
 		HMask& operator =(const HMask& other) {
 			if (this != &other) {
 				delete[] m_blocks;
-				Area::resize(other.x1, other.y1, other.x2, other.y2);
+				hArea::resize(other.x1, other.y1, other.x2, other.y2);
 				m_size = (other.area() / s_bit_interval) + 1;
 				m_blocks = new block_type[m_size];
 				std::copy(other.m_blocks, other.m_blocks + m_size, m_blocks);
@@ -942,8 +860,8 @@ namespace hrzn {
 				m_blocks[i] = v;
 		}
 
-		MatrixContainer<bool> expand() const {
-			MatrixContainer<bool> obj((Area)*this);
+		HMap<bool> expand() const {
+			HMap<bool> obj((hArea)*this);
 			for (int y = obj.y1; y <= obj.y2; ++y)
 				for (int x = obj.x1; x <= obj.x2; ++x)
 					obj.set(x, y, this->at(x, y));
@@ -986,19 +904,19 @@ namespace hrzn {
 		
 		static HMask AND(const HMask& a, const HMask& b) {
 			THROW_NOT_IMPLEMENTED("HMask::AND");
-			HMask v(Area::intersect(a, b));
+			HMask v(hArea::intersect(a, b));
 			return v;
 		}
 
 		static HMask OR(const HMask& a, const HMask& b) {
 			THROW_NOT_IMPLEMENTED("HMask::OR");
-			HMask v(Area::intersect(a, b));
+			HMask v(hArea::intersect(a, b));
 			return v;
 		}
 
 		static HMask XOR(const HMask& a, const HMask& b) {
 			THROW_NOT_IMPLEMENTED("HMask::XOR");
-			HMask v(Area::intersect(a, b));
+			HMask v(hArea::intersect(a, b));
 			return v;
 		}
 
@@ -1008,13 +926,13 @@ namespace hrzn {
 			return v;
 		}
 
-	}; // class MatrixMask : IMatrix<bool>
+	}; // class MatrixMask : IMap<bool>
 
 
 
 	// Bitwise AND operation between two boolean Matrices
-	HMask operator & (const IMatrix<bool>& a, const IMatrix<bool>& b) {
-		HMask result(Area::intersect(a, b));
+	HMask operator & (const IMap<bool>& a, const IMap<bool>& b) {
+		HMask result(hArea::intersect(a, b));
 		for (int y = result.y1; y <= result.y2; ++y)
 			for (int x = result.x1; x <= result.x2; ++x)
 				result.set(x, y, a.at(x, y) && b.at(x, y));
@@ -1022,8 +940,8 @@ namespace hrzn {
 	}
 
 	// Bitwise OR operation between two boolean Matrices
-	HMask operator | (const IMatrix<bool>& a, const IMatrix<bool>& b) {
-		HMask result(Area::intersect(a, b));
+	HMask operator | (const IMap<bool>& a, const IMap<bool>& b) {
+		HMask result(hArea::intersect(a, b));
 		for (int y = result.y1; y <= result.y2; ++y)
 			for (int x = result.x1; x <= result.x2; ++x)
 				result.set(x, y, a.at(x, y) || b.at(x, y));
@@ -1031,8 +949,8 @@ namespace hrzn {
 	}
 
 	// Bitwise XOR operation between two boolean Matrices
-	HMask operator ^ (const IMatrix<bool>& a, const IMatrix<bool>& b) {
-		HMask result(Area::intersect(a, b));
+	HMask operator ^ (const IMap<bool>& a, const IMap<bool>& b) {
+		HMask result(hArea::intersect(a, b));
 		for (int y = result.y1; y <= result.y2; ++y)
 			for (int x = result.x1; x <= result.x2; ++x)
 				result.set(x, y, a.at(x, y) && b.at(x, y));
@@ -1040,23 +958,12 @@ namespace hrzn {
 	}
 
 	// Bitwise Invert operation between on a boolean Matrix
-	HMask operator ~ (const IMatrix<bool>& a) {
-		HMask result((Area)a);
+	HMask operator ~ (const IMap<bool>& a) {
+		HMask result((hArea)a);
 		for (int y = a.y1; y <= a.y2; ++y)
 			for (int x = a.x1; x <= a.x2; ++x)
 				result.set(x, y, !a.at(x, y));
 		return result;
-	}
-
-
-	template<typename T>
-	inline Region<T> IMatrix<T>::region() {
-		return Region<T>(Area(*this), this);
-	}
-
-	template<typename T>
-	inline Region<T> IMatrix<T>::region(const Area& area) {
-		return Region<T>(Area::intersect(*this, area), this);
 	}
 
 

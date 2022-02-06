@@ -30,6 +30,17 @@ SOFTWARE.
 
 namespace hrzn {
 
+	struct hStringTableStyle {
+		unsigned int padding = 2;
+		bool enumerate = false;
+		char filled = '#';
+		char empty = '.';
+		char top_line = '-';
+		char siding = '|';
+		char corner = '+';
+		char bottom_line = '-';
+	};
+
 	template <typename T>
 	std::ostream& operator<<(std::ostream& output, const ITuple<T>& tuple) {
 		output << tuple.x << tuple.y;
@@ -52,12 +63,12 @@ namespace hrzn {
 		return input;
 	}
 
-	std::ostream& operator<<(std::ostream& output, const Area& rect) {
+	std::ostream& operator<<(std::ostream& output, const hArea& rect) {
 		output << rect.x1 << rect.y1 << rect.x2 << rect.y2;
 		return output;
 	}
 
-	std::istream& operator>>(std::istream& input, Area& rect) {
+	std::istream& operator>>(std::istream& input, hArea& rect) {
 		input >> rect.x1 >> rect.y1 >> rect.x2 >> rect.y2;
 		return input;
 	}
@@ -75,17 +86,22 @@ namespace hrzn {
 		return ss.str();
 	}
 
-	std::string toString(const Area& rect) {
-		std::stringstream ss;
-		ss << "Rect{" << rect.x1 << ',' << rect.y1 << ',' << rect.x2 << ',' << rect.y2 << '}';
-		return ss.str();
+	std::string toString(const hArea& rect) {
+		if (rect) {
+			std::stringstream ss;
+			ss << "Area{" << rect.x1 << ',' << rect.y1 << ',' << rect.x2 << ',' << rect.y2 << '}';
+			return ss.str();
+		}
+		else {
+			return "Area{empty}";
+		}
 	}
 
 	template <typename T>
-	std::string toString(const IMatrix<T>& mat, bool output_contents = false, bool line_breaks=true) {
+	std::string toString(const IMap<T>& mat, bool output_contents = false, bool line_breaks=true) {
 		std::stringstream ss;
 		char br = line_breaks ? '\n' : ' ';
-		ss << "Matrix";
+		ss << "Map";
 		if (output_contents) {
 			ss << br;
 			for (int y = mat.start().y; y < mat.end().y - 1; y++) {
@@ -102,7 +118,7 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	std::ostream& streamOutRow(std::ostream& output, const IMatrix<T>& mat, int row) {
+	std::ostream& streamOutRow(std::ostream& output, const IMap<T>& mat, int row) {
 		for (int x = mat.start().x; x < mat.end().x; x++) {
 			output << mat.at(x, row);
 		}
@@ -110,7 +126,7 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	std::ostream& streamOutColumn(std::ostream& output, const IMatrix<T>& mat, int col) {
+	std::ostream& streamOutColumn(std::ostream& output, const IMap<T>& mat, int col) {
 		for (int y = mat.start().y; y < mat.end().y; y++) {
 			output << mat.at(col, y);
 		}
@@ -157,38 +173,34 @@ namespace hrzn {
 	/// <param name="bottom_line">Character to use for the bottom border of the table.</param>
 	/// <returns>A string containing the formatted table ready for printing or writing.</returns>
 	template <typename T>
-	std::string toStringTable(const IMatrix<T>& mat, int padding,
-			bool enumerate = false,
-			char top_line = '-', char siding = '|', char corner = '+', char bottom_line = '-')
+	std::string toStringTable(const IMap<T>& mat, const hStringTableStyle & style = hStringTableStyle())
 	{
-
 		std::stringstream ss;
 
-		int rail_pad = (int)(siding != 0);
+		int rail_pad = (int)(style.siding != 0);
 
+		if (style.top_line)
+			ss << makeStringLine((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.top_line, style.corner, style.corner) << '\n';
 
-		if (top_line)
-			ss << makeStringLine((mat.width() + enumerate + 1) * padding + rail_pad, top_line, corner, corner) << '\n';
-
-		if (enumerate) {
-			ss << siding << std::setw(padding) << "";
+		if (style.enumerate) {
+			ss << style.siding << std::setw(style.padding) << "";
 			for (int x = mat.x1; x <= mat.x2; x++)
-				ss << std::setw(padding) << x;
-			ss << std::setw(padding) << siding << '\n';
+				ss << std::setw(style.padding) << x;
+			ss << std::setw(style.padding) << style.siding << '\n';
 		}
 
 		for (int y = mat.y1; y <= mat.y2; y++) {
-			ss << siding;
-			if (enumerate) {
-				ss << std::setw(padding) << y;
+			ss << style.siding;
+			if (style.enumerate) {
+				ss << std::setw(style.padding) << y;
 			}
 			for (int x = mat.x1; x <= mat.x2; x++)
-				ss << std::setw(padding) << mat.at(x, y);
-			ss << std::setw(padding) << siding << '\n';
+				ss << std::setw(style.padding) << mat.at(x, y);
+			ss << std::setw(style.padding) << style.siding << '\n';
 		}
 
-		if (bottom_line)
-			ss << makeStringLine((mat.width() + enumerate + 1) * padding + rail_pad, bottom_line, corner, corner) << '\n';
+		if (style.bottom_line)
+			ss << makeStringLine((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.bottom_line, style.corner, style.corner) << '\n';
 
 		return ss.str();
 	}
@@ -207,39 +219,36 @@ namespace hrzn {
 	/// <param name="bottom_line">Character to use for the bottom border of the table.</param>
 	/// <returns>A string containing the formatted table ready for printing or writing.</returns>
 	/// <returns></returns>
-	std::string toStringMask(const IMatrix<bool>& mat, int padding,
-		bool enumerate = false,
-		char filled = '#', char empty = '.',
-		char top_line = '-', char siding = '|', char corner = '+', char bottom_line = '-')
+	std::string toStringMask(const IMap<bool>& mat, const hStringTableStyle & style )
 	{
 
 		std::stringstream ss;
 
-		int rail_pad = (int)(siding != 0);
+		int rail_pad = (int)(style.siding != 0);
 
 
-		if (top_line)
-			ss << makeStringLine((mat.width() + enumerate + 1) * padding + rail_pad, top_line, corner, corner) << '\n';
+		if (style.top_line)
+			ss << makeStringLine((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.top_line, style.corner, style.corner) << '\n';
 
-		if (enumerate) {
-			ss << siding << std::setw(padding) << "";
+		if (style.enumerate) {
+			ss << style.siding << std::setw(style.padding) << "";
 			for (int x = mat.x1; x <= mat.x2; x++)
-				ss << std::setw(padding) << x;
-			ss << std::setw(padding) << siding << '\n';
+				ss << std::setw(style.padding) << x;
+			ss << std::setw(style.padding) << style.siding << '\n';
 		}
 
 		for (int y = mat.y1; y <= mat.y2; y++) {
-			ss << siding;
-			if (enumerate) {
-				ss << std::setw(padding) << y;
+			ss << style.siding;
+			if (style.enumerate) {
+				ss << std::setw(style.padding) << y;
 			}
 			for (int x = mat.x1; x <= mat.x2; x++)
-				ss << std::setw(padding) << (mat.at(x, y) ? filled : empty);
-			ss << std::setw(padding) << siding << '\n';
+				ss << std::setw(style.padding) << (mat.at(x, y) ? style.filled : style.empty);
+			ss << std::setw(style.padding) << style.siding << '\n';
 		}
 
-		if (bottom_line)
-			ss << makeStringLine((mat.width() + enumerate + 1) * padding + rail_pad, bottom_line, corner, corner) << '\n';
+		if (style.bottom_line)
+			ss << makeStringLine((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.bottom_line, style.corner, style.corner) << '\n';
 
 		return ss.str();
 	}
