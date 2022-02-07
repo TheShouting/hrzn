@@ -34,11 +34,11 @@ SOFTWARE.
 
 int main() {
 
-	hrzn::MatrixContainer<char> map(20,20);
+	hrzn::HMap<char> map(20,20);
 	map.fill('.');
 	hrzn::scatter(&map, ':', 0.9);
 	map.at(3, 3) = 'X';
 
-	std::cout << hrzn::toStringTable(map, 2) << "\n";
+	std::cout << hrzn::toStringTable(map) << "\n";
 
 }
