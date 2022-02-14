@@ -281,7 +281,7 @@ namespace hrzn {
 		}
 
 		hVector getRightVector(hType_f length = 1._hf) const {
-			return hVector(std::cos(rad() + H_PI) * length, std::sin(rad() + H_PI) * length);
+			return hVector(std::cos(rad() + H_PI * 0.5_hf) * length, std::sin(rad() + H_PI * 0.5_hf) * length);
 		}
 
 		hVector rotate(hVector const& vec) const {
@@ -484,7 +484,7 @@ namespace hrzn {
 
 	}; // struct hArea
 
-	bool operator==(const hArea& a, const hArea& b) {
+	inline bool operator==(const hArea& a, const hArea& b) {
 		return a.x1 == b.x1 && a.y1 == b.y1 && a.x2 == b.x2 && a.y2 == b.y2;
 	}
 
@@ -543,42 +543,18 @@ namespace hrzn {
 
 	}; // struct IterableRect
 
-	hArea_iterable hArea::iterable() const {
+	inline hArea_iterable hArea::iterable() const {
 		return hArea_iterable(*this);
 	}
 
-	hArea_iterable hArea::iterate_x(int y) const {
+	inline hArea_iterable hArea::iterate_x(int y) const {
 		return hArea_iterable({this->x1, y, this->x2, y});
 	}
 
-	hArea_iterable hArea::iterate_y(int x) const {
+	inline hArea_iterable hArea::iterate_y(int x) const {
 		return hArea_iterable({ x, this->y1, x, this->y2 });
 	}
 
-
-	/// <summary>
-	/// A class holding position, rotation, and scale values for use in transformation of various other coordinates in 2D space.
-	/// </summary>
-	struct hTransform {
-		hVector position = { 0._hf, 0._hf };
-		hRotation rotation = { 0._hf };
-		hVector scale = { 0._hf, 0._hf };
-
-		hTransform transform(hTransform xform) {
-			hTransform nf;
-			nf.position = rotation.rotate(xform.position - position) + position;
-			nf.rotation = xform.rotation + rotation;
-			nf.scale = xform.scale * scale;
-		}
-
-		hTransform transform(hVector pos, hRotation rot = { 0._hf }, hVector sc = { 1._hf, 1._hf }) {
-			hTransform nf;
-			nf.position = rotation.rotate(pos - position) + position;
-			nf.rotation = rot + rotation;
-			nf.scale = sc * scale;
-		}
-
-	}; // struct hTransform
 
 
 	/******************************************************************************************************************
@@ -931,7 +907,7 @@ namespace hrzn {
 
 
 	// Bitwise AND operation between two boolean Matrices
-	HMask operator & (const IMap<bool>& a, const IMap<bool>& b) {
+	inline HMask operator & (const IMap<bool>& a, const IMap<bool>& b) {
 		HMask result(hArea::intersect(a, b));
 		for (int y = result.y1; y <= result.y2; ++y)
 			for (int x = result.x1; x <= result.x2; ++x)
@@ -940,7 +916,7 @@ namespace hrzn {
 	}
 
 	// Bitwise OR operation between two boolean Matrices
-	HMask operator | (const IMap<bool>& a, const IMap<bool>& b) {
+	inline HMask operator | (const IMap<bool>& a, const IMap<bool>& b) {
 		HMask result(hArea::intersect(a, b));
 		for (int y = result.y1; y <= result.y2; ++y)
 			for (int x = result.x1; x <= result.x2; ++x)
@@ -949,7 +925,7 @@ namespace hrzn {
 	}
 
 	// Bitwise XOR operation between two boolean Matrices
-	HMask operator ^ (const IMap<bool>& a, const IMap<bool>& b) {
+	inline HMask operator ^ (const IMap<bool>& a, const IMap<bool>& b) {
 		HMask result(hArea::intersect(a, b));
 		for (int y = result.y1; y <= result.y2; ++y)
 			for (int x = result.x1; x <= result.x2; ++x)
@@ -958,7 +934,7 @@ namespace hrzn {
 	}
 
 	// Bitwise Invert operation between on a boolean Matrix
-	HMask operator ~ (const IMap<bool>& a) {
+	inline HMask operator ~ (const IMap<bool>& a) {
 		HMask result((hArea)a);
 		for (int y = a.y1; y <= a.y2; ++y)
 			for (int x = a.x1; x <= a.x2; ++x)
@@ -966,5 +942,48 @@ namespace hrzn {
 		return result;
 	}
 
+
+	/******************************************************************************************************************
+		Transformation types
+	******************************************************************************************************************/
+
+
+	/// <summary>
+	/// A class holding position, rotation, and scale values for use in transformation of various other coordinates in 2D space.
+	/// </summary>
+	struct hTransform {
+		hVector position;
+		hRotation rotation;
+		hVector scale;
+
+		hTransform() : position(0._hf, 0._hf), rotation(0._hf), scale(1._hf, 1._hf) {}
+
+		hTransform(hVector p, hRotation r, hVector s) : position(p), rotation(r), scale(s) {}
+
+		hVector getForwardVector() const {
+			return rotation.getForwardVector(scale.y);
+		}
+
+		hVector getRightVector() const {
+			return rotation.getRightVector(scale.x);
+		}
+
+		hVector childPositon(hVector pos) const {
+			return position + rotation.rotate(pos * scale);
+		}
+
+		hRotation childRotation(hRotation r) const {
+			return rotation + r;
+		}
+
+		hVector childScale(hVector s) const {
+			return scale * s;
+		}
+
+		hTransform childTransform(const hTransform & child) const {
+			return { childPositon(child.position), childRotation(child.rotation), childScale(child.scale)};
+		}
+
+	}; // struct hTransform
 
 } // namespace hrzn

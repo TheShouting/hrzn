@@ -20,13 +20,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\hrzn\hrzn.h">
+    <ClInclude Include="include\htl\hrzn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\hrzn\stringify.h">
+    <ClInclude Include="include\htl\stringify.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\hrzn\utility.h">
+    <ClInclude Include="include\htl\utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

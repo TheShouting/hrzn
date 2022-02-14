@@ -26,9 +26,9 @@ SOFTWARE.
 *	as an example of library usage. This is a header only library. Place the folder [hrzn/] in your include
 *	directory to use.
 */
-#include "hrzn/hrzn.h"
-#include "hrzn/stringify.h"
-#include "hrzn/utility.h"
+#include "htl/hrzn.h"
+#include "htl/stringify.h"
+#include "htl/utility.h"
 
 #include <iostream>
 

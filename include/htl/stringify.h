@@ -42,51 +42,51 @@ namespace hrzn {
 	};
 
 	template <typename T>
-	std::ostream& operator<<(std::ostream& output, const ITuple<T>& tuple) {
+	inline std::ostream& operator<<(std::ostream& output, const ITuple<T>& tuple) {
 		output << tuple.x << tuple.y;
 		return output;
 	}
 
 	template <typename T>
-	std::istream& operator>>(std::istream& input, ITuple<T>& tuple) {
+	inline std::istream& operator>>(std::istream& input, ITuple<T>& tuple) {
 		input >> tuple.x >> tuple.y;
 		return input;
 	}
 
-	std::ostream& operator<<(std::ostream& output, const hRotation& rot) {
+	inline std::ostream& operator<<(std::ostream& output, const hRotation& rot) {
 		output << rot.tau;
 		return output;
 	}
 
-	std::istream& operator>>(std::istream& input, hRotation& rot) {
+	inline std::istream& operator>>(std::istream& input, hRotation& rot) {
 		input >> rot.tau;
 		return input;
 	}
 
-	std::ostream& operator<<(std::ostream& output, const hArea& rect) {
+	inline std::ostream& operator<<(std::ostream& output, const hArea& rect) {
 		output << rect.x1 << rect.y1 << rect.x2 << rect.y2;
 		return output;
 	}
 
-	std::istream& operator>>(std::istream& input, hArea& rect) {
+	inline std::istream& operator>>(std::istream& input, hArea& rect) {
 		input >> rect.x1 >> rect.y1 >> rect.x2 >> rect.y2;
 		return input;
 	}
 
 	template <typename T>
-	std::string toString(const ITuple<T>& tuple) {
+	inline std::string toString(const ITuple<T>& tuple) {
 		std::stringstream ss;
 		ss << "Tuple{" << tuple.x << ',' << tuple.y << '}';
 		return ss.str();
 	}
 
-	std::string toString(const hRotation& rot) {
+	inline std::string toString(const hRotation& rot) {
 		std::stringstream ss;
 		ss << "Rotation{" << rot.tau << "*TAU}";
 		return ss.str();
 	}
 
-	std::string toString(const hArea& rect) {
+	inline std::string toString(const hArea& rect) {
 		if (rect) {
 			std::stringstream ss;
 			ss << "Area{" << rect.x1 << ',' << rect.y1 << ',' << rect.x2 << ',' << rect.y2 << '}';
@@ -98,7 +98,7 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	std::string toString(const IMap<T>& mat, bool output_contents = false, bool line_breaks=true) {
+	inline std::string toString(const IMap<T>& mat, bool output_contents = false, bool line_breaks=true) {
 		std::stringstream ss;
 		char br = line_breaks ? '\n' : ' ';
 		ss << "Map";
@@ -118,7 +118,7 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	std::ostream& streamOutRow(std::ostream& output, const IMap<T>& mat, int row) {
+	inline std::ostream& streamOutRow(std::ostream& output, const IMap<T>& mat, int row) {
 		for (int x = mat.start().x; x < mat.end().x; x++) {
 			output << mat.at(x, row);
 		}
@@ -126,7 +126,7 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	std::ostream& streamOutColumn(std::ostream& output, const IMap<T>& mat, int col) {
+	inline std::ostream& streamOutColumn(std::ostream& output, const IMap<T>& mat, int col) {
 		for (int y = mat.start().y; y < mat.end().y; y++) {
 			output << mat.at(col, y);
 		}
@@ -142,7 +142,7 @@ namespace hrzn {
 	/// <param name="start">Character to start the line.</param>
 	/// <param name="end">Character to end the line with.</param>
 	/// <returns>A string of the formatted line.</returns>
-	std::string makeStringLine(int length, char symbol, char start, char end) {
+	inline std::string makeStringLine(int length, char symbol, char start, char end) {
 		std::stringstream ss;
 		if (start) {
 			length--;
@@ -173,7 +173,7 @@ namespace hrzn {
 	/// <param name="bottom_line">Character to use for the bottom border of the table.</param>
 	/// <returns>A string containing the formatted table ready for printing or writing.</returns>
 	template <typename T>
-	std::string toStringTable(const IMap<T>& mat, const hStringTableStyle & style = hStringTableStyle())
+	inline std::string toStringTable(const IMap<T>& mat, const hStringTableStyle & style = hStringTableStyle())
 	{
 		std::stringstream ss;
 
@@ -219,7 +219,7 @@ namespace hrzn {
 	/// <param name="bottom_line">Character to use for the bottom border of the table.</param>
 	/// <returns>A string containing the formatted table ready for printing or writing.</returns>
 	/// <returns></returns>
-	std::string toStringMask(const IMap<bool>& mat, const hStringTableStyle & style )
+	inline std::string toStringMask(const IMap<bool>& mat, const hStringTableStyle & style )
 	{
 
 		std::stringstream ss;
