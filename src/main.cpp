@@ -26,19 +26,19 @@ SOFTWARE.
 *	as an example of library usage. This is a header only library. Place the folder [hrzn/] in your include
 *	directory to use.
 */
-#include "hrzn/hrzn.h"
-#include "hrzn/stringify.h"
-#include "hrzn/utility.h"
+#include "htl/hrzn.h"
+#include "htl/stringify.h"
+#include "htl/utility.h"
 
 #include <iostream>
 
 int main() {
 
-	hrzn::MatrixContainer<char> map(20,20);
+	hrzn::HMap<char> map(20,20);
 	map.fill('.');
 	hrzn::scatter(&map, ':', 0.9);
 	map.at(3, 3) = 'X';
 
-	std::cout << hrzn::toStringTable(map, 2) << "\n";
+	std::cout << hrzn::toStringTable(map) << "\n";
 
 }

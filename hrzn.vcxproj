@@ -154,9 +154,9 @@
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\hrzn\hrzn.h" />
-    <ClInclude Include="include\hrzn\stringify.h" />
-    <ClInclude Include="include\hrzn\utility.h" />
+    <ClInclude Include="include\htl\hrzn.h" />
+    <ClInclude Include="include\htl\stringify.h" />
+    <ClInclude Include="include\htl\utility.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -25,6 +25,8 @@ SOFTWARE.
 
 #include "hrzn.h"
 
+#include <vector>
+
 namespace hrzn {
 
 
@@ -49,73 +51,86 @@ namespace hrzn {
 	};
 
 	/******************************************************************************************************************
-		Tuple Operations
+		Transform Operations
 	******************************************************************************************************************/
 
-	hPoint wrapPoint(const hPoint& p, const Area& area) {
+	inline hPoint wrapPoint(const hPoint& p, const hArea& area) {
 		hType_i x = std::min(std::max(p.x, area.x1), area.x2);
 		hType_i y = std::min(std::max(p.y, area.y1), area.y2);
 		return { x, y };
 	}
 
-	hPoint clampPoint(const hPoint& p, const Area& area) {
+	inline hPoint clampPoint(const hPoint& p, const hArea& area) {
 		hType_i x = (p.x % area.width() + area.width()) % area.width();
 		hType_i y = (p.y % area.height() + area.height()) % area.height();
 		return { x, y };
 	}
 
-	hType_f dotProduct(const hVector& a, const hVector& b) {
+	inline hType_f dotProduct(const hVector& a, const hVector& b) {
 		return a.x * b.x + a.y * b.y;
 	}
 
-	hType_f distance(const hVector& a, const hVector& b) {
+	inline hType_f distance(const hVector& a, const hVector& b) {
 		return std::sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 	}
 
-	hType_f distanceSqr(const hVector& a, const hVector& b) {
+	inline hType_f distanceSqr(const hVector& a, const hVector& b) {
 		return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
 	}
 
-	hType_f distanceManhattan(const hVector& a, const hVector& b) {
+	inline hType_f distanceManhattan(const hVector& a, const hVector& b) {
 		return std::abs(a.x - b.x) + std::abs(a.y - b.y);
 	}
 
-	hVector getNormalized(hVector const& vec) {
+	inline hVector getNormalized(hVector const& vec) {
 		double l = vec.length();
-		if (l < U_EPSILON) {
+		if (l < H_EPSILON) {
 			return hVector();
 		}
 		double il = 1.0f / l;
 		return hVector(vec.x * il, vec.y * il);
 	}
 
+	inline hRotation findRotation(hVector v) {
+		return hRotation::Radians(std::atan2(v.y, v.x));
+	}
+
+	inline hVector round(const hVector& vec) {
+		return { std::round(vec.x), std::round(vec.y) };
+	}
+
 
 	/******************************************************************************************************************
-		Area Operations
+		hArea Operations
 	******************************************************************************************************************/
 
-	bool overlapping(const Area& a, const Area& b) {
+	inline bool overlapping(const hArea& a, const hArea& b) {
 		return !(a.x1 > b.x2 || a.y1 > b.y2 || b.x1 > a.x2 || b.y1 > a.y2);
 	}
 
-	bool contains(const Area& a, const Area& b) {
+	inline bool contains(const hArea& a, const hArea& b) {
 		return b.x1 >= a.x1 && b.y1 >= a.y1 && b.x2 <= a.x2 && b.y2 <= a.x2;
 	}
 
-	bool contains(const Area& a, const hPoint& b) {
+	inline bool contains(const hArea& a, const hPoint& b) {
 		return b.x >= a.x1 && b.y >= a.y1 && b.x <= a.x2 && b.y <= a.x2;
 	}
 
-	bool isEdgePoint(const Area& rec, const hPoint& pos) {
+	inline bool isEdgePoint(const hArea& rec, const hPoint& pos) {
 		return pos.x == rec.x1 || pos.x == rec.x2 || pos.y == rec.y1 || pos.y == rec.y2;
 	}
 
-	Area intersect(const Area& a, const Area& b) {
-		return Area(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
+	inline hArea intersect(const hArea& a, const hArea& b) {
+		return hArea(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
 	}
 
-	Area makeBoundary(const Area& a, const Area& b) {
-		return Area(std::min(a.x1, b.x1), std::min(a.y1, b.y1), std::max(a.x2, b.x2), std::max(a.y2, b.y2));
+	inline hArea makeBoundary(const hArea& a, const hArea& b) {
+		return hArea(std::min(a.x1, b.x1), std::min(a.y1, b.y1), std::max(a.x2, b.x2), std::max(a.y2, b.y2));
+	}
+
+	inline hArea makeBoundary(const std::initializer_list<hPoint> list) {
+		hArea a;
+		return a;
 	}
 
 	/// <summary>
@@ -123,9 +138,9 @@ namespace hrzn {
 	/// </summary>
 	/// <param name="rec">The <type>Urect</type> area to be split</param>
 	/// <returns>A container with the new URect objects. If <paramref name="rec"/> is only a single cell (width and height are equal to 1), then both are simply a copy of the orignal parameter. </returns>
-	std::pair<Area, Area> split(const Area& area) {
-		Area a1 = area;
-		Area a2 = area;
+	inline std::pair<hArea, hArea> split(const hArea& area) {
+		hArea a1 = area;
+		hArea a2 = area;
 		hPoint cp = area.center();
 		if (area.height() > 1 && area.height() > area.width()) {
 			a1.y2 = cp.y;
@@ -143,16 +158,26 @@ namespace hrzn {
 	******************************************************************************************************************/
 	
 	template <typename T>
-	void transfer(IMatrix<T>* to, const IMatrix<T>& from) {
-		Area area = hrzn::intersect(*to, from);
+	inline bool compare(const IMap<T> & a, const IMap<T> & b) {
+		hArea area = hrzn::intersect(a, b);
+		for (int y = area.y1; y <= area.y2; ++y)
+			for (int x = area.x1; x <= area.x2; ++x)
+				if (a.at(x, y) != b.at(x, y))
+					return false;
+		return true;
+	}
+
+	template <typename T>
+	inline void transfer(IMap<T>* to, const IMap<T>& from) {
+		hArea area = hrzn::intersect(*to, from);
 		for (int y = area.y1; y <= area.y2; ++y)
 			for (int x = area.x1; x <= area.x2; ++x)
 				to->set(x, y, from.at(x, y));
 	}
 
 	template <typename Ta, typename Tb>
-	MatrixContainer<Ta> copy(const IMatrix<Tb>& mat, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
-		MatrixContainer<Ta> dup(mat);
+	inline HMap<Ta> copy(const IMap<Tb>& mat, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
+		HMap<Ta> dup(mat);
 		for (int y = mat.y1; y <= mat.y2; ++y)
 			for (int x = mat.x1; x <= mat.x2; ++x)
 				dup.set(x, y, cast(mat.at(x, y)));
@@ -160,16 +185,23 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	void fill(IMatrix<T>* mat, const Area area, const T& fill_obj) {
-		Area fill_area = hrzn::intersect(*mat, area);
+	inline void fill(IMap<T>* mat, const hArea area, const T& fill_obj) {
+		hArea fill_area = hrzn::intersect(*mat, area);
 		for (int y = fill_area.y1; y <= fill_area.y2; ++y)
 			for (int x = fill_area.x1; x <= fill_area.x2; ++x)
 				mat->set(x, y, fill_obj);
 	}
 
+	template <typename T, typename Tf>
+	inline void fill_each(IMap<T>* mat, Tf& fill_func) {
+		for (int y = mat->y1; y <= mat->y2; ++y)
+			for (int x = mat->x1; x <= mat->x2; ++x)
+				mat->set(x, y, fill_func());
+	}
+
 	template <typename T>
-	void maskfill(IMatrix<T>* mat, const IMatrix<bool>& mask, const T& fill_obj) {
-		Area fill_area = hrzn::intersect(*mat, mask);
+	inline void maskfill(IMap<T>* mat, const IMap<bool>& mask, const T& fill_obj) {
+		hArea fill_area = hrzn::intersect(*mat, mask);
 		for (int y = fill_area.y1; y <= fill_area.y2; ++y)
 			for (int x = fill_area.x1; x <= fill_area.x2; ++x)
 				if (mask.at(x, y)) 
@@ -177,8 +209,8 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	void floodFillArea(hPoint start, IMatrix<T>* region, IMatrix<bool>* result, bool edge = false, bool use8 = false) {
-		Area area = hrzn::intersect(*region, *result);
+	inline void floodFillArea(hPoint start, IMap<T>* region, IMap<bool>* result, bool edge = false, bool use8 = false) {
+		hArea area = hrzn::intersect(*region, *result);
 		result->set(start, true);
 
 		for (int i = 0; i < (use8 ? 8 : 4); ++i) {
@@ -193,9 +225,9 @@ namespace hrzn {
 
 	}
 
-	void cellularAutomata(IMatrix<bool>* mask, int birth_rate, bool wrap_position) {
-		MatrixContainer<int> neighbor_counts((Area)(*mask), 0);
-		for (auto cell : mask->region()) {
+	inline void cellularAutomata(IMap<bool>* mask, int birth_rate, bool wrap_position) {
+		HMap<int> neighbor_counts((hArea)(*mask), 0);
+		for (auto cell : mask->iterable()) {
 			int n_count = 0;
 			for (const auto& dir : neighborhood8) {
 				hPoint pos;
@@ -209,32 +241,65 @@ namespace hrzn {
 			}
 			neighbor_counts.set((hPoint)cell, n_count);
 		}
-		for (auto cell : mask->region())
+		for (auto cell : mask->iterable())
 			mask->set((hPoint)cell, neighbor_counts.at(cell) >= birth_rate);
 	}
 
 	template <typename T>
-	void scatter(IMatrix<T>* mat, T val, double threshold) {
-		for (auto i : mat->region()) {
+	inline void scatter(IMap<T>* mat, T val, double threshold) {
+		for (auto i : mat->iterable()) {
 			if (((double)std::rand() / (double)RAND_MAX) > threshold)
 				mat->set((hPoint)i, val);
 		}
 	}
+
+	template <typename T>
+	inline HMask select(const IMap<T>& map, const T& i) {
+		HMask mask((hArea)map);
+		for (auto p : map.iterable())
+			mask.set(p, map.at(p) == i);
+		return mask;
+	}
+
+	//HMask select(const IMap<T>& map, bool(*f)(const T &)) {
+	template <typename T, typename Tf>
+	inline HMask select(const IMap<T>& map, Tf & f) {
+		HMask mask((hArea)map);
+		for (auto p : map.iterable())
+			mask.set(p, f(map.at(p)));
+		return mask;
+	}
+
+	template <typename T>
+	inline std::vector<T> projectFromPoint(const IMap<T>& map, hPoint start, int length, hPoint direction) {
+		std::vector<T> list;
+		for (int i = 0; i < length; ++i) {
+			hPoint pt = start + (direction * i);
+			if (map.contains(pt)) {
+				list.push_back(map.at(pt));
+			}
+			else {
+				return list;
+			}
+		}
+		return list;
+	}
+
 
 	/******************************************************************************************************************
 		Lerping Methods
 	******************************************************************************************************************/
 
 	namespace lerp {
-		hType_f lerp(const hType_f& a, const hType_f& b, const hType_f& f) {
+		inline hType_f lerp(const hType_f& a, const hType_f& b, const hType_f& f) {
 			return (a * (1._hf - f)) + (b * f);
 		}
 
-		hVector lerp(const hVector& a, const hVector& b, const hType_f& f) {
+		inline hVector lerp(const hVector& a, const hVector& b, const hType_f& f) {
 			return { lerp(a.x, b.x, f), lerp(a.y, b.y, f) };
 		}
 
-		hRotation lerp(const hRotation& a, const hRotation& b, const hType_f& f) {
+		inline hRotation lerp(const hRotation& a, const hRotation& b, const hType_f& f) {
 			hType_f t_a = a.tau;
 			hType_f t_b = b.tau;
 			if (std::abs(t_a - t_b) >= 1._hf) {
@@ -246,20 +311,18 @@ namespace hrzn {
 			return {lerp(t_a, t_b, f)};
 		}
 
-		hType_f smoothstep(const hType_f& a, const hType_f& b, const hType_f& f) {
+		inline hTransform lerp(const hTransform& a, const hTransform& b, const hType_f& f) {
+			return { lerp(a.position, b.position, f), lerp(a.rotation, b.rotation, f), lerp(a.scale, b.scale, f) };
+		}
+
+		template <typename T>
+		inline T smoothstep(const T& a, const T& b, const hType_f& f) {
 			return lerp(a, b, f * f * (3._hf - 2._hf * f));
 		}
 
-		hVector smoothstep(const hVector& a, const hVector& b, const hType_f& f) {
-			return { smoothstep(a.x, b.x, f), smoothstep(a.y, b.y, f) };
-		}
-
-		hType_f smootherstep(const hType_f& a, const hType_f& b, const hType_f& f) {
+		template <typename T>
+		inline T smootherstep(const T& a, const T& b, const hType_f& f) {
 			return lerp(a, b, f * f * f * (f * (6._hf * f - 15._hf) + 10._hf));
-		}
-
-		hVector smootherstep(const hVector& a, const hVector& b, const hType_f& f) {
-			return { smootherstep(a.x, b.x, f), smootherstep(a.y, b.y, f) };
 		}
 
 	} // namespace lerp
