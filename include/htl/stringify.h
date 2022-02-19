@@ -39,6 +39,7 @@ namespace hrzn {
 		char siding = '|';
 		char corner = '+';
 		char bottom_line = '-';
+		int precision = 2;
 	};
 
 	template <typename T>
@@ -176,12 +177,16 @@ namespace hrzn {
 	inline std::string toStringTable(const IMap<T>& mat, const hStringTableStyle & style = hStringTableStyle())
 	{
 		std::stringstream ss;
+		ss.precision(style.precision);
+		ss.setf(std::ios::fixed);
 
 		int rail_pad = (int)(style.siding != 0);
 
+		// Top table border
 		if (style.top_line)
 			ss << makeStringLine((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.top_line, style.corner, style.corner) << '\n';
 
+		// Column numbering
 		if (style.enumerate) {
 			ss << style.siding << std::setw(style.padding) << "";
 			for (int x = mat.x1; x <= mat.x2; x++)
@@ -189,6 +194,7 @@ namespace hrzn {
 			ss << std::setw(style.padding) << style.siding << '\n';
 		}
 
+		// Map content
 		for (int y = mat.y1; y <= mat.y2; y++) {
 			ss << style.siding;
 			if (style.enumerate) {
@@ -199,6 +205,7 @@ namespace hrzn {
 			ss << std::setw(style.padding) << style.siding << '\n';
 		}
 
+		// Bottom table border
 		if (style.bottom_line)
 			ss << makeStringLine((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.bottom_line, style.corner, style.corner) << '\n';
 

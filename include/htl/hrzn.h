@@ -986,4 +986,63 @@ namespace hrzn {
 
 	}; // struct hTransform
 
+
+	struct IPolygon {
+
+		hVector operator[](std::size_t index) const { return get(index); }
+
+		virtual std::size_t count() const = 0;
+		virtual hVector get(std::size_t index) const = 0;
+
+		hVector center() const {
+			hVector avg;
+			for (int i = 0; i < count(); ++i)
+				avg += get(i);
+			return avg / static_cast<hType_f>(count());
+		}
+
+		hType_f perimeter() const {
+			hType_f length = 0._hf;
+			for (int i = 0; i < count() - 1; ++i)
+				length += (get(i) - get(i + 1)).length();
+			return length;
+		}
+
+		hType_f perimeter_closed() const {
+			hType_f length = 0._hf;
+			for (int i = 0; i < count() - 1; ++i)
+				length += (get(i) - get(i + 1)).length();
+			length += (get(0) - get(count() - 1)).length();
+			return length;
+		}
+
+	}; // struct IPolygon
+
+	template <unsigned int N>
+	struct IPolygonN : public IPolygon {
+		std::size_t count() const override { return N; }
+	};
+
+	struct hQuad : public hTransform, IPolygonN<4> {
+
+		hVector dimensions;
+
+		hQuad() : dimensions(1._hf), hTransform() {}
+		hQuad(hType_f w, hType_f h) : dimensions(w, h), hTransform() {}
+		hQuad(hVector dim) : dimensions(dim), hTransform() {}
+		hQuad(hVector dim, hTransform tform) : dimensions(dim), hTransform(tform) {}
+
+		hVector get(std::size_t index) const override {
+			static const hVector v[] = {
+				{-0.5_hf, -0.5_hf},
+				{ 0.5_hf, -0.5_hf},
+				{ 0.5_hf,  0.5_hf},
+				{-0.5_hf,  0.5_hf}
+			};
+			return position + rotation.rotate(scale * dimensions * v[index]);
+		}
+
+	};
+
+
 } // namespace hrzn
