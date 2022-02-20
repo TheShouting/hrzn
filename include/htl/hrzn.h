@@ -29,6 +29,7 @@ SOFTWARE.
 #include <algorithm>
 #include <stdexcept>
 #include <iterator>
+#include <vector>
 
 #define H_PI 3.1415926535897932384626433832795_hf
 #define H_DEGTORAD 0.017453_hf
@@ -987,12 +988,30 @@ namespace hrzn {
 	}; // struct hTransform
 
 
+	const hPoint h_corner [4] = {
+				{0, 0},
+				{1, 0},
+				{1, 1},
+				{0, 1}
+		};
+
+
 	struct IPolygon {
 
-		hVector operator[](std::size_t index) const { return get(index); }
+		IPolygon() {}
+		virtual ~IPolygon() {}
 
 		virtual std::size_t count() const = 0;
 		virtual hVector get(std::size_t index) const = 0;
+
+		virtual hVector operator[](std::size_t index) const { return get(index); }
+
+		virtual std::vector<hVector> list() const {
+			std::vector<hVector> list;
+			for (int i = 0; i < count(); ++i)
+				list.emplace_back(get(i));
+			return list;
+		}
 
 		hVector center() const {
 			hVector avg;
@@ -1018,31 +1037,56 @@ namespace hrzn {
 
 	}; // struct IPolygon
 
+
+	struct hPolygon : public IPolygon {
+		std::vector<hVector> vertices;
+
+		hPolygon() {}
+		hPolygon(std::initializer_list<hVector> verts) : vertices(verts) {}
+		hPolygon(const IPolygon & polygon) : vertices(polygon.list()) {}
+
+		std::size_t count() const override { return vertices.size(); }
+		hVector get(std::size_t index) const { return vertices[index]; }
+	}; // struct hPolygon
+
+
 	template <unsigned int N>
 	struct IPolygonN : public IPolygon {
 		std::size_t count() const override { return N; }
-	};
+	}; // struct IPolygonN<int>
+
+
+	struct hBox : public IPolygonN<4> {
+
+		hVector v1;
+		hVector v2;
+
+		hBox() : v1(0._hf), v2(1._hf) {}
+		hBox(hVector size) : v1(0._hf), v2(size) {}
+		hBox(hVector v1, hVector v2) : v1(v1), v2(v2) {}
+		hBox(hType_f w, hType_f h) : v1(0._hf), v2(w, h) {}
+		hBox(hType_f ax, hType_f ay, hType_f bx, hType_f by) : v1(ax, ay), v2(bx, by) {}
+		hBox(hArea area) : v1(area.x1, area.y1), v2(area.x2, area.y2) {}
+
+		hVector get(std::size_t index) const override {
+			return { (&v1)[h_corner[index].x].x, (&v2)[h_corner[index].y].y };
+		}
+
+	}; // struct hBox
+
 
 	struct hQuad : public hTransform, IPolygonN<4> {
 
-		hVector dimensions;
-
-		hQuad() : dimensions(1._hf), hTransform() {}
-		hQuad(hType_f w, hType_f h) : dimensions(w, h), hTransform() {}
-		hQuad(hVector dim) : dimensions(dim), hTransform() {}
-		hQuad(hVector dim, hTransform tform) : dimensions(dim), hTransform(tform) {}
+		hQuad() : hTransform() {}
+		hQuad(hType_f w, hType_f h) : hTransform({ 0,0 } ,0.f, {w, h}) {}
+		hQuad(hVector dim) : hTransform() {}
+		hQuad(hTransform tform) : hTransform(tform) {}
 
 		hVector get(std::size_t index) const override {
-			static const hVector v[] = {
-				{-0.5_hf, -0.5_hf},
-				{ 0.5_hf, -0.5_hf},
-				{ 0.5_hf,  0.5_hf},
-				{-0.5_hf,  0.5_hf}
-			};
-			return position + rotation.rotate(scale * dimensions * v[index]);
+			return position + rotation.rotate(scale * (h_corner[index] - hVector(1._hf)));
 		}
 
-	};
+	}; // struct hQuad
 
 
 } // namespace hrzn
