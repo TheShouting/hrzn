@@ -299,6 +299,20 @@ namespace hrzn {
 		return map;
 	}
 
+	inline hBox boundingBox(const IPolygon& polygon) {
+		hVector min = polygon.get(0);
+		hVector max = polygon.get(0);
+
+		for (int i = 1; i < polygon.count(); ++i) {
+			min.x = std::min(min.x, polygon.get(i).x);
+			min.y = std::min(min.y, polygon.get(i).y);
+			max.x = std::max(max.x, polygon.get(i).x);
+			max.y = std::max(max.y, polygon.get(i).y);
+		}
+
+		return { min, max };
+	}
+
 	/******************************************************************************************************************
 		Lerping Methods
 	******************************************************************************************************************/
