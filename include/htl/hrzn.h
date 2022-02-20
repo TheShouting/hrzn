@@ -1083,7 +1083,7 @@ namespace hrzn {
 		hQuad(hTransform tform) : hTransform(tform) {}
 
 		hVector get(std::size_t index) const override {
-			return position + rotation.rotate(scale * (h_corner[index] - hVector(1._hf)));
+			return position + rotation.rotate(scale * (h_corner[index] - hVector(0.5_hf)));
 		}
 
 	}; // struct hQuad
