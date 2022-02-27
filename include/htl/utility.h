@@ -291,11 +291,11 @@ namespace hrzn {
 	inline HMap<T> transposeListToMap(hType_u width, hType_u height, T* list) {
 		HMap<T> map(width, height);
 
-		for (int y = map.y1; y <= map.y2; ++y)
-			for (int x = map.x1; x <= map.x2; ++x) {
+		for (int x = map.x1; x <= map.x2; ++x) {
+			for (int y = map.y1; y <= map.y2; ++y)
 				map.set(x, y, *list);
-				list++;
-			}
+			list++;
+		}
 		return map;
 	}
 

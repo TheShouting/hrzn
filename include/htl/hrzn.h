@@ -1004,9 +1004,9 @@ namespace hrzn {
 		virtual std::size_t count() const = 0;
 		virtual hVector get(std::size_t index) const = 0;
 
-		virtual hVector operator[](std::size_t index) const { return get(index); }
+		hVector operator[](std::size_t index) const { return get(index); }
 
-		virtual std::vector<hVector> list() const {
+		std::vector<hVector> list() const {
 			std::vector<hVector> list;
 			for (int i = 0; i < count(); ++i)
 				list.emplace_back(get(i));
@@ -1069,7 +1069,11 @@ namespace hrzn {
 		hBox(hArea area) : v1(area.x1, area.y1), v2(area.x2, area.y2) {}
 
 		hVector get(std::size_t index) const override {
-			return { (&v1)[h_corner[index].x].x, (&v2)[h_corner[index].y].y };
+			//if (index == 0) return { v1.x, v1.x };
+			//if (index == 1) return { v2.x, v1.y };
+			//if (index == 2) return { v2.x, v2.y };
+			//if (index == 3) return { v1.x, v2.y };
+			return { (&v1)[h_corner[index].x].x, (&v1)[h_corner[index].y].y };
 		}
 
 	}; // struct hBox
