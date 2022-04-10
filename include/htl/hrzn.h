@@ -42,18 +42,19 @@ SOFTWARE.
 #define _TO_STRING(n) _TO_STRING_DEFERRED(n)
 #define THROW_NOT_IMPLEMENTED(m) throw std::runtime_error(m " not implemented at line: " _TO_STRING(__LINE__) ", " _TO_STRING(__FILE__))
 
+
+// Aliased FLOAT type
+typedef float hType_f;
+// Aliased INT type
+typedef int hType_i;
+// Aliased UNSIGNED INT type
+typedef unsigned int hType_u;
+
+constexpr hType_f operator "" _hf(long double val) { return static_cast<hType_f>(val); }
+constexpr hType_i operator "" _hi(unsigned long long int val) { return static_cast<hType_i>(val); }
+
+
 namespace hrzn {
-
-	// Aliased FLOAT type
-	typedef float hType_f;
-	// Aliased INT type
-	typedef int hType_i;
-	// Aliased UNSIGNED INT type
-	typedef unsigned int hType_u;
-
-	constexpr hType_f operator "" _hf(long double val) { return static_cast<hType_f>(val); }
-	constexpr hType_i operator "" _hi(unsigned long long int val) { return static_cast<hType_i>(val); }
-
 
 	/******************************************************************************************************************
 		Transform data types (Vectors/Tuples and Rotations)
