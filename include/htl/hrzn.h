@@ -135,6 +135,17 @@ namespace hrzn {
 			return l;
 		}
 
+		ITuple<T> epsilon() const {
+			double small_v = 1.0;
+			if (std::is_floating_point<T>::value)
+				small_v = H_EPSILON;
+			double vx = static_cast<double>(x);
+			double x_sign = std::signbit(vx) * -2.0 + 1.0;
+			double vy = static_cast<double>(y);
+			double y_sign = std::signbit(vy) * -2.0 + 1.0;
+			return { std::max(small_v, std::abs(vx)) * x_sign, std::max(small_v, std::abs(vy)) * y_sign};
+		}
+
 	}; // struct ITuple<T>
 
 
@@ -980,6 +991,10 @@ namespace hrzn {
 
 		hVector childScale(hVector s) const {
 			return scale * s;
+		}
+
+		hVector inversePosition(hVector pos) {
+			return rotation.unrotate(pos / scale.epsilon()) - pos;
 		}
 
 		hTransform childTransform(const hTransform & child) const {
