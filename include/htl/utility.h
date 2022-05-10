@@ -54,13 +54,13 @@ namespace hrzn {
 		Transform Operations
 	******************************************************************************************************************/
 
-	inline hPoint wrapPoint(const hPoint& p, const hArea& area) {
-		hType_i x = std::min(std::max(p.x, area.x1), area.x2);
-		hType_i y = std::min(std::max(p.y, area.y1), area.y2);
+	inline hPoint clampPoint(const hPoint& p, const hArea& area) {
+		hType_i x = std::min(std::max(p.x, area.x1), area.x2 - 1_hi);
+		hType_i y = std::min(std::max(p.y, area.y1), area.y2 - 1_hi);
 		return { x, y };
 	}
 
-	inline hPoint clampPoint(const hPoint& p, const hArea& area) {
+	inline hPoint wrapPoint(const hPoint& p, const hArea& area) {
 		hType_i x = (p.x % area.width() + area.width()) % area.width();
 		hType_i y = (p.y % area.height() + area.height()) % area.height();
 		return { x, y };
@@ -113,11 +113,11 @@ namespace hrzn {
 	}
 
 	inline bool contains(const hArea& a, const hPoint& b) {
-		return b.x >= a.x1 && b.y >= a.y1 && b.x <= a.x2 && b.y <= a.x2;
+		return b.x >= a.x1 && b.y >= a.y1 && b.x < a.x2 && b.y < a.x2;
 	}
 
 	inline bool isEdgePoint(const hArea& rec, const hPoint& pos) {
-		return pos.x == rec.x1 || pos.x == rec.x2 || pos.y == rec.y1 || pos.y == rec.y2;
+		return pos.x == rec.x1 || pos.x == rec.x2 - 1_hi || pos.y == rec.y1 || pos.y == rec.y2 - 1_hi;
 	}
 
 	inline hArea intersect(const hArea& a, const hArea& b) {
@@ -144,11 +144,11 @@ namespace hrzn {
 		hPoint cp = area.center();
 		if (area.height() > 1 && area.height() > area.width()) {
 			a1.y2 = cp.y;
-			a2.y1 = cp.y + 1;
+			a2.y1 = cp.y;
 		}
 		else if (area.width() > 1) {
 			a1.x2 = cp.x;
-			a2.x1 = cp.x + 1;
+			a2.x1 = cp.x;
 		}
 		return std::make_pair(a1, a2);
 	}
@@ -160,8 +160,8 @@ namespace hrzn {
 	template <typename T>
 	inline bool compare(const IMap<T> & a, const IMap<T> & b) {
 		hArea area = hrzn::intersect(a, b);
-		for (int y = area.y1; y <= area.y2; ++y)
-			for (int x = area.x1; x <= area.x2; ++x)
+		for (int y = area.y1; y < area.y2; ++y)
+			for (int x = area.x1; x < area.x2; ++x)
 				if (a.at(x, y) != b.at(x, y))
 					return false;
 		return true;
@@ -170,16 +170,16 @@ namespace hrzn {
 	template <typename T>
 	inline void transfer(IMap<T>* to, const IMap<T>& from) {
 		hArea area = hrzn::intersect(*to, from);
-		for (int y = area.y1; y <= area.y2; ++y)
-			for (int x = area.x1; x <= area.x2; ++x)
+		for (int y = area.y1; y < area.y2; ++y)
+			for (int x = area.x1; x < area.x2; ++x)
 				to->set(x, y, from.at(x, y));
 	}
 
 	template <typename Ta, typename Tb>
 	inline HMap<Ta> copy(const IMap<Tb>& mat, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
 		HMap<Ta> dup(mat);
-		for (int y = mat.y1; y <= mat.y2; ++y)
-			for (int x = mat.x1; x <= mat.x2; ++x)
+		for (int y = mat.y1; y < mat.y2; ++y)
+			for (int x = mat.x1; x < mat.x2; ++x)
 				dup.set(x, y, cast(mat.at(x, y)));
 		return dup;
 	}
@@ -187,23 +187,23 @@ namespace hrzn {
 	template <typename T>
 	inline void fill(IMap<T>* mat, const hArea area, const T& fill_obj) {
 		hArea fill_area = hrzn::intersect(*mat, area);
-		for (int y = fill_area.y1; y <= fill_area.y2; ++y)
-			for (int x = fill_area.x1; x <= fill_area.x2; ++x)
+		for (int y = fill_area.y1; y < fill_area.y2; ++y)
+			for (int x = fill_area.x1; x < fill_area.x2; ++x)
 				mat->set(x, y, fill_obj);
 	}
 
 	template <typename T, typename Tf>
 	inline void fill_each(IMap<T>* mat, Tf& fill_func) {
-		for (int y = mat->y1; y <= mat->y2; ++y)
-			for (int x = mat->x1; x <= mat->x2; ++x)
+		for (int y = mat->y1; y < mat->y2; ++y)
+			for (int x = mat->x1; x < mat->x2; ++x)
 				mat->set(x, y, fill_func());
 	}
 
 	template <typename T>
 	inline void maskfill(IMap<T>* mat, const IMap<bool>& mask, const T& fill_obj) {
 		hArea fill_area = hrzn::intersect(*mat, mask);
-		for (int y = fill_area.y1; y <= fill_area.y2; ++y)
-			for (int x = fill_area.x1; x <= fill_area.x2; ++x)
+		for (int y = fill_area.y1; y < fill_area.y2; ++y)
+			for (int x = fill_area.x1; x < fill_area.x2; ++x)
 				if (mask.at(x, y)) 
 					mat.set(x, y, fill_obj);
 	}
@@ -291,8 +291,8 @@ namespace hrzn {
 	inline HMap<T> transposeListToMap(hType_u width, hType_u height, T* list) {
 		HMap<T> map(width, height);
 
-		for (int x = map.x1; x <= map.x2; ++x) {
-			for (int y = map.y1; y <= map.y2; ++y)
+		for (int x = map.x1; x < map.x2; ++x) {
+			for (int y = map.y1; y < map.y2; ++y)
 				map.set(x, y, *list);
 			list++;
 		}

@@ -338,7 +338,7 @@ namespace hrzn {
 
 		hArea() : x1(INT_MAX), y1(INT_MAX), x2(INT_MIN), y2(INT_MIN) {}
 
-		hArea(hType_u w, hType_u h) : x1(0), y1(0), x2((hType_i)w - 1), y2((hType_i)h - 1) {}
+		hArea(hType_u w, hType_u h) : x1(0), y1(0), x2((hType_i)w), y2((hType_i)h) {}
 
 		hArea(hType_i x_1, hType_i y_1, hType_i x_2, hType_i y_2) : x1(x_1), y1(y_1), x2(x_2), y2(y_2) {}
 
@@ -359,11 +359,11 @@ namespace hrzn {
 		}
 
 		operator bool() const {
-			return x1 <= x2 && y1 <= y2;
+			return x1 < x2 && y1 < y2;
 		}
 
 		bool valid() const {
-			return x1 <= x2 && y1 <= y2;
+			return x1 < x2 && y1 < y2;
 		}
 
 		void move(hType_i move_x, hType_i move_y) {
@@ -382,7 +382,7 @@ namespace hrzn {
 
 		void resize(const hPoint& size) {
 			if (size) {
-				resize(std::min(x1, x1 + size.x), std::min(y1, y1 + size.y), std::max(x1, x1 + size.x) - 1, std::max(y1, y1 + size.y) - 1);
+				resize(std::min(x1, x1 + size.x), std::min(y1, y1 + size.y), std::max(x1, x1 + size.x), std::max(y1, y1 + size.y));
 			}
 		}
 
@@ -397,7 +397,7 @@ namespace hrzn {
 		void resizeFromCenter(hType_u w, hType_u h) {
 			if (valid()) {
 				hPoint ctr = center();
-				resize(ctr.x - w / 2, ctr.y - h / 2, x1 + w - 1, y1 + h - 1);
+				resize(ctr.x - w / 2, ctr.y - h / 2, x1 + w, y1 + h);
 			}
 		}
 
@@ -419,11 +419,11 @@ namespace hrzn {
 		}
 
 		std::size_t width() const {
-			return std::max(x2 - x1 + 1_hi, 0_hi);
+			return std::max(x2 - x1, 0_hi);
 		}
 
 		std::size_t height() const {
-			return std::max(y2 - y1 + 1_hi, 0_hi);
+			return std::max(y2 - y1, 0_hi);
 		}
 
 		hPoint dimensions() const {
@@ -439,7 +439,7 @@ namespace hrzn {
 		}
 
 		hPoint end() const {
-			return { x2 + 1_hi, y2 + 1_hi };
+			return { x2, y2 };
 		}
 
 		hPoint center() const {
@@ -467,12 +467,12 @@ namespace hrzn {
 		}
 
 		bool contains(hType_i x, hType_i y) const {
-			return x >= x1 && x <= x2 && y >= y1 && y <= y2;
+			return x >= x1 && x < x2 && y >= y1 && y < y2;
 		}
 
 		/// Create an hArea object using position, width, and height.
 		static hArea build(hType_i x, hType_i y, hType_i width, hType_i height) {
-			return hArea(x, y, x + width - 1, y + height - 1);
+			return hArea(x, y, x + width, y + height);
 		}
 
 		// Create an hArea object that contains all listed points.
@@ -600,14 +600,14 @@ namespace hrzn {
 		void set(hPoint p, const T& val) { set(p.x, p.y, val); }
 
 		virtual void fill(const T& obj) {
-			for (hType_i y = y1; y <= y2; ++y)
-				for (hType_i x = x1; x <= x2; ++x)
+			for (hType_i y = y1; y < y2; ++y)
+				for (hType_i x = x1; x < x2; ++x)
 					set(x, y, obj);
 		}
 
 		void fill(fill_func f) {
-			for (hType_i y = y1; y <= y2; ++y)
-				for (hType_i x = x1; x <= x2; ++x)
+			for (hType_i y = y1; y < y2; ++y)
+				for (hType_i x = x1; x < x2; ++x)
 					set(x, y, f());
 		}
 
@@ -735,8 +735,8 @@ namespace hrzn {
 			assert(m_contents != nullptr);
 			hArea new_rect(xa, ya, xb, yb);
 				T* new_block = new T[new_rect.area()];
-				for (hType_i y = new_rect.y1; y <= new_rect.y2; ++y)
-					for (hType_i x = new_rect.x1; x <= new_rect.x2; ++x) {
+				for (hType_i y = new_rect.y1; y < new_rect.y2; ++y)
+					for (hType_i x = new_rect.x1; x < new_rect.x2; ++x) {
 						hType_i i = (x - new_rect.x1) + (y - new_rect.y1) * (hType_i)new_rect.width();
 						new_block[i] = hArea::contains(x, y) ? std::move(m_contents[base::f_index(x, y)]) : fill_obj;
 					}
@@ -781,8 +781,8 @@ namespace hrzn {
 		}
 
 		HMask(const IMap<bool>& obj) : base(obj), m_size((obj.area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
-			for (int y = obj.y1; y <= obj.y2; ++y) {
-				for (int x = obj.x1; x <= obj.x2; ++x) {
+			for (int y = obj.y1; y < obj.y2; ++y) {
+				for (int x = obj.x1; x < obj.x2; ++x) {
 					this->set(x, y, obj.at(x, y));
 				}
 			}
@@ -803,8 +803,8 @@ namespace hrzn {
 				hArea::resize(other.x1, other.y1, other.x2, other.y2);
 				m_size = (other.area() / s_bit_interval) + 1;
 				m_blocks = new block_type[m_size];
-				for (int y = other.y1; y <= other.y2; ++y) {
-					for (int x = other.x1; x <= other.x2; ++x) {
+				for (int y = other.y1; y < other.y2; ++y) {
+					for (int x = other.x1; x < other.x2; ++x) {
 						this->set(x, y, other.at(x, y));
 					}
 				}
@@ -922,8 +922,8 @@ namespace hrzn {
 	// Bitwise AND operation between two boolean Matrices
 	inline HMask operator & (const IMap<bool>& a, const IMap<bool>& b) {
 		HMask result(hArea::intersect(a, b));
-		for (int y = result.y1; y <= result.y2; ++y)
-			for (int x = result.x1; x <= result.x2; ++x)
+		for (int y = result.y1; y < result.y2; ++y)
+			for (int x = result.x1; x < result.x2; ++x)
 				result.set(x, y, a.at(x, y) && b.at(x, y));
 		return result;
 	}
@@ -931,8 +931,8 @@ namespace hrzn {
 	// Bitwise OR operation between two boolean Matrices
 	inline HMask operator | (const IMap<bool>& a, const IMap<bool>& b) {
 		HMask result(hArea::intersect(a, b));
-		for (int y = result.y1; y <= result.y2; ++y)
-			for (int x = result.x1; x <= result.x2; ++x)
+		for (int y = result.y1; y < result.y2; ++y)
+			for (int x = result.x1; x < result.x2; ++x)
 				result.set(x, y, a.at(x, y) || b.at(x, y));
 		return result;
 	}
@@ -940,8 +940,8 @@ namespace hrzn {
 	// Bitwise XOR operation between two boolean Matrices
 	inline HMask operator ^ (const IMap<bool>& a, const IMap<bool>& b) {
 		HMask result(hArea::intersect(a, b));
-		for (int y = result.y1; y <= result.y2; ++y)
-			for (int x = result.x1; x <= result.x2; ++x)
+		for (int y = result.y1; y < result.y2; ++y)
+			for (int x = result.x1; x < result.x2; ++x)
 				result.set(x, y, a.at(x, y) && b.at(x, y));
 		return result;
 	}
@@ -949,8 +949,8 @@ namespace hrzn {
 	// Bitwise Invert operation between on a boolean Matrix
 	inline HMask operator ~ (const IMap<bool>& a) {
 		HMask result((hArea)a);
-		for (int y = a.y1; y <= a.y2; ++y)
-			for (int x = a.x1; x <= a.x2; ++x)
+		for (int y = a.y1; y < a.y2; ++y)
+			for (int x = a.x1; x < a.x2; ++x)
 				result.set(x, y, !a.at(x, y));
 		return result;
 	}

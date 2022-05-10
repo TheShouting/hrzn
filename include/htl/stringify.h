@@ -105,11 +105,11 @@ namespace hrzn {
 		ss << "Map";
 		if (output_contents) {
 			ss << br;
-			for (int y = mat.start().y; y < mat.end().y - 1; y++) {
+			for (int y = mat.start().y; y < mat.end().y; y++) {
 				ss << '{';
-				for (int x = mat.start().x; x < mat.end().x; x++)
+				for (int x = mat.start().x; x < mat.end().x - 1; x++)
 					ss << mat.at(x, y) << ',';
-				ss << mat.at(mat.x2, y) << '}' << br;
+				ss << mat.at(mat.x2 - 1, y) << '}' << br;
 			}
 		}
 		else {
@@ -165,13 +165,6 @@ namespace hrzn {
 	/// Convert a Matrix of values to a formatted table in a string.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	/// <param name="mat">A reference to the Matrix object to be used for outputting.</param>
-	/// <param name="padding">Specifies the amount of space between each column.</param>
-	/// <param name="enumerate">Show Column and Row index numbers.</param>
-	/// <param name="top_line">Character to use for the top border of the table.</param>
-	/// <param name="siding">Character to use for the left and right borders of the table.</param>
-	/// <param name="corner">Character to use for each corner of the table.</param>
-	/// <param name="bottom_line">Character to use for the bottom border of the table.</param>
 	/// <returns>A string containing the formatted table ready for printing or writing.</returns>
 	template <typename T>
 	inline std::string toStringTable(const IMap<T>& mat, const hStringTableStyle & style = hStringTableStyle())
@@ -189,18 +182,18 @@ namespace hrzn {
 		// Column numbering
 		if (style.enumerate) {
 			ss << style.siding << std::setw(style.padding) << "";
-			for (int x = mat.x1; x <= mat.x2; x++)
+			for (int x = mat.x1; x < mat.x2; x++)
 				ss << std::setw(style.padding) << x;
 			ss << std::setw(style.padding) << style.siding << '\n';
 		}
 
 		// Map content
-		for (int y = mat.y1; y <= mat.y2; y++) {
+		for (int y = mat.y1; y < mat.y2; y++) {
 			ss << style.siding;
 			if (style.enumerate) {
 				ss << std::setw(style.padding) << y;
 			}
-			for (int x = mat.x1; x <= mat.x2; x++)
+			for (int x = mat.x1; x < mat.x2; x++)
 				ss << std::setw(style.padding) << mat.at(x, y);
 			ss << std::setw(style.padding) << style.siding << '\n';
 		}
@@ -215,18 +208,9 @@ namespace hrzn {
 	/// <summary>
 	/// Convert a Mask of boolean values to a formatted table in a string.
 	/// </summary>
-	/// <param name="mat">A reference to the Mask object to be used for outputting.</param>
-	/// <param name="padding">Specifies the amount of space between each column.</param>
-	/// <param name="enumerate">Show Column and Row index numbers.</param>
-	/// <param name="filled">Character to represent filled cells.</param>
-	/// <param name="empty"><Character to represent empty cells/param>
-	/// <param name="top_line">Character to use for the top border of the table.</param>
-	/// <param name="siding">Character to use for the left and right borders of the table.</param>
-	/// <param name="corner">Character to use for each corner of the table.</param>
-	/// <param name="bottom_line">Character to use for the bottom border of the table.</param>
 	/// <returns>A string containing the formatted table ready for printing or writing.</returns>
 	/// <returns></returns>
-	inline std::string toStringMask(const IMap<bool>& mat, const hStringTableStyle & style )
+	inline std::string toStringMask(const IMap<bool>& mat, const hStringTableStyle & style = hStringTableStyle())
 	{
 
 		std::stringstream ss;
@@ -239,17 +223,17 @@ namespace hrzn {
 
 		if (style.enumerate) {
 			ss << style.siding << std::setw(style.padding) << "";
-			for (int x = mat.x1; x <= mat.x2; x++)
+			for (int x = mat.x1; x < mat.x2; x++)
 				ss << std::setw(style.padding) << x;
 			ss << std::setw(style.padding) << style.siding << '\n';
 		}
 
-		for (int y = mat.y1; y <= mat.y2; y++) {
+		for (int y = mat.y1; y < mat.y2; y++) {
 			ss << style.siding;
 			if (style.enumerate) {
 				ss << std::setw(style.padding) << y;
 			}
-			for (int x = mat.x1; x <= mat.x2; x++)
+			for (int x = mat.x1; x < mat.x2; x++)
 				ss << std::setw(style.padding) << (mat.at(x, y) ? style.filled : style.empty);
 			ss << std::setw(style.padding) << style.siding << '\n';
 		}
