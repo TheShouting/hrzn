@@ -745,181 +745,10 @@ namespace hrzn {
 
 	}; // class HMap<T>
 
-	/// <summary>
-	/// A extension of a boolean Matrix class that provides additional methods and increased performance for boolean masks.
-	/// </summary>
-	class HMask : public IMap<bool> {
-
-	public:
-		using block_type = std::uint64_t;
-
-		using IMap<bool>::operator[];
-		using IMap<bool>::at;
-		using IMap<bool>::set;
-		using base = IMap<bool>;
-
-	private:
-
-		static const hType_u s_bit_interval = sizeof(block_type) * CHAR_BIT;
-
-		std::size_t m_size = 0;
-		block_type* m_blocks = nullptr;
-		bool m_dummy = false;
-
-	public:
-
-		HMask(int w, int h) : base(hArea(w, h)), m_size((this->area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
-			for (int i = 0; i < m_size; ++i)
-				m_blocks[i] = 0;
-		}
-
-		HMask(hArea area) : base(hArea(area)), m_size((this->area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
-			for (int i = 0; i < m_size; ++i)
-				m_blocks[i] = 0;
-		}
-
-		HMask(const IMap<bool>& obj) : base(obj), m_size((obj.area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
-			for (int y = obj.y1; y < obj.y2; ++y) {
-				for (int x = obj.x1; x < obj.x2; ++x) {
-					this->set(x, y, obj.at(x, y));
-				}
-			}
-		}
-
-		HMask(const HMask& obj) : base(obj), m_size((obj.area() / s_bit_interval) + 1), m_blocks(new block_type[m_size]) {
-			std::copy(obj.m_blocks, obj.m_blocks + m_size, m_blocks);
-		}
-
-		~HMask() {
-			delete[] m_blocks;
-			m_blocks = nullptr;
-		}
-
-		HMask& operator =(const IMap<bool>& other) {
-			if (this != &other) {
-				delete[] m_blocks;
-				hArea::resize(other.x1, other.y1, other.x2, other.y2);
-				m_size = (other.area() / s_bit_interval) + 1;
-				m_blocks = new block_type[m_size];
-				for (int y = other.y1; y < other.y2; ++y) {
-					for (int x = other.x1; x < other.x2; ++x) {
-						this->set(x, y, other.at(x, y));
-					}
-				}
-			}
-			return *this;
-		}
-
-		HMask& operator =(const HMask& other) {
-			if (this != &other) {
-				delete[] m_blocks;
-				hArea::resize(other.x1, other.y1, other.x2, other.y2);
-				m_size = (other.area() / s_bit_interval) + 1;
-				m_blocks = new block_type[m_size];
-				std::copy(other.m_blocks, other.m_blocks + m_size, m_blocks);
-			}
-			return *this;
-		}
-
-		operator bool() const override {
-			return m_blocks;
-		}
-
-		void set(hType_i x, hType_i y, const bool& val) override {
-			hType_u index = f_index(x, y);
-			hType_u block_id = index / s_bit_interval;			
-			block_type offset = 1ULL << (index % s_bit_interval);
-			m_blocks[block_id] = (m_blocks[block_id] & ~offset) | (offset * val);
-		}
-
-		bool& at(int x, int y) override {
-			m_dummy = f_get(x, y);
-			return m_dummy;
-		}
-
-		bool at(int x, int y) const override {
-			return f_get(x, y);
-		}
-
-		void fill(const bool& obj) override {
-			block_type v = ~block_type() * obj;
-			for (int i = 0; i < m_size; ++i)
-				m_blocks[i] = v;
-		}
-
-		HMap<bool> expand() const {
-			HMap<bool> obj((hArea)*this);
-			for (int y = obj.y1; y <= obj.y2; ++y)
-				for (int x = obj.x1; x <= obj.x2; ++x)
-					obj.set(x, y, this->at(x, y));
-			return obj;
-		}
-
-		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override { // TODO implement
-			THROW_NOT_IMPLEMENTED("HMask::resize");
-			//resize(xa, ya, xb, yb, false);
-		}
-
-		void flip() {
-			for (int i = 0; i < m_size; ++i)
-				m_blocks[i] = ~m_blocks[i];
-		}
-
-	private:
-		
-		bool f_get(int x, int y) const {
-			hType_u index = f_index(x, y);
-			hType_u block_id = index / s_bit_interval;
-			block_type offset = 1ULL << (index % s_bit_interval);
-			return (m_blocks[block_id] & offset) == offset;
-		}
-
-	private:
-		static block_type s_offsetBlock(const HMask & mask, hType_u x, hType_u y) {
-			hType_u i = mask.f_index(x, y);
-			hType_u offset_x = i % s_bit_interval;
-			hType_u offset_y = i / s_bit_interval;
-			block_type block = mask.m_blocks[offset_y];
-			if (offset_x) {
-				block = block << offset_x;
-				block |= mask.m_blocks[offset_y + 1] >> (s_bit_interval - offset_x);
-			}
-			return block;
-		}
-
-	public:
-		
-		static HMask AND(const HMask& a, const HMask& b) {
-			THROW_NOT_IMPLEMENTED("HMask::AND");
-			HMask v(hArea::intersect(a, b));
-			return v;
-		}
-
-		static HMask OR(const HMask& a, const HMask& b) {
-			THROW_NOT_IMPLEMENTED("HMask::OR");
-			HMask v(hArea::intersect(a, b));
-			return v;
-		}
-
-		static HMask XOR(const HMask& a, const HMask& b) {
-			THROW_NOT_IMPLEMENTED("HMask::XOR");
-			HMask v(hArea::intersect(a, b));
-			return v;
-		}
-
-		static HMask NOT(const HMask& a) {
-			HMask v(a);
-			v.flip();
-			return v;
-		}
-
-	}; // class MatrixMask : IMap<bool>
-
-
 
 	// Bitwise AND operation between two boolean Matrices
-	inline HMask operator & (const IMap<bool>& a, const IMap<bool>& b) {
-		HMask result(hArea::intersect(a, b));
+	inline HMap<bool> operator & (const IMap<bool>& a, const IMap<bool>& b) {
+		HMap<bool> result(hArea::intersect(a, b));
 		for (int y = result.y1; y < result.y2; ++y)
 			for (int x = result.x1; x < result.x2; ++x)
 				result.set(x, y, a.at(x, y) && b.at(x, y));
@@ -927,8 +756,8 @@ namespace hrzn {
 	}
 
 	// Bitwise OR operation between two boolean Matrices
-	inline HMask operator | (const IMap<bool>& a, const IMap<bool>& b) {
-		HMask result(hArea::intersect(a, b));
+	inline HMap<bool> operator | (const IMap<bool>& a, const IMap<bool>& b) {
+		HMap<bool> result(hArea::intersect(a, b));
 		for (int y = result.y1; y < result.y2; ++y)
 			for (int x = result.x1; x < result.x2; ++x)
 				result.set(x, y, a.at(x, y) || b.at(x, y));
@@ -936,8 +765,8 @@ namespace hrzn {
 	}
 
 	// Bitwise XOR operation between two boolean Matrices
-	inline HMask operator ^ (const IMap<bool>& a, const IMap<bool>& b) {
-		HMask result(hArea::intersect(a, b));
+	inline HMap<bool> operator ^ (const IMap<bool>& a, const IMap<bool>& b) {
+		HMap<bool> result(hArea::intersect(a, b));
 		for (int y = result.y1; y < result.y2; ++y)
 			for (int x = result.x1; x < result.x2; ++x)
 				result.set(x, y, a.at(x, y) && b.at(x, y));
@@ -945,8 +774,8 @@ namespace hrzn {
 	}
 
 	// Bitwise Invert operation between on a boolean Matrix
-	inline HMask operator ~ (const IMap<bool>& a) {
-		HMask result((hArea)a);
+	inline HMap<bool> operator ~ (const IMap<bool>& a) {
+		HMap<bool> result((hArea)a);
 		for (int y = a.y1; y < a.y2; ++y)
 			for (int x = a.x1; x < a.x2; ++x)
 				result.set(x, y, !a.at(x, y));

@@ -254,8 +254,8 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	inline HMask select(const IMap<T>& map, const T& i) {
-		HMask mask((hArea)map);
+	inline HMap<bool> select(const IMap<T>& map, const T& i) {
+		HMap<bool> mask((hArea)map);
 		for (auto p : map.iterable())
 			mask.set(p, map.at(p) == i);
 		return mask;
@@ -263,8 +263,8 @@ namespace hrzn {
 
 	//HMask select(const IMap<T>& map, bool(*f)(const T &)) {
 	template <typename T, typename Tf>
-	inline HMask select(const IMap<T>& map, Tf & f) {
-		HMask mask((hArea)map);
+	inline HMap<bool> select(const IMap<T>& map, Tf & f) {
+		HMap<bool> mask((hArea)map);
 		for (auto p : map.iterable())
 			mask.set(p, f(map.at(p)));
 		return mask;
