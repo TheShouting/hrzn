@@ -30,7 +30,7 @@ SOFTWARE.
 namespace hrzn {
 
 
-	const ITuple<hType_i> neighborhood4[] = {
+	constexpr ITuple<hType_i> h_neighborhood4[] = {
 		{0, -1},
 		{1, 0},
 		{0, 1},
@@ -38,7 +38,7 @@ namespace hrzn {
 		{0, 0}
 	};
 
-	const ITuple<hType_i> neighborhood8[] = {
+	constexpr ITuple<hType_i> h_neighborhood8[] = {
 		{0, -1},
 		{1, -1},
 		{1, 0},
@@ -214,7 +214,7 @@ namespace hrzn {
 		result->set(start, true);
 
 		for (int i = 0; i < (use8 ? 8 : 4); ++i) {
-			hPoint pos = start + (use8 ? neighborhood8 : neighborhood4)[i];
+			hPoint pos = start + (use8 ? h_neighborhood8 : h_neighborhood4)[i];
 			if (area.contains(pos) && !result->at(pos)) {
 				if (region->at(pos) == region->at(start))
 					hrzn::floodFillArea(pos, region, result, edge, use8);
@@ -229,7 +229,7 @@ namespace hrzn {
 		HMap<int> neighbor_counts((hArea)(*mask), 0);
 		for (auto cell : mask->iterable()) {
 			int n_count = 0;
-			for (const auto& dir : neighborhood8) {
+			for (const auto& dir : h_neighborhood8) {
 				hPoint pos;
 				if (wrap_position)
 					pos = hrzn::wrapPoint(cell + dir, *mask);

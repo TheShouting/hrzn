@@ -69,19 +69,17 @@ namespace hrzn {
 
 		T x, y;
 
-		ITuple() : x(), y() {}
+		constexpr ITuple() : x(), y() {}
 
 		template <typename TCast>
-		ITuple(TCast xval, TCast yval) : x(static_cast<T>(xval)), y(static_cast<T>(yval)) {}
+		constexpr ITuple(TCast xval, TCast yval) : x(static_cast<T>(xval)), y(static_cast<T>(yval)) {}
 
-		explicit ITuple(T val) : x(val), y(val) {}
+		explicit constexpr ITuple(T val) : x(val), y(val) {}
 
-		ITuple(const ITuple<T>& t) = default;
+		constexpr ITuple(const ITuple<T>& t) = default;
 
 		template <typename TCast>
-		explicit ITuple(const ITuple<TCast>& t) : x(static_cast<T>(t.x)), y(static_cast<T>(t.y)) {}
-
-		virtual ~ITuple() {}
+		explicit constexpr ITuple(const ITuple<TCast>& t) : x(static_cast<T>(t.x)), y(static_cast<T>(t.y)) {}
 
 		T operator [] (int i) const { return (&x)[i]; }
 
@@ -219,9 +217,9 @@ namespace hrzn {
 
 		hType_f tau;
 
-		hRotation() : tau(0.f) {}
+		constexpr hRotation() : tau(0.f) {}
 
-		hRotation(hType_f a) : tau(a) {}
+		constexpr hRotation(hType_f a) : tau(a) {}
 
 		hRotation operator-() const { return hRotation(-tau); }
 
@@ -336,13 +334,13 @@ namespace hrzn {
 
 		hType_i x1, y1, x2, y2;
 
-		hArea() : x1(INT_MAX), y1(INT_MAX), x2(INT_MIN), y2(INT_MIN) {}
+		constexpr hArea() : x1(INT_MAX), y1(INT_MAX), x2(INT_MIN), y2(INT_MIN) {}
 
-		hArea(hType_u w, hType_u h) : x1(0), y1(0), x2((hType_i)w), y2((hType_i)h) {}
+		constexpr hArea(hType_u w, hType_u h) : x1(0), y1(0), x2((hType_i)w), y2((hType_i)h) {}
 
-		hArea(hType_i x_1, hType_i y_1, hType_i x_2, hType_i y_2) : x1(x_1), y1(y_1), x2(x_2), y2(y_2) {}
+		constexpr hArea(hType_i x_1, hType_i y_1, hType_i x_2, hType_i y_2) : x1(x_1), y1(y_1), x2(x_2), y2(y_2) {}
 
-		explicit hArea(hPoint p1, hPoint p2) : x1(p1.x), y1(p1.y), x2(p2.x), y2(p2.y) {}
+		explicit constexpr hArea(hPoint p1, hPoint p2) : x1(p1.x), y1(p1.y), x2(p2.x), y2(p2.y) {}
 
 		hArea_iterable iterable() const;
 		hArea_iterable iterate_x(int y) const;
@@ -969,9 +967,9 @@ namespace hrzn {
 		hRotation rotation;
 		hVector scale;
 
-		hTransform() : position(0._hf, 0._hf), rotation(0._hf), scale(1._hf, 1._hf) {}
+		constexpr hTransform() : position(0._hf, 0._hf), rotation(0._hf), scale(1._hf, 1._hf) {}
 
-		hTransform(hVector p, hRotation r, hVector s) : position(p), rotation(r), scale(s) {}
+		constexpr hTransform(hVector p, hRotation r, hVector s) : position(p), rotation(r), scale(s) {}
 
 		hVector getForwardVector() const {
 			return rotation.getForwardVector(scale.y);
@@ -1004,7 +1002,7 @@ namespace hrzn {
 	}; // struct hTransform
 
 
-	const hPoint h_corner [4] = {
+	constexpr hPoint h_corner [4] = {
 				{0, 0},
 				{1, 0},
 				{1, 1},
