@@ -105,9 +105,9 @@ namespace hrzn {
 		ss << "Map";
 		if (output_contents) {
 			ss << br;
-			for (int y = mat.start().y; y < mat.end().y; y++) {
+			for (int y = mat.first().y; y < mat.last().y; y++) {
 				ss << '{';
-				for (int x = mat.start().x; x < mat.end().x - 1; x++)
+				for (int x = mat.first().x; x < mat.last().x - 1; x++)
 					ss << mat.at(x, y) << ',';
 				ss << mat.at(mat.x2 - 1, y) << '}' << br;
 			}
@@ -120,7 +120,7 @@ namespace hrzn {
 
 	template <typename T>
 	inline std::ostream& streamOutRow(std::ostream& output, const IMap<T>& mat, int row) {
-		for (int x = mat.start().x; x < mat.end().x; x++) {
+		for (int x = mat.first().x; x < mat.last().x; x++) {
 			output << mat.at(x, row);
 		}
 		return output;
@@ -128,7 +128,7 @@ namespace hrzn {
 
 	template <typename T>
 	inline std::ostream& streamOutColumn(std::ostream& output, const IMap<T>& mat, int col) {
-		for (int y = mat.start().y; y < mat.end().y; y++) {
+		for (int y = mat.first().y; y < mat.last().y; y++) {
 			output << mat.at(col, y);
 		}
 		return output;
@@ -140,20 +140,20 @@ namespace hrzn {
 	/// </summary>
 	/// <param name="length">Specifies the length of the line.</param>
 	/// <param name="symbol">The character which composes the length of the horizontal line.</param>
-	/// <param name="start">Character to start the line.</param>
-	/// <param name="end">Character to end the line with.</param>
+	/// <param name="first">Character to first the line.</param>
+	/// <param name="last">Character to last the line with.</param>
 	/// <returns>A string of the formatted line.</returns>
-	inline std::string makeStringLine(int length, char symbol, char start, char end) {
+	inline std::string makeStringLine(int length, char symbol, char first, char last) {
 		std::stringstream ss;
-		if (start) {
+		if (first) {
 			length--;
-			ss << start;
+			ss << first;
 		}
 		for (int i = 0; i < length-1; i++) {
 			ss << symbol;
 		}
-		if (end) {
-			ss << end;
+		if (last) {
+			ss << last;
 		}
 		else {
 			ss << symbol;

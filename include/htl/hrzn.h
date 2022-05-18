@@ -38,20 +38,40 @@ SOFTWARE.
 #define H_RAD 6.283185307179586476925286766559_hf
 #define H_EPSILON 1.192092896e-07_hf
 
+#define H_CORNER_TOPLEFT 0
+#define H_CORNER_TOPRIGHT 1
+#define H_CORNER_LOWERRIGHT 2
+#define H_CORNER_LOWERLEFT 3
+
+#define HRZN_FOREACH_POINT(A, X, Y) for (int X, Y = A.y1; Y < A.y2; ++Y) for (X = A.x1; X < A.x2; ++X) 
+
 #define _TO_STRING_DEFERRED(n) #n
 #define _TO_STRING(n) _TO_STRING_DEFERRED(n)
 #define THROW_NOT_IMPLEMENTED(m) throw std::runtime_error(m " not implemented at line: " _TO_STRING(__LINE__) ", " _TO_STRING(__FILE__))
 
 
-// Aliased FLOAT type
-typedef float hType_f;
-// Aliased INT type
-typedef int hType_i;
-// Aliased UNSIGNED INT type
-typedef unsigned int hType_u;
+//#define H_DOUBLE_TYPE
+//#define H_LONG_TYPE
 
-constexpr hType_f operator "" _hf(long double val) { return static_cast<hType_f>(val); }
-constexpr hType_i operator "" _hi(unsigned long long int val) { return static_cast<hType_i>(val); }
+// Set floating precision Size
+#ifdef H_DOUBLE_TYPE
+	typedef double hType_f;
+#else
+	typedef float hType_f;
+#endif // H_DOUBLE_TYPE
+
+// Set integral size
+#ifdef H_LONG_TYPE
+	typedef long hType_i;
+#else
+	typedef int hType_i;
+#endif // H_LONG_TYPE
+
+// Aliased UNSIGNED INT type
+typedef unsigned long int hType_u;
+
+constexpr hType_f operator "" _hf(long double val) { return static_cast<::hType_f>(val); }
+constexpr hType_i operator "" _hi(unsigned long long int val) { return static_cast<::hType_i>(val); }
 
 
 namespace hrzn {
@@ -115,6 +135,10 @@ namespace hrzn {
 
 		T lengthManhattan() const { return std::abs(this->x) + std::abs(this->y); }
 
+		/// <summary>
+		/// Find the unit vector of the tuple.
+		/// </summary>
+		/// <returns>A normailized tuple or vector.</returns>
 		ITuple<T> normal() const {
 			double l = length();
 			if (l < H_EPSILON)
@@ -123,6 +147,10 @@ namespace hrzn {
 			return { static_cast<T>(this->x * il), static_cast<T>(this->y * il) };
 		}
 
+		/// <summary>
+		/// Normailize the Tuple in place and return the former length.
+		/// </summary>
+		/// <returns>Original length before normalizing.</returns>
 		double normalize() {
 			double l = length();
 			if (l < H_EPSILON)
@@ -133,6 +161,10 @@ namespace hrzn {
 			return l;
 		}
 
+		/// <summary>
+		/// Create a new tuple contining the smallest values of x and y where the they are non-zero.
+		/// </summary>
+		/// <returns></returns>
 		ITuple<T> epsilon() const {
 			double small_v = 1.0;
 			if (std::is_floating_point<T>::value)
@@ -205,10 +237,89 @@ namespace hrzn {
 	template <typename T>
 	ITuple<T> operator ~ (const ITuple<T>& a) { return ITuple<T>(a.y, a.x); }
 
-	// Type aliases for Tuples of FLOAT types.
+
+#define _GENERATE_MATHF(F) \
+	template <typename T> inline ITuple<T> F(const ITuple<T>& a) { \
+		return { std::F(a.x), std::F(a.y) }; }
+
+	_GENERATE_MATHF(sqrt)
+	_GENERATE_MATHF(abs)
+	_GENERATE_MATHF(round)
+	_GENERATE_MATHF(floor)
+	_GENERATE_MATHF(ceil)
+	_GENERATE_MATHF(trunc)
+
+#undef _GENERATE_MATHF
+
+#define _GENERATE_MATH_AND(F) \
+	template <typename T> inline bool F(const ITuple<T>& a) { \
+		return std::F(a.x) && std::F(a.y); }
+
+	_GENERATE_MATH_AND(isnormal)
+	_GENERATE_MATH_AND(isfinite)
+
+#undef _GENERATE_MATH_AND
+
+#define _GENERATE_MATH_OR(F) \
+	template <typename T> inline bool F(const ITuple<T>& a) { \
+		return std::F(a.x) || std::F(a.y); }
+
+	_GENERATE_MATH_OR(isnan)
+	_GENERATE_MATH_OR(isinf)
+	_GENERATE_MATH_OR(signbit)
+
+#undef _GENERATE_MATH_OR
+
+	/// Type aliases for Tuples of FLOAT types.
 	using hVector = ITuple<hType_f>;
-	// Type alias for Tuples of INT types.
+	/// Type alias for Tuples of INT types.
 	using hPoint = ITuple<hType_i>;
+
+	/// <summary>
+	/// An array of unit vectors containinf the vertices of a quadrilateral.
+	/// </summary>
+	constexpr ITuple<hType_f> h_quad[] = {
+		{0._hf, 0._hf},
+		{1._hf, 0._hf},
+		{1._hf, 1._hf},
+		{0._hf, 1._hf}
+	};
+
+	/// <summary>
+	/// An array contained the point offsets for each corner in a box or area.
+	/// </summary>
+	constexpr ITuple<hType_i> h_corner[4] = {
+		{0_hi, 0_hi},
+		{1_hi, 0_hi},
+		{1_hi, 1_hi},
+		{0_hi, 1_hi}
+	};
+
+	/// <summary>
+	/// An array containing all offsets for a 4-way neighborhood.
+	/// </summary>
+	constexpr ITuple<hType_i> h_neighborhood4[] = {
+		{ 0_hi, -1_hi},
+		{ 1_hi,  0_hi},
+		{ 0_hi,  1_hi},
+		{-1_hi,  0_hi},
+		{ 0_hi,  0_hi}
+	};
+
+	/// <summary>
+	/// An array containing all offsets for a 4-way neighborhood.
+	/// </summary>
+	constexpr ITuple<hType_i> h_neighborhood8[] = {
+		{ 0_hi, -1_hi},
+		{ 1_hi, -1_hi},
+		{ 1_hi,  0_hi},
+		{ 1_hi,  1_hi},
+		{ 0_hi,  1_hi},
+		{-1_hi,  1_hi},
+		{-1_hi,  0_hi},
+		{-1_hi, -1_hi},
+		{ 0_hi,  0_hi}
+	};
 
 	/// <summary>
 	/// A class for managing rotations and angles.
@@ -325,8 +436,6 @@ namespace hrzn {
 		hArea data types
 	******************************************************************************************************************/
 
-	struct hArea_iterable; // Forward declaration
-	
 	/// <summary>
 	/// A class for managing coordinates of a 2D area.
 	/// </summary>
@@ -341,10 +450,6 @@ namespace hrzn {
 		constexpr hArea(hType_i x_1, hType_i y_1, hType_i x_2, hType_i y_2) : x1(x_1), y1(y_1), x2(x_2), y2(y_2) {}
 
 		explicit constexpr hArea(hPoint p1, hPoint p2) : x1(p1.x), y1(p1.y), x2(p2.x), y2(p2.y) {}
-
-		hArea_iterable iterable() const;
-		hArea_iterable iterate_x(int y) const;
-		hArea_iterable iterate_y(int x) const;
 
 		hArea& operator +=(hPoint dist) {
 			move(dist.x, dist.y);
@@ -399,11 +504,8 @@ namespace hrzn {
 			}
 		}
 
-		hArea normalize() const {
-			if (valid())
-				return hArea(0, 0, x2 - x1, y2 - y1);
-			else
-				return hArea();
+		hArea normalized() const {
+			return hArea(0, 0, x2 - x1, y2 - y1);
 		}
 
 		hPoint clamp(const hPoint& pt) const {
@@ -428,36 +530,35 @@ namespace hrzn {
 			return { width(), height() };
 		}
 
+		hPoint first() const {
+			return { x1, x1 };
+		}
+
+		hPoint last() const {
+			return { x2, y2 };
+		}
+
 		std::size_t area() const {
 			return width() * height();
 		}
 
-		hPoint start() const {
-			return { x1, y1 };
-		}
-
-		hPoint end() const {
-			return { x2, y2 };
+		hPoint corner(int i) const {
+			switch (i) {
+			case(H_CORNER_TOPLEFT):
+				return { x1, y1 };
+			case(H_CORNER_TOPRIGHT):
+				return { x2 - 1, y1 };
+			case(H_CORNER_LOWERRIGHT):
+				return { x2 - 1, y2 - 1 };
+			case(H_CORNER_LOWERLEFT):
+				return { x1, y2 - 1 };
+			default:
+				throw std::out_of_range("Index is not a valid corner.");
+			}
 		}
 
 		hPoint center() const {
 			return { (x2 - x1) / 2 + x1, (y2 - y1) / 2 + y1 };
-		}
-
-		hPoint upperLeft() const {
-			return { x1, y1 };
-		}
-
-		hPoint upperRight() const {
-			return { x2, y1 };
-		}
-
-		hPoint bottomLeft() const {
-			return { x1, y2 };
-		}
-
-		hPoint bottomRight() const {
-			return { x2, y2 };
 		}
 
 		bool contains(const hPoint& pt) const {
@@ -468,29 +569,8 @@ namespace hrzn {
 			return x >= x1 && x < x2 && y >= y1 && y < y2;
 		}
 
-		/// Create an hArea object using position, width, and height.
-		static hArea build(hType_i x, hType_i y, hType_i width, hType_i height) {
-			return hArea(x, y, x + width, y + height);
-		}
-
-		// Create an hArea object that contains all listed points.
-		static hArea buildBoundary(std::initializer_list<hPoint> pts) {
-			hArea r; // (pts.begin()->x, pts.begin()->y, pts.begin()->x, pts.begin()->y);
-			for (auto p : pts) {
-				r.x1 = std::min(r.x1, p.x);
-				r.y1 = std::min(r.y1, p.y);
-				r.x2 = std::max(r.x2, p.x);
-				r.y2 = std::max(r.y2, p.y);
-			}
-			return r;
-		}
-
-		static hArea buildRadius(hType_i x, hType_i y, hType_i radius) {
-			return hArea(x - radius, y - radius, x + radius, y + radius);
-		}
-
-		static hArea intersect(const hArea& a, const hArea& b) {
-			return hArea(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
+		bool contains(const hArea& other) {
+			return false;
 		}
 
 	}; // struct hArea
@@ -499,71 +579,12 @@ namespace hrzn {
 		return a.x1 == b.x1 && a.y1 == b.y1 && a.x2 == b.x2 && a.y2 == b.y2;
 	}
 
-
-	/// <summary>
-	/// A helper class for iterating through all points in an area.
-	/// </summary>
-	struct hArea_iterable : public hArea {
-
-		struct iterator : public hPoint {
-			using iterator_category = std::forward_iterator_tag;
-			using difference_type = std::ptrdiff_t;
-
-			iterator(hType_i i, hType_i w, hType_i x, hType_i y) : m_i(i), m_w(w), m_x(x), m_y(y) {
-				hPoint::x = m_x + (hType_i)(m_i % m_w);
-				hPoint::y = m_y + (hType_i)(m_i / m_w);
-			}
-
-			hPoint& operator*() { return *this; }
-			hPoint* operator->() { return this; }
-
-			// Prefix increment
-			iterator& operator++() {
-				m_i++;
-				hPoint::x = m_x + (hType_i)(m_i % m_w);
-				hPoint::y = m_y + (hType_i)(m_i / m_w);
-				return *this;
-			}
-
-			// Postfix increment
-			iterator operator++(int) {
-				iterator tmp = *this;
-				++(*this);
-				return tmp;
-			}
-
-			friend bool operator== (const iterator& a, const iterator& b) { return a.m_i == b.m_i; };
-			friend bool operator!= (const iterator& a, const iterator& b) { return a.m_i != b.m_i; };
-
-			std::size_t index() { return m_i; }
-
-		private:
-			std::size_t m_i;
-			const hType_i m_w, m_x, m_y;
-		};
-
-		hArea_iterable(const hArea& _area) : hArea(_area) {}
-
-		iterator begin() {
-			return iterator(0, width(), x1, y1);
-		}
-
-		iterator end() {
-			return iterator(area(), width(), x1, y1);
-		}
-
-	}; // struct IterableRect
-
-	inline hArea_iterable hArea::iterable() const {
-		return hArea_iterable(*this);
+	inline hArea operator+(const hArea& a, const hPoint& b) {
+		return hArea(a.first() + b, a.last() + b);
 	}
 
-	inline hArea_iterable hArea::iterate_x(int y) const {
-		return hArea_iterable({this->x1, y, this->x2, y});
-	}
-
-	inline hArea_iterable hArea::iterate_y(int x) const {
-		return hArea_iterable({ x, this->y1, x, this->y2 });
+	inline hArea intersect(const hArea& a, const hArea& b) {
+		return hArea(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
 	}
 
 
@@ -621,6 +642,38 @@ namespace hrzn {
 				return (x - x1) + (y - y1) * width();
 			throw std::out_of_range("Point not located in Matrix.");
 		}
+
+	public:
+		struct Iterator : hPoint {
+			using iterator_category = std::forward_iterator_tag;
+			using difference_type = std::ptrdiff_t;
+
+			IMap& map;
+
+			Iterator(IMap& m, hPoint p) : map(m), hPoint(p) {}
+
+			T& operator *() { return map.at(x, y); }
+			T* operator ->() { return &map.at(x, y); }
+
+			// Prefix increment
+			Iterator& operator++() {
+				y = y + (x == (map.x2 - 1_hi));
+				x = (x - map.x1 + 1) % map.width() + map.x1;
+				return *this;
+			}
+
+			// Postfix increment
+			Iterator operator++(int) {
+				Iterator tmp = *this;
+				++(*this);
+				return tmp;
+			}
+
+		}; // struct IMap>T>::Iterator
+
+		Iterator begin() { return Iterator(*this, { x1, x1 }); }
+		Iterator end() { return Iterator(*this, { x1, y2 }); }
+
 	}; // class IMap<T>
 
 
@@ -629,7 +682,7 @@ namespace hrzn {
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	template <typename T>
-	class ISubMap : public IMap<T> {
+	class HMapRef : public IMap<T> {
 	private:
 		IMap<T>* m_source;
 	public:
@@ -639,7 +692,7 @@ namespace hrzn {
 		using IMap<T>::set;
 		using base = IMap<T>;
 
-		ISubMap(const hArea& area, base& mat) : base(area), m_source(&mat) {}
+		HMapRef(const hArea& area, base& mat) : base(area), m_source(&mat) {}
 
 		operator bool() const override { return m_source->operator bool(); }
 
@@ -652,12 +705,18 @@ namespace hrzn {
 		base* source() { return m_source; }
 
 		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
-			//hArea new_rect = hArea::intersect(*this, { xa, ya, xb, yb });
-			//hArea::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
-			hArea::resize(xa, ya, xb, yb);
+			hArea new_rect = intersect(*this, { xa, ya, xb, yb });
+			hArea::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
+			//hArea::resize(xa, ya, xb, yb);
 		}
 
-	}; // class ISubMap<T>
+	}; // class HMapRef<T>
+
+	template<typename T>
+	HMapRef<T> ReferenceArea(hArea area, IMap<T> & map) {
+		hArea i_area = hrzn::intersect(area, map);
+		return HMapRef<T>(i_area, map);
+	}
 
 
 	/// <summary>
@@ -681,9 +740,9 @@ namespace hrzn {
 
 		HMap() : base(hArea()) {}
 		HMap(std::size_t w, std::size_t h) : base(hArea(w, h)), m_contents(new T[w * h]) {}
-		HMap(std::size_t w, std::size_t h, const T& obj) : base(hArea(w, h)), m_contents(new T[w * h]) { for (auto& i : (*this)) i = obj; }
+		HMap(std::size_t w, std::size_t h, const T& obj) : base(hArea(w, h)), m_contents(new T[w * h]) { for (int i = 0; i < (w * h); ++i) m_contents[i] = obj; }
 		HMap(const hArea& rect) : base(rect), m_contents(new T[rect.area()]) {}
-		HMap(const hArea& rect, const T& obj) : base(rect), m_contents(new T[rect.area()]) { for (auto& i : (*this)) i = obj; }
+		HMap(const hArea& rect, const T& obj) : base(rect), m_contents(new T[rect.area()]) { for (int i = 0; i < rect.area(); ++i) m_contents[i] = obj; }
 
 		HMap(const HMap<T>& other) : base(other), m_contents(new T[other.area()]) {
 			std::copy(other.m_contents, other.m_contents + other.area(), m_contents);
@@ -693,9 +752,6 @@ namespace hrzn {
 			delete[] m_contents;
 			m_contents = nullptr;
 		}
-
-		T* begin() { return m_contents; }
-		T* end() { return &m_contents[this->area()]; }
 
 		HMap<T>& operator =(const HMap<T>& other) {
 			if (this != &other) {
@@ -748,7 +804,7 @@ namespace hrzn {
 
 	// Bitwise AND operation between two boolean Matrices
 	inline HMap<bool> operator & (const IMap<bool>& a, const IMap<bool>& b) {
-		HMap<bool> result(hArea::intersect(a, b));
+		HMap<bool> result(intersect(a, b));
 		for (int y = result.y1; y < result.y2; ++y)
 			for (int x = result.x1; x < result.x2; ++x)
 				result.set(x, y, a.at(x, y) && b.at(x, y));
@@ -757,7 +813,7 @@ namespace hrzn {
 
 	// Bitwise OR operation between two boolean Matrices
 	inline HMap<bool> operator | (const IMap<bool>& a, const IMap<bool>& b) {
-		HMap<bool> result(hArea::intersect(a, b));
+		HMap<bool> result(intersect(a, b));
 		for (int y = result.y1; y < result.y2; ++y)
 			for (int x = result.x1; x < result.x2; ++x)
 				result.set(x, y, a.at(x, y) || b.at(x, y));
@@ -766,7 +822,7 @@ namespace hrzn {
 
 	// Bitwise XOR operation between two boolean Matrices
 	inline HMap<bool> operator ^ (const IMap<bool>& a, const IMap<bool>& b) {
-		HMap<bool> result(hArea::intersect(a, b));
+		HMap<bool> result(intersect(a, b));
 		for (int y = result.y1; y < result.y2; ++y)
 			for (int x = result.x1; x < result.x2; ++x)
 				result.set(x, y, a.at(x, y) && b.at(x, y));
@@ -829,15 +885,6 @@ namespace hrzn {
 		}
 
 	}; // struct hTransform
-
-
-	constexpr hPoint h_corner [4] = {
-				{0, 0},
-				{1, 0},
-				{1, 1},
-				{0, 1}
-		};
-
 
 	struct IPolygon {
 
@@ -912,10 +959,6 @@ namespace hrzn {
 		hBox(hArea area) : v1(area.x1, area.y1), v2(area.x2, area.y2) {}
 
 		hVector get(std::size_t index) const override {
-			//if (index == 0) return { v1.x, v1.x };
-			//if (index == 1) return { v2.x, v1.y };
-			//if (index == 2) return { v2.x, v2.y };
-			//if (index == 3) return { v1.x, v2.y };
 			return { (&v1)[h_corner[index].x].x, (&v1)[h_corner[index].y].y };
 		}
 
@@ -930,7 +973,7 @@ namespace hrzn {
 		hQuad(hTransform tform) : hTransform(tform) {}
 
 		hVector get(std::size_t index) const override {
-			return position + rotation.rotate(scale * hVector(h_corner[index].x - 0.5_hf, h_corner[index].y - 0.5f));
+			return position + rotation.rotate(scale * hVector(h_quad[index].x - 0.5_hf, h_quad[index].y - 0.5_hf));
 		}
 
 	}; // struct hQuad
