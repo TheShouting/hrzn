@@ -36,7 +36,7 @@ int main() {
 
 	hrzn::HMap<char> map(20,20);
 	map.fill('.');
-	hrzn::scatter(&map, ':', 0.9);
+	hrzn::scatter(map, ':', 0.9);
 	map.at(3, 3) = 'X';
 
 	std::cout << hrzn::toStringTable(map) << "\n";
