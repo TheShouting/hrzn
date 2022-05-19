@@ -120,33 +120,6 @@ namespace hrzn
 			};
 			Assert::ExpectException<std::out_of_range>(f);
 		}
-
-		TEST_METHOD(HMap_CopyAndCompare) {
-			char val1 = 'X';
-			char val2 = '+';
-			hrzn::hPoint loc = { 2, 2 };
-
-			hrzn::HMap<char> map_a({ 0, 0, 4, 4 }, '.');
-			map_a.set(loc, val1);
-
-			for (int i = 0; i < 4; ++i)
-				map_a.set(map_a.corner(i), val2);
-
-			hrzn::HMap<char> map_b = hrzn::duplicate<char>(map_a);
-
-			Assert::AreEqual(val1, map_b.at(loc), L"Direct equivelence failure.");
-			Assert::AreEqual(val2, map_b.at(map_b.corner(0)), L"Comparison failure at corner 0.");
-			Assert::AreEqual(val2, map_b.at(map_b.corner(1)), L"Comparison failure at corner 1.");
-			Assert::AreEqual(val2, map_b.at(map_b.corner(2)), L"Comparison failure at corner 2.");
-			Assert::AreEqual(val2, map_b.at(map_b.corner(3)), L"Comparison failure at corner 3.");
-
-
-			for (int i = 0; i < 4; ++i)
-				map_b.set(map_b.corner(i), val1);
-
-			Assert::IsFalse(hrzn::compare(map_a, map_b), L"Comparison function faild.");
-		}
-
 		TEST_METHOD(HMap_Iterator) {
 			hrzn::HMap<int> map(100, 100, -1);
 
@@ -198,4 +171,80 @@ namespace hrzn
 		}
 	};
 
+
+
+	TEST_CLASS(HTL_Utility) {
+		TEST_METHOD(Util_DuplicateAndCompare) {
+			char val1 = 'X';
+			char val2 = '+';
+			hrzn::hPoint loc = { 2, 2 };
+
+			hrzn::HMap<char> map_a({ 0, 0, 4, 4 }, '.');
+			map_a.set(loc, val1);
+
+			for (int i = 0; i < 4; ++i)
+				map_a.set(map_a.corner(i), val2);
+
+			hrzn::HMap<char> map_b = hrzn::duplicate<char>(map_a);
+
+			Assert::AreEqual(val1, map_b.at(loc), L"Direct equivelence failure.");
+			Assert::AreEqual(val2, map_b.at(map_b.corner(0)), L"Comparison failure at corner 0.");
+			Assert::AreEqual(val2, map_b.at(map_b.corner(1)), L"Comparison failure at corner 1.");
+			Assert::AreEqual(val2, map_b.at(map_b.corner(2)), L"Comparison failure at corner 2.");
+			Assert::AreEqual(val2, map_b.at(map_b.corner(3)), L"Comparison failure at corner 3.");
+
+
+			for (int i = 0; i < 4; ++i)
+				map_b.set(map_b.corner(i), val1);
+
+			Assert::IsFalse(hrzn::compare(map_a, map_b), L"Comparison function faild.");
+		}
+
+		TEST_METHOD(Util_IsEdgePoint) {
+			hrzn::hArea area = { 1, 2, 12, 13 };
+			int error = 0;
+			for (int i = 0; i < 4; ++i) {
+				if (!hrzn::isEdgePoint(area, area.corner(i)))
+					error++;
+			}
+			Assert::AreEqual(0, error, L"Edge detection failure.");
+			Assert::IsFalse(hrzn::isEdgePoint(area, area.center()), L"False positive test for center.");
+		}
+
+		TEST_METHOD(Util_OverlapAndContain) {
+			hrzn::hArea area1 = { -10, -10, 50, 50 };
+			hrzn::hArea area2 = { 20, 25, 100, 100 };
+			hrzn::hArea area3 = { -3, -1, 10, 10 };
+			Assert::IsTrue(hrzn::overlapping(area1, area2), L"Failed overlap test.");
+			Assert::IsFalse(hrzn::overlapping(area3, area2), L"False positive overlap test.");
+			Assert::IsTrue(hrzn::overlapping(area1, area3), L"Failed contained overlap test.");
+
+			
+			Assert::IsTrue(hrzn::contains(area1, area3), L"Contains test false negative.");
+			Assert::IsFalse(hrzn::contains(area1, area2), L"Contains test false positive.");
+			Assert::IsTrue(hrzn::contains(area1, area3.center()), L"Contain point failure.");
+			Assert::IsFalse(hrzn::contains(area1, hPoint{ 1000, 1000 }), L"Outside contain point failure.");
+		}
+
+		TEST_METHOD(Util_CastCopyFunction) {
+			HMap<bool> map_bool({ 50, 50 }, false);
+			HMap<int> map_int({ 2, 4, 30, 30 }, 99);
+
+			hrzn::copy(map_int, map_bool);
+
+			std::size_t count = 0;
+			for (auto b : map_bool) {
+				if (b) count++;
+			}
+			Assert::AreEqual(map_int.area(), count, L"Incomplete copy or cast failure.");
+
+			int error = 0;
+			for (int x, y = map_int.y1; y < map_int.y2; ++y)
+				for (x = map_int.x1; x < map_int.x2; ++x)
+					if (!map_bool.at(x, y)) error++;
+			Assert::AreEqual(0, error, L"Malformed copy.");
+
+		}
+
+	};
 }

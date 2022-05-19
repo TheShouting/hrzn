@@ -152,55 +152,135 @@ namespace hrzn {
 		Matrix Operations
 	******************************************************************************************************************/
 
+	/// <summary>
+	/// Compare the intersecting area of two maps. Returns true of all equivelantly positioned cells area the same.
+	/// </summary>
 	template <typename T>
 	inline bool compare(const IMap<T>& a, const IMap<T>& b) {
 		hArea area = hrzn::intersect(a, b);
-		for (int y = area.y1; y < area.y2; ++y)
-			for (int x = area.x1; x < area.x2; ++x)
-				if (a.at(x, y) != b.at(x, y))
-					return false;
+		HRZN_FOREACH_POINT(area, x, y) {
+			if (a.at(x, y) != b.at(x, y))
+				return false;
+		}
 		return true;
 	}
 
+	/// <summary>
+	/// Copy all cells from the intersection area of both maps. Can optionally specify a conversion function.
+	/// </summary>
 	template <typename Ta, typename Tb>
-	inline void copy(const IMap<Tb>& from, IMap<Tb>& to, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
+	inline void copy(const IMap<Ta>& from, IMap<Tb>& to, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
 		hArea area = hrzn::intersect(from, to);
-		for (int y = area.y1; y < area.y2; ++y)
-			for (int x = area.x1; x < area.x2; ++x)
-				to.set(x, y, cast(from.at(x, y)));
+		HRZN_FOREACH_POINT(area, x, y) {
+			to.set(x, y, cast(from.at(x, y)));
+		}
 	}
 
+	
 	template <typename Ta, typename Tb>
-	inline HMap<Ta> duplicate(const IMap<Tb>& mat, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
-		HMap<Ta> dup(mat);
-		for (int y = mat.y1; y < mat.y2; ++y)
-			for (int x = mat.x1; x < mat.x2; ++x)
-				dup.set(x, y, cast(mat.at(x, y)));
+	inline HMap<Ta> duplicate(const IMap<Tb>& map, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
+		HMap<Ta> dup(map);
+		HRZN_FOREACH_POINT(map, x, y) {
+			dup.set(x, y, cast(map.at(x, y)));
+		}
 		return dup;
 	}
 
 	template <typename T>
-	inline void fill(IMap<T>& mat, const hArea area, const T& fill_obj) {
-		hArea fill_area = hrzn::intersect(mat, area);
-		for (int y = fill_area.y1; y < fill_area.y2; ++y)
-			for (int x = fill_area.x1; x < fill_area.x2; ++x)
-				mat.set(x, y, fill_obj);
-	}
-
-	template <typename T, typename Tf>
-	inline void fill_each(IMap<T>& mat, Tf& fill_func) {
-		for (int y = mat.y1; y < mat.y2; ++y)
-			for (int x = mat.x1; x < mat.x2; ++x)
-				mat.set(x, y, fill_func());
+	inline void fill(IMap<T>& map, const T& fill_obj) {
+		HRZN_FOREACH_POINT(map, x, y) {
+			map.set(x, y, fill_obj);
+		}
 	}
 
 	template <typename T>
-	inline void maskfill(IMap<T>& mat, const IMap<bool>& mask, const T& fill_obj) {
-		hArea fill_area = hrzn::intersect(mat, mask);
-		for (int y = fill_area.y1; y < fill_area.y2; ++y)
-			for (int x = fill_area.x1; x < fill_area.x2; ++x)
-				if (mask.at(x, y))
-					mat.set(x, y, fill_obj);
+	inline void fill(IMap<T>& map, const hArea area, const T& fill_obj) {
+		hArea fill_area = hrzn::intersect(map, area);
+		HRZN_FOREACH_POINT(fill_area, x, y) {
+			map.set(x, y, fill_obj);
+		}
+	}
+
+	template <typename T, typename Tf>
+	inline void fill_each(IMap<T>& map, Tf& fill_func) {
+		HRZN_FOREACH_POINT(map, x, y) {
+			map.set(x, y, fill_func());
+		}
+	}
+
+	template <typename T>
+	inline void maskfill(IMap<T>& map, const T& fill_obj, const IMap<bool>& mask) {
+		hArea fill_area = hrzn::intersect(map, mask);
+		HRZN_FOREACH_POINT(fill_area, x, y) {
+			if (mask.at(x, y))
+				map.set(x, y, fill_obj);
+		}
+	}
+
+	template <typename T>
+	inline HMap<bool> select(const IMap<T>& map, const T& i) {
+		HMap<bool> mask((hArea)map, false);
+		HRZN_FOREACH_POINT(map, x, y) {
+			mask.set(x, y, map.at(x, y) == i);
+		}
+		return mask;
+	}
+
+	template <typename T>
+	inline std::vector<T> projectFromPoint(const IMap<T>& map, hPoint first, int length, hPoint direction) {
+		std::vector<T> list;
+		for (int i = 0; i < length; ++i) {
+			hPoint pt = first + (direction * i);
+			if (map.contains(pt)) {
+				list.push_back(map.at(pt));
+			}
+			else {
+				return list;
+			}
+		}
+		return list;
+	}
+
+	template <typename T>
+	inline HMap<T> transposeListToMap(hArea area, T* list) {
+		HMap<T> map(area);
+
+		for (int x = map.x1; x < map.x2; ++x) {
+			for (int y = map.y1; y < map.y2; ++y)
+				map.set(x, y, *list);
+			list++;
+		}
+		return map;
+	}
+
+	template <typename T>
+	inline std::vector<T> transposeMapToList(const IMap<T>& map) {
+		std::vector<T> list;
+		list.reserve(map.area());
+		int i = 0;
+		for (int y = map.y1; y < map.y2; ++y)
+			for (int x = map.x1; x < map.x2; ++x)
+				list.emplace_back(map.at(x, y));
+		return list;
+	}
+
+	template <typename T>
+	inline HMap<T> transposeListToMap(hType_u width, hType_u height, T* list) {
+		return transposeListToMap(hArea(width, height), list);
+	}
+
+
+
+	/******************************************************************************************************************
+		Map generation algorithms
+	******************************************************************************************************************/
+
+	template <typename T>
+	inline void scatter(IMap<T>& map, T val, double threshold) {
+		HRZN_FOREACH_POINT(map, x, y) {
+			if (((double)std::rand() / (double)RAND_MAX) > threshold)
+				map.set(x, y, val);
+		}
 	}
 
 	template <typename T>
@@ -243,65 +323,12 @@ namespace hrzn {
 				mask->set(x, y, neighbor_counts.at(x, y) >= birth_rate);
 	}
 
-	template <typename T>
-	inline void scatter(IMap<T>& mat, T val, double threshold) {
-		for (auto i : mat.iterable()) {
-			if (((double)std::rand() / (double)RAND_MAX) > threshold)
-				mat.set((hPoint)i, val);
-		}
-	}
-
-	template <typename T>
-	inline HMap<bool> select(const IMap<T>& map, const T& i) {
-		HMap<bool> mask((hArea)map, false);
-		for (auto p : map.iterable())
-			mask.set(p, map.at(p) == i);
-		return mask;
-	}
-
-	template <typename T>
-	inline std::vector<T> projectFromPoint(const IMap<T>& map, hPoint first, int length, hPoint direction) {
-		std::vector<T> list;
-		for (int i = 0; i < length; ++i) {
-			hPoint pt = first + (direction * i);
-			if (map.contains(pt)) {
-				list.push_back(map.at(pt));
-			}
-			else {
-				return list;
-			}
-		}
-		return list;
-	}
-
-	template <typename T>
-	inline HMap<T> transposeListToMap(hArea area, T* list) {
-		HMap<T> map(area);
-
-		for (int x = map.x1; x < map.x2; ++x) {
-			for (int y = map.y1; y < map.y2; ++y)
-				map.set(x, y, *list);
-			list++;
-		}
-		return map;
-	}
-
-	template <typename T>
-	inline std::vector<T> transposeMapToList(const IMap<T>& map) {
-		std::vector<T> list;
-		list.reserve(map.area());
-		int i = 0;
-		for (int y = map.y1; y < map.y2; ++y)
-			for (int x = map.x1; x < map.x2; ++x)
-				list.emplace_back(map.at(x, y));
-		return list;
-	}
 
 
-	template <typename T>
-	inline HMap<T> transposeListToMap(hType_u width, hType_u height, T* list) {
-		return transposeListToMap(hArea(width, height), list);
-	}
+	/******************************************************************************************************************
+		Transformation and Polygon Methods
+	******************************************************************************************************************/
+
 
 	inline hBox boundingBox(const IPolygon& polygon) {
 		hVector min = polygon.get(0);
@@ -317,53 +344,6 @@ namespace hrzn {
 		return { min, max };
 	}
 
-	std::vector<hPoint> bresenham(hPoint a, hPoint b)
-	{
-		std::vector<hPoint> list;
-		//int dx, dy, p, x, y;
-		int p, last;
-
-
-		hPoint d;
-		hPoint out;
-
-		//dx = b.x - a.x;
-		//dy = b.y - a.y;
-		if (a.x > b.x) {
-			d = a - b;
-			out = b;
-			last = a.x;
-		}
-		else {
-			d = b - a;
-			out = a;
-			last = b.x;
-		}
-
-		//x = a.x;
-		//y = a.y;
-
-		p = 2 * d.y - d.x;
-
-		while (out.x < b.x)
-		{
-			list.push_back(out);
-			if (p >= 0)
-			{
-				//putpixel(x, y, 7);
-				out.y = out.y + 1;
-				p = p + 2 * d.y - 2 * d.x;
-			}
-			else
-			{
-				//putpixel(x, y, 7);
-				p = p + 2 * d.y;
-			}
-			out.x = out.x + 1;
-
-		}
-		return list;
-	}
 
 	/******************************************************************************************************************
 		Lerping Methods

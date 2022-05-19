@@ -43,11 +43,22 @@ SOFTWARE.
 #define H_CORNER_LOWERRIGHT 2
 #define H_CORNER_LOWERLEFT 3
 
-#define HRZN_FOREACH_POINT(A, X, Y) for (int X, Y = A.y1; Y < A.y2; ++Y) for (X = A.x1; X < A.x2; ++X) 
 
 #define _TO_STRING_DEFERRED(n) #n
 #define _TO_STRING(n) _TO_STRING_DEFERRED(n)
 #define THROW_NOT_IMPLEMENTED(m) throw std::runtime_error(m " not implemented at line: " _TO_STRING(__LINE__) ", " _TO_STRING(__FILE__))
+
+#define _GENERATE_MATH_AND(F) \
+	template <typename T> inline bool F(const ITuple<T>& a) { \
+		return std::F(a.x) && std::F(a.y); }
+
+#define _GENERATE_MATH_OR(F) \
+	template <typename T> inline bool F(const ITuple<T>& a) { \
+		return std::F(a.x) || std::F(a.y); }
+
+#define _GENERATE_MATHF(F) \
+	template <typename T> inline ITuple<T> F(const ITuple<T>& a) { \
+		return { std::F(a.x), std::F(a.y) }; }
 
 
 //#define H_DOUBLE_TYPE
@@ -73,6 +84,7 @@ typedef unsigned long int hType_u;
 constexpr hType_f operator "" _hf(long double val) { return static_cast<::hType_f>(val); }
 constexpr hType_i operator "" _hi(unsigned long long int val) { return static_cast<::hType_i>(val); }
 
+#define HRZN_FOREACH_POINT(A, X, Y) for (hType_i X, Y = A.y1; Y < A.y2; ++Y) for (X = A.x1; X < A.x2; ++X) 
 
 namespace hrzn {
 
@@ -237,11 +249,6 @@ namespace hrzn {
 	template <typename T>
 	ITuple<T> operator ~ (const ITuple<T>& a) { return ITuple<T>(a.y, a.x); }
 
-
-#define _GENERATE_MATHF(F) \
-	template <typename T> inline ITuple<T> F(const ITuple<T>& a) { \
-		return { std::F(a.x), std::F(a.y) }; }
-
 	_GENERATE_MATHF(sqrt)
 	_GENERATE_MATHF(abs)
 	_GENERATE_MATHF(round)
@@ -249,26 +256,13 @@ namespace hrzn {
 	_GENERATE_MATHF(ceil)
 	_GENERATE_MATHF(trunc)
 
-#undef _GENERATE_MATHF
-
-#define _GENERATE_MATH_AND(F) \
-	template <typename T> inline bool F(const ITuple<T>& a) { \
-		return std::F(a.x) && std::F(a.y); }
-
 	_GENERATE_MATH_AND(isnormal)
 	_GENERATE_MATH_AND(isfinite)
-
-#undef _GENERATE_MATH_AND
-
-#define _GENERATE_MATH_OR(F) \
-	template <typename T> inline bool F(const ITuple<T>& a) { \
-		return std::F(a.x) || std::F(a.y); }
 
 	_GENERATE_MATH_OR(isnan)
 	_GENERATE_MATH_OR(isinf)
 	_GENERATE_MATH_OR(signbit)
 
-#undef _GENERATE_MATH_OR
 
 	/// Type aliases for Tuples of FLOAT types.
 	using hVector = ITuple<hType_f>;
@@ -980,3 +974,9 @@ namespace hrzn {
 
 
 } // namespace hrzn
+
+#undef THROW_NOT_IMPLEMENTED
+
+#undef _GENERATE_MATHF
+#undef _GENERATE_MATH_AND
+#undef _GENERATE_MATH_OR
