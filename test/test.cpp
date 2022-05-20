@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "CppUnitTest.h"
 
+#include <type_traits>
+
 #include "../include/htl/hrzn.h"
 #include "../include/htl/utility.h"
 
@@ -17,6 +19,19 @@ namespace hrzn
 	TEST_CLASS(HTL_BasicTypes)
 	{
 	public:
+
+		TEST_METHOD(hType_TypeTraits) {
+			Assert::IsTrue(std::is_arithmetic<hType_i>(), L"Test integral is arithmetic failure.");
+			Assert::IsTrue(std::is_integral<hType_i>(), L"Test is integral failure.");
+			Assert::IsTrue(std::is_signed<hType_i>(), L"Test integral signed failure.");
+
+			Assert::IsTrue(std::is_arithmetic<hType_f>(), L"Test floating point arithmetic failure.");
+			Assert::IsTrue(std::is_floating_point<hType_f>(), L"Test is floating point failure.");
+
+			Assert::IsTrue(std::is_arithmetic<hType_u>(), L"Test unsigned is arithmetic failure.");
+			Assert::IsTrue(std::is_integral<hType_u>(), L"Test unsigned is integral failure.");
+			Assert::IsFalse(std::is_signed<hType_u>(), L"Test unsigned failure.");
+		}
 
 		TEST_METHOD(hTuple_BasicOperators) {
 			int ax = 10;
@@ -38,6 +53,15 @@ namespace hrzn
 
 			Assert::AreEqual({ b.y, b.x }, ~b, L"Swizzle failed.");
 			Assert::AreEqual({ -b.x, -b.y }, -b, L"Invert failed.");
+
+		}
+
+		TEST_METHOD(IndexAccessorTest) {
+			
+			hPoint p{ 3, 11 };
+
+			Assert::AreEqual(3, p[0], L"Index 0 failure on point.");
+			Assert::AreEqual(11, p[1], L"Index 1 failure on point.");
 
 		}
 

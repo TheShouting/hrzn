@@ -249,19 +249,19 @@ namespace hrzn {
 	template <typename T>
 	ITuple<T> operator ~ (const ITuple<T>& a) { return ITuple<T>(a.y, a.x); }
 
-	_GENERATE_MATHF(sqrt)
-	_GENERATE_MATHF(abs)
-	_GENERATE_MATHF(round)
-	_GENERATE_MATHF(floor)
-	_GENERATE_MATHF(ceil)
-	_GENERATE_MATHF(trunc)
+	_GENERATE_MATHF(sqrt);
+	_GENERATE_MATHF(abs);
+	_GENERATE_MATHF(round);
+	_GENERATE_MATHF(floor);
+	_GENERATE_MATHF(ceil);
+	_GENERATE_MATHF(trunc);
 
-	_GENERATE_MATH_AND(isnormal)
-	_GENERATE_MATH_AND(isfinite)
+	_GENERATE_MATH_AND(isnormal);
+	_GENERATE_MATH_AND(isfinite);
 
-	_GENERATE_MATH_OR(isnan)
-	_GENERATE_MATH_OR(isinf)
-	_GENERATE_MATH_OR(signbit)
+	_GENERATE_MATH_OR(isnan);
+	_GENERATE_MATH_OR(isinf);
+	_GENERATE_MATH_OR(signbit);
 
 
 	/// Type aliases for Tuples of FLOAT types.

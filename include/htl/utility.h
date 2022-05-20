@@ -131,7 +131,7 @@ namespace hrzn {
 	/// <summary>
 	/// Split the area of a <type>URect</type> along its longest axis into two smaller ones.
 	/// </summary>
-	/// <param name="rec">The <type>Urect</type> area to be split</param>
+	/// <param name="area">The <type>hArea</type> to be split</param>
 	/// <returns>A container with the new URect objects. If <paramref name="rec"/> is only a single cell (width and height are equal to 1), then both are simply a copy of the orignal parameter. </returns>
 	inline std::pair<hArea, hArea> split(const hArea& area) {
 		hArea a1 = area;
@@ -176,7 +176,9 @@ namespace hrzn {
 		}
 	}
 
-	
+	/// <summary>
+	/// Create a duplicate map from an existing map with an optional conversion method.
+	/// </summary>
 	template <typename Ta, typename Tb>
 	inline HMap<Ta> duplicate(const IMap<Tb>& map, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
 		HMap<Ta> dup(map);
