@@ -52,9 +52,9 @@ SOFTWARE.
 	template <typename T> inline bool F(const ITuple<T>& a) { \
 		return std::F(a.x) && std::F(a.y); }
 
-#define _GENERATE_MATH_OR(F) \
-	template <typename T> inline bool F(const ITuple<T>& a) { \
-		return std::F(a.x) || std::F(a.y); }
+#define _GENERATE_MATH_B(F) \
+	template <typename T> inline ITuple<bool> F##_b(const ITuple<T>& a) { \
+		return {std::F(a.x), std::F(a.y)}; }
 
 #define _GENERATE_MATHF(F) \
 	template <typename T> inline ITuple<T> F(const ITuple<T>& a) { \
@@ -87,6 +87,20 @@ constexpr hType_i operator "" _hi(unsigned long long int val) { return static_ca
 #define HRZN_FOREACH_POINT(A, X, Y) for (hType_i X, Y = A.y1; Y < A.y2; ++Y) for (X = A.x1; X < A.x2; ++X) 
 
 namespace hrzn {
+
+	template<typename T, bool = std::is_floating_point_v<T>>
+	struct vEpsilon {};
+
+	template<typename T>
+	struct vEpsilon<T, false> {
+		inline static T value = 1_hi;
+	};
+
+	template<typename T>
+	struct vEpsilon<T, true> {
+		inline static T value = H_EPSILON;
+	};
+
 
 	/******************************************************************************************************************
 		Transform data types (Vectors/Tuples and Rotations)
@@ -178,14 +192,11 @@ namespace hrzn {
 		/// </summary>
 		/// <returns></returns>
 		ITuple<T> epsilon() const {
-			double small_v = 1.0;
-			if (std::is_floating_point<T>::value)
-				small_v = H_EPSILON;
-			double vx = static_cast<double>(x);
-			double x_sign = std::signbit(vx) * -2.0 + 1.0;
-			double vy = static_cast<double>(y);
-			double y_sign = std::signbit(vy) * -2.0 + 1.0;
-			return { std::max(small_v, std::abs(vx)) * x_sign, std::max(small_v, std::abs(vy)) * y_sign};
+			return { vEpsilon<T>::value, vEpsilon<T>::value };
+		}
+
+		ITuple<T> epsilonSigned() const {
+			return { vEpsilon<T>::value * (T)std::signbit((double)this->x) * -2 + 1, vEpsilon<T>::value * (T)std::signbit((double)this->y) * -2 + 1 };
 		}
 
 	}; // struct ITuple<T>
@@ -259,10 +270,11 @@ namespace hrzn {
 	_GENERATE_MATH_AND(isnormal);
 	_GENERATE_MATH_AND(isfinite);
 
-	_GENERATE_MATH_OR(isnan);
-	_GENERATE_MATH_OR(isinf);
-	_GENERATE_MATH_OR(signbit);
-
+	_GENERATE_MATH_B(isnormal);
+	_GENERATE_MATH_B(isfinite);
+	_GENERATE_MATH_B(isnan);
+	_GENERATE_MATH_B(isinf);
+	_GENERATE_MATH_B(signbit);
 
 	/// Type aliases for Tuples of FLOAT types.
 	using hVector = ITuple<hType_f>;

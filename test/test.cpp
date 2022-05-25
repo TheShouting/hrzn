@@ -20,6 +20,38 @@ namespace hrzn
 	{
 	public:
 
+		TEST_METHOD(vEpsilon_TypeTest) {
+			
+#define ASSERT_EPSILON(T) Assert::AreNotEqual(T(0), vEpsilon<T>::value, L#T)
+
+			ASSERT_EPSILON(bool);
+			
+			ASSERT_EPSILON(char);
+			ASSERT_EPSILON(unsigned char);
+
+			ASSERT_EPSILON(int);
+			ASSERT_EPSILON(unsigned int);
+
+			ASSERT_EPSILON(long);
+			ASSERT_EPSILON(unsigned long);
+
+			ASSERT_EPSILON(std::size_t);
+
+			ASSERT_EPSILON(float);
+			ASSERT_EPSILON(double);
+
+		}
+
+		TEST_METHOD(ITuple_EpsilonTest) {
+			Assert::AreNotEqual(hrzn::hVector(), hrzn::hVector().epsilon(), L"hVector epsilon failure.");
+			Assert::AreNotEqual(hrzn::hPoint(), hrzn::hPoint().epsilon(), L"hPoint epsilon failure.");
+
+
+			Assert::AreNotEqual(hrzn::hVector(), hrzn::hVector().epsilonSigned(), L"hVector epsilonSigned failure.");
+			Assert::AreNotEqual(hrzn::hPoint(), hrzn::hPoint().epsilonSigned(), L"hPoint epsilonSigned failure.");
+		}
+		}
+
 		TEST_METHOD(hType_TypeTraits) {
 			Assert::IsTrue(std::is_arithmetic<hType_i>(), L"Test integral is arithmetic failure.");
 			Assert::IsTrue(std::is_integral<hType_i>(), L"Test is integral failure.");
