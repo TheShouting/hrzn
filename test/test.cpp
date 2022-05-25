@@ -50,7 +50,6 @@ namespace hrzn
 			Assert::AreNotEqual(hrzn::hVector(), hrzn::hVector().epsilonSigned(), L"hVector epsilonSigned failure.");
 			Assert::AreNotEqual(hrzn::hPoint(), hrzn::hPoint().epsilonSigned(), L"hPoint epsilonSigned failure.");
 		}
-		}
 
 		TEST_METHOD(hType_TypeTraits) {
 			Assert::IsTrue(std::is_arithmetic<hType_i>(), L"Test integral is arithmetic failure.");
