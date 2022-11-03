@@ -31,19 +31,27 @@ SOFTWARE.
 #include <iterator>
 #include <vector>
 
-#define H_PI 3.1415926535897932384626433832795_hf
-#define H_DEGTORAD 0.017453_hf
-#define H_RADTODEG 57.29578_hf
-#define H_DEG 360.0_hf
-#define H_RAD 6.283185307179586476925286766559_hf
-#define H_EPSILON 1.192092896e-07_hf
+#define H_PI		3.1415926535897932384626433832795_hf
+#define H_DEGTORAD	0.017453_hf
+#define H_RADTODEG	57.29578_hf
+#define H_DEG		360.0_hf
+#define H_RAD		6.283185307179586476925286766559_hf
+#define H_EPSILON	1.192092896e-07_hf
 
-#define H_CORNER_TOPLEFT 0
-#define H_CORNER_TOPRIGHT 1
-#define H_CORNER_LOWERRIGHT 2
-#define H_CORNER_LOWERLEFT 3
+#define H_TOPLEFT		0
+#define H_TOPRIGHT		1
+#define H_LOWERRIGHT	2
+#define H_LOWERLEFT		3
 
-
+#define H_DIR_N		0
+#define H_DIR_NE	1
+#define H_DIR_E		2
+#define H_DIR_SE	3
+#define H_DIR_S		4
+#define H_DIR_SW	5
+#define H_DIR_W		6
+#define H_DIR_NW	7
+ 
 #define _TO_STRING_DEFERRED(n) #n
 #define _TO_STRING(n) _TO_STRING_DEFERRED(n)
 #define THROW_NOT_IMPLEMENTED(m) throw std::runtime_error(m " not implemented at line: " _TO_STRING(__LINE__) ", " _TO_STRING(__FILE__))
@@ -550,13 +558,13 @@ namespace hrzn {
 
 		hPoint corner(int i) const {
 			switch (i) {
-			case(H_CORNER_TOPLEFT):
+			case(H_TOPLEFT):
 				return { x1, y1 };
-			case(H_CORNER_TOPRIGHT):
+			case(H_TOPRIGHT):
 				return { x2 - 1, y1 };
-			case(H_CORNER_LOWERRIGHT):
+			case(H_LOWERRIGHT):
 				return { x2 - 1, y2 - 1 };
-			case(H_CORNER_LOWERLEFT):
+			case(H_LOWERLEFT):
 				return { x1, y2 - 1 };
 			default:
 				throw std::out_of_range("Index is not a valid corner.");
