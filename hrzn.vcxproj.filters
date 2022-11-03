@@ -29,5 +29,11 @@
     <ClInclude Include="include\htl\utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\htl\containers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\htl\geometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

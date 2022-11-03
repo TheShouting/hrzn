@@ -24,8 +24,10 @@ SOFTWARE.
 #pragma once
 
 #include "hrzn.h"
+#include "geometry.h"
+#include "containers.h"
 
-#include <vector>
+#define HRZN_FOREACH_POINT(A, X, Y) for (hType_i X, Y = A.y1; Y < A.y2; ++Y) for (X = A.x1; X < A.x2; ++X) 
 
 namespace hrzn {
 
@@ -63,7 +65,7 @@ namespace hrzn {
 
 	inline hVector getNormalized(hVector const& vec) {
 		double l = vec.length();
-		if (l < H_EPSILON) {
+		if (l < EPSILON) {
 			return hVector();
 		}
 		double il = 1.0f / l;

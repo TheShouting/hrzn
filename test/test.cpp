@@ -4,6 +4,7 @@
 #include <type_traits>
 
 #include "../include/htl/hrzn.h"
+#include "../include/htl/containers.h"
 #include "../include/htl/utility.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -213,7 +214,7 @@ namespace hrzn
 			hArea area = { -10, -10, 110, 110 };
 			hrzn::HMap<char> map(100, 100, '.');
 
-			auto ref1 = hrzn::ReferenceArea(area, map);
+			auto ref1 = hrzn::GetReferenceArea(area, map);
 
 			std::fill(ref1.begin(), ref1.end(), '#');
 

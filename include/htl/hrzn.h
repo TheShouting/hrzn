@@ -29,28 +29,6 @@ SOFTWARE.
 #include <algorithm>
 #include <stdexcept>
 #include <iterator>
-#include <vector>
-
-#define H_PI		3.1415926535897932384626433832795_hf
-#define H_DEGTORAD	0.017453_hf
-#define H_RADTODEG	57.29578_hf
-#define H_DEG		360.0_hf
-#define H_RAD		6.283185307179586476925286766559_hf
-#define H_EPSILON	1.192092896e-07_hf
-
-#define H_TOPLEFT		0
-#define H_TOPRIGHT		1
-#define H_LOWERRIGHT	2
-#define H_LOWERLEFT		3
-
-#define H_DIR_N		0
-#define H_DIR_NE	1
-#define H_DIR_E		2
-#define H_DIR_SE	3
-#define H_DIR_S		4
-#define H_DIR_SW	5
-#define H_DIR_W		6
-#define H_DIR_NW	7
  
 #define _TO_STRING_DEFERRED(n) #n
 #define _TO_STRING(n) _TO_STRING_DEFERRED(n)
@@ -92,9 +70,28 @@ typedef unsigned long int hType_u;
 constexpr hType_f operator "" _hf(long double val) { return static_cast<::hType_f>(val); }
 constexpr hType_i operator "" _hi(unsigned long long int val) { return static_cast<::hType_i>(val); }
 
-#define HRZN_FOREACH_POINT(A, X, Y) for (hType_i X, Y = A.y1; Y < A.y2; ++Y) for (X = A.x1; X < A.x2; ++X) 
-
 namespace hrzn {
+
+	constexpr auto PI = 3.1415926535897932384626433832795_hf;
+	constexpr auto DEGTORAD = 0.017453_hf;
+	constexpr auto RADTODEG = 57.29578_hf;
+	constexpr auto DEG = 360.0_hf;
+	constexpr auto RAD = 6.283185307179586476925286766559_hf;
+	constexpr auto EPSILON = 1.192092896e-07_hf;
+
+	constexpr auto TOPLEFT = 0;
+	constexpr auto TOPRIGHT = 1;
+	constexpr auto LOWERRIGHT = 2;
+	constexpr auto LOWERLEFT = 3;
+
+	constexpr auto DIR_N = 0;
+	constexpr auto DIR_NE = 1;
+	constexpr auto DIR_E = 2;
+	constexpr auto DIR_SE = 3;
+	constexpr auto DIR_S = 4;
+	constexpr auto DIR_SW = 5;
+	constexpr auto DIR_W = 6;
+	constexpr auto DIR_NW = 7;
 
 	template<typename T, bool = std::is_floating_point_v<T>>
 	struct vEpsilon {};
@@ -106,7 +103,7 @@ namespace hrzn {
 
 	template<typename T>
 	struct vEpsilon<T, true> {
-		inline static T value = H_EPSILON;
+		inline static T value = EPSILON;
 	};
 
 
@@ -175,7 +172,7 @@ namespace hrzn {
 		/// <returns>A normailized tuple or vector.</returns>
 		ITuple<T> normal() const {
 			double l = length();
-			if (l < H_EPSILON)
+			if (l < EPSILON)
 				return { 0._hf, 0._hf };
 			double il = 1.0 / l;
 			return { static_cast<T>(this->x * il), static_cast<T>(this->y * il) };
@@ -187,7 +184,7 @@ namespace hrzn {
 		/// <returns>Original length before normalizing.</returns>
 		double normalize() {
 			double l = length();
-			if (l < H_EPSILON)
+			if (l < EPSILON)
 				return 0.0;
 			double il = 1.0 / l;
 			this->x = static_cast<T>(this->x * il);
@@ -366,26 +363,26 @@ namespace hrzn {
 		hRotation operator / (T const& val) const { return hRotation(tau / static_cast<hType_f>(val)); }
 
 		auto addDeg(hType_f deg) {
-			tau += (deg / H_DEG);
-			return tau * H_DEG;
+			tau += (deg / DEG);
+			return tau * DEG;
 		}
 
 		auto addRad(hType_f rad) {
-			tau += (rad / H_RAD);
-			return tau * H_RAD;
+			tau += (rad / RAD);
+			return tau * RAD;
 		}
 
 		void setDeg(hType_f deg) {
-			tau = deg / H_DEG;
+			tau = deg / DEG;
 		}
 
 		void setRad(hType_f rad) {
-			tau = rad / H_RAD;
+			tau = rad / RAD;
 		}
 
-		inline auto deg() const { return tau * H_DEG; }
+		inline auto deg() const { return tau * DEG; }
 
-		inline auto rad() const { return tau * H_RAD; }
+		inline auto rad() const { return tau * RAD; }
 
 		inline void spin(hType_f t) {
 			tau += t;
@@ -408,7 +405,7 @@ namespace hrzn {
 		}
 
 		void setWithVector(hVector vec) {
-			tau = std::atan2(vec.y, vec.x) / H_RAD;
+			tau = std::atan2(vec.y, vec.x) / RAD;
 			tau = tau - std::floor(tau);
 		}
 
@@ -417,7 +414,7 @@ namespace hrzn {
 		}
 
 		hVector getRightVector(hType_f length = 1._hf) const {
-			return hVector(std::cos(rad() + H_PI * 0.5_hf) * length, std::sin(rad() + H_PI * 0.5_hf) * length);
+			return hVector(std::cos(rad() + PI * 0.5_hf) * length, std::sin(rad() + PI * 0.5_hf) * length);
 		}
 
 		hVector rotate(hVector const& vec) const {
@@ -439,9 +436,9 @@ namespace hrzn {
 			return hRotation(diff - std::floor(diff) - 0.5_hf);
 		}
 
-		static hRotation Degrees(hType_f deg) { return hRotation(deg / H_DEG); }
+		static hRotation Degrees(hType_f deg) { return hRotation(deg / DEG); }
 
-		static hRotation Radians(hType_f rad) { return hRotation(rad / H_RAD); }
+		static hRotation Radians(hType_f rad) { return hRotation(rad / RAD); }
 
 	}; // struct hRotation
 
@@ -558,13 +555,13 @@ namespace hrzn {
 
 		hPoint corner(int i) const {
 			switch (i) {
-			case(H_TOPLEFT):
+			case(TOPLEFT):
 				return { x1, y1 };
-			case(H_TOPRIGHT):
+			case(TOPRIGHT):
 				return { x2 - 1, y1 };
-			case(H_LOWERRIGHT):
+			case(LOWERRIGHT):
 				return { x2 - 1, y2 - 1 };
-			case(H_LOWERLEFT):
+			case(LOWERLEFT):
 				return { x1, y2 - 1 };
 			default:
 				throw std::out_of_range("Index is not a valid corner.");
@@ -599,257 +596,6 @@ namespace hrzn {
 
 	inline hArea intersect(const hArea& a, const hArea& b) {
 		return hArea(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
-	}
-
-
-
-	/******************************************************************************************************************
-		Matrix container types
-	******************************************************************************************************************/
-
-	/// <summary>
-	/// Abstract class for all Matrix-like containers and accessors.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	template <typename T>
-	class IMap : public hArea {
-	public:
-
-		using fill_func = T(*)();
-		//using fill_func = std::function<T()>; // TODO add ifdef block to check for cpp compiler version
-
-		bool repeat_boundary = false;
-
-		IMap(const hArea& area) : hArea(area) {}
-
-		virtual ~IMap() {}
-
-		// Common inherited methods
-		T& operator[](hPoint pt) { return at(pt.x, pt.y); }
-		T operator[](hPoint pt) const { return at(pt.x, pt.y); }
-
-		T& at(hPoint p) { return at(p.x, p.y); }
-		T at(hPoint p) const { return at(p.x, p.y); }
-		void set(hPoint p, const T& val) { set(p.x, p.y, val); }
-
-		virtual void fill(const T& obj) {
-			for (hType_i y = y1; y < y2; ++y)
-				for (hType_i x = x1; x < x2; ++x)
-					set(x, y, obj);
-		}
-
-		void fill(fill_func f) {
-			for (hType_i y = y1; y < y2; ++y)
-				for (hType_i x = x1; x < x2; ++x)
-					set(x, y, f());
-		}
-
-		// Abstract methods
-		virtual operator bool() const = 0;
-		virtual T& at(hType_i x, hType_i y) = 0;
-		virtual T at(hType_i x, hType_i y) const = 0;
-		virtual void set(hType_i x, hType_i y, const T& val) = 0;
-
-	protected:
-		std::size_t f_index(hType_i x, hType_i y) const {
-			if (contains(x, y))
-				return (x - x1) + (y - y1) * width();
-			throw std::out_of_range("Point not located in Matrix.");
-		}
-
-	public:
-		struct Iterator : hPoint {
-			using iterator_category = std::forward_iterator_tag;
-			using difference_type = std::ptrdiff_t;
-
-			IMap& map;
-
-			Iterator(IMap& m, hPoint p) : map(m), hPoint(p) {}
-
-			T& operator *() { return map.at(x, y); }
-			T* operator ->() { return &map.at(x, y); }
-
-			// Prefix increment
-			Iterator& operator++() {
-				y = y + (x == (map.x2 - 1_hi));
-				x = (x - map.x1 + 1) % map.width() + map.x1;
-				return *this;
-			}
-
-			// Postfix increment
-			Iterator operator++(int) {
-				Iterator tmp = *this;
-				++(*this);
-				return tmp;
-			}
-
-		}; // struct IMap>T>::Iterator
-
-		Iterator begin() { return Iterator(*this, { x1, x1 }); }
-		Iterator end() { return Iterator(*this, { x1, y2 }); }
-
-	}; // class IMap<T>
-
-
-	/// <summary>
-	/// A helper class used for operating on the sub region of an abstract Matrix parent class.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	template <typename T>
-	class HMapRef : public IMap<T> {
-	private:
-		IMap<T>* m_source;
-	public:
-
-		using IMap<T>::operator[];
-		using IMap<T>::at;
-		using IMap<T>::set;
-		using base = IMap<T>;
-
-		HMapRef(const hArea& area, base& mat) : base(area), m_source(&mat) {}
-
-		operator bool() const override { return m_source->operator bool(); }
-
-		T& at(hType_i x, hType_i y) override { return m_source->at(x, y); }
-
-		T at(hType_i x, hType_i y) const override { return m_source->at(x, y); }
-
-		void set(hType_i x, hType_i y, const T& val) override { m_source->set(x, y, val); }
-
-		base* source() { return m_source; }
-
-		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
-			hArea new_rect = intersect(*this, { xa, ya, xb, yb });
-			hArea::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
-			//hArea::resize(xa, ya, xb, yb);
-		}
-
-	}; // class HMapRef<T>
-
-	template<typename T>
-	HMapRef<T> ReferenceArea(hArea area, IMap<T> & map) {
-		hArea i_area = hrzn::intersect(area, map);
-		return HMapRef<T>(i_area, map);
-	}
-
-
-	/// <summary>
-	/// Map container for storing any variables by position in a 2 dimensional grid.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	template <typename T>
-	class HMap : public IMap<T> {
-	public:
-
-		using IMap<T>::operator[];
-		using IMap<T>::at;
-		using IMap<T>::set;
-		using base = IMap<T>;
-
-	private:
-
-		T* m_contents = nullptr;
-
-	public:
-
-		HMap() : base(hArea()) {}
-		HMap(std::size_t w, std::size_t h) : base(hArea(w, h)), m_contents(new T[w * h]) {}
-		HMap(std::size_t w, std::size_t h, const T& obj) : base(hArea(w, h)), m_contents(new T[w * h]) { for (int i = 0; i < (w * h); ++i) m_contents[i] = obj; }
-		HMap(const hArea& rect) : base(rect), m_contents(new T[rect.area()]) {}
-		HMap(const hArea& rect, const T& obj) : base(rect), m_contents(new T[rect.area()]) { for (int i = 0; i < rect.area(); ++i) m_contents[i] = obj; }
-
-		HMap(const HMap<T>& other) : base(other), m_contents(new T[other.area()]) {
-			std::copy(other.m_contents, other.m_contents + other.area(), m_contents);
-		}
-
-		~HMap() {
-			delete[] m_contents;
-			m_contents = nullptr;
-		}
-
-		HMap<T>& operator =(const HMap<T>& other) {
-			if (this != &other) {
-				delete[] m_contents;
-				m_contents = new T[other.area()];
-				std::copy(other.m_contents, other.m_contents + other.area(), m_contents);
-				hArea::resize(other.x1, other.y1, other.x2, other.y2);
-			}
-			return *this;
-		}
-
-		operator bool() const override { return m_contents; }
-
-		T& operator[](std::size_t i) { return m_contents[i]; }
-
-		const T& operator[](std::size_t i) const { return m_contents[i]; }
-
-		T& at(hType_i x, hType_i y) override {
-			return m_contents[this->f_index(x, y)];
-		}
-
-		T at(hType_i x, hType_i y) const override {
-			return m_contents[this->f_index(x, y)];
-		}
-
-		void set(hType_i x, hType_i y, const T& val) override {
-			m_contents[this->f_index(x, y)] = val;
-		}
-
-		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
-			resize(xa, ya, xb, yb, T());
-		}
-
-		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb, const T& fill_obj) {
-			assert(m_contents != nullptr);
-			hArea new_rect(xa, ya, xb, yb);
-				T* new_block = new T[new_rect.area()];
-				for (hType_i y = new_rect.y1; y < new_rect.y2; ++y)
-					for (hType_i x = new_rect.x1; x < new_rect.x2; ++x) {
-						hType_i i = (x - new_rect.x1) + (y - new_rect.y1) * (hType_i)new_rect.width();
-						new_block[i] = hArea::contains(x, y) ? std::move(m_contents[base::f_index(x, y)]) : fill_obj;
-					}
-				delete[]m_contents;
-				m_contents = new_block;
-			hArea::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
-		}
-
-	}; // class HMap<T>
-
-
-	// Bitwise AND operation between two boolean Matrices
-	inline HMap<bool> operator & (const IMap<bool>& a, const IMap<bool>& b) {
-		HMap<bool> result(intersect(a, b));
-		for (int y = result.y1; y < result.y2; ++y)
-			for (int x = result.x1; x < result.x2; ++x)
-				result.set(x, y, a.at(x, y) && b.at(x, y));
-		return result;
-	}
-
-	// Bitwise OR operation between two boolean Matrices
-	inline HMap<bool> operator | (const IMap<bool>& a, const IMap<bool>& b) {
-		HMap<bool> result(intersect(a, b));
-		for (int y = result.y1; y < result.y2; ++y)
-			for (int x = result.x1; x < result.x2; ++x)
-				result.set(x, y, a.at(x, y) || b.at(x, y));
-		return result;
-	}
-
-	// Bitwise XOR operation between two boolean Matrices
-	inline HMap<bool> operator ^ (const IMap<bool>& a, const IMap<bool>& b) {
-		HMap<bool> result(intersect(a, b));
-		for (int y = result.y1; y < result.y2; ++y)
-			for (int x = result.x1; x < result.x2; ++x)
-				result.set(x, y, a.at(x, y) && b.at(x, y));
-		return result;
-	}
-
-	// Bitwise Invert operation between on a boolean Matrix
-	inline HMap<bool> operator ~ (const IMap<bool>& a) {
-		HMap<bool> result((hArea)a);
-		for (int y = a.y1; y < a.y2; ++y)
-			for (int x = a.x1; x < a.x2; ++x)
-				result.set(x, y, !a.at(x, y));
-		return result;
 	}
 
 
@@ -899,99 +645,6 @@ namespace hrzn {
 		}
 
 	}; // struct hTransform
-
-	struct IPolygon {
-
-		IPolygon() {}
-		virtual ~IPolygon() {}
-
-		virtual std::size_t count() const = 0;
-		virtual hVector get(std::size_t index) const = 0;
-
-		hVector operator[](std::size_t index) const { return get(index); }
-
-		std::vector<hVector> list() const {
-			std::vector<hVector> list;
-			for (int i = 0; i < count(); ++i)
-				list.emplace_back(get(i));
-			return list;
-		}
-
-		hVector center() const {
-			hVector avg;
-			for (int i = 0; i < count(); ++i)
-				avg += get(i);
-			return avg / static_cast<hType_f>(count());
-		}
-
-		hType_f perimeter() const {
-			hType_f length = 0._hf;
-			for (int i = 0; i < count() - 1; ++i)
-				length += (get(i) - get(i + 1)).length();
-			return length;
-		}
-
-		hType_f perimeter_closed() const {
-			hType_f length = 0._hf;
-			for (int i = 0; i < count() - 1; ++i)
-				length += (get(i) - get(i + 1)).length();
-			length += (get(0) - get(count() - 1)).length();
-			return length;
-		}
-
-	}; // struct IPolygon
-
-
-	struct hPolygon : public IPolygon {
-		std::vector<hVector> vertices;
-
-		hPolygon() {}
-		hPolygon(std::initializer_list<hVector> verts) : vertices(verts) {}
-		hPolygon(const IPolygon & polygon) : vertices(polygon.list()) {}
-
-		std::size_t count() const override { return vertices.size(); }
-		hVector get(std::size_t index) const { return vertices[index]; }
-	}; // struct hPolygon
-
-
-	template <unsigned int N>
-	struct IPolygonN : public IPolygon {
-		std::size_t count() const override { return N; }
-	}; // struct IPolygonN<int>
-
-
-	struct hBox : public IPolygonN<4> {
-
-		hVector v1;
-		hVector v2;
-
-		hBox() : v1(0._hf), v2(1._hf) {}
-		hBox(hVector size) : v1(0._hf), v2(size) {}
-		hBox(hVector v1, hVector v2) : v1(v1), v2(v2) {}
-		hBox(hType_f w, hType_f h) : v1(0._hf), v2(w, h) {}
-		hBox(hType_f ax, hType_f ay, hType_f bx, hType_f by) : v1(ax, ay), v2(bx, by) {}
-		hBox(hArea area) : v1(area.x1, area.y1), v2(area.x2, area.y2) {}
-
-		hVector get(std::size_t index) const override {
-			return { (&v1)[h_corner[index].x].x, (&v1)[h_corner[index].y].y };
-		}
-
-	}; // struct hBox
-
-
-	struct hQuad : public hTransform, IPolygonN<4> {
-
-		hQuad() : hTransform() {}
-		hQuad(hType_f w, hType_f h) : hTransform({ 0,0 } ,0.f, {w, h}) {}
-		hQuad(hVector dim) : hTransform() {}
-		hQuad(hTransform tform) : hTransform(tform) {}
-
-		hVector get(std::size_t index) const override {
-			return position + rotation.rotate(scale * hVector(h_quad[index].x - 0.5_hf, h_quad[index].y - 0.5_hf));
-		}
-
-	}; // struct hQuad
-
 
 } // namespace hrzn
 

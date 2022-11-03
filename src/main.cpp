@@ -27,6 +27,7 @@ SOFTWARE.
 *	directory to use.
 */
 #include "htl/hrzn.h"
+#include "htl/containers.h"
 #include "htl/stringify.h"
 #include "htl/utility.h"
 
