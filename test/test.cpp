@@ -215,7 +215,7 @@ namespace hrzn
 		}
 
 		TEST_METHOD(HMap_Iterator) {
-			hrzn::HMap<int> map(100, 100, -1);
+			hrzn::HMap<int> map({7, 13, 111, 97}, -1);
 
 			int i1 = 0;
 			for (auto& cell : map) {
