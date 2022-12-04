@@ -554,18 +554,8 @@ namespace hrzn {
 		}
 
 		hPoint corner(int i) const {
-			switch (i) {
-			case(TOPLEFT):
-				return { x1, y1 };
-			case(TOPRIGHT):
-				return { x2 - 1, y1 };
-			case(LOWERRIGHT):
-				return { x2 - 1, y2 - 1 };
-			case(LOWERLEFT):
-				return { x1, y2 - 1 };
-			default:
-				throw std::out_of_range("Index is not a valid corner.");
-			}
+			if (i < 0 || i > 3) throw std::out_of_range("Index is not a valid corner.");
+			return { x1 + h_corner[i].x * (width() - 1), y1 + h_corner[i].y * (height() - 1) };
 		}
 
 		hPoint center() const {
@@ -594,6 +584,9 @@ namespace hrzn {
 		return hArea(a.first() + b, a.last() + b);
 	}
 
+	/// <summary>
+	/// Create a new Area based on the overlap of two other Area objects.
+	/// </summary>
 	inline hArea intersect(const hArea& a, const hArea& b) {
 		return hArea(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
 	}

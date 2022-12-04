@@ -6,9 +6,14 @@
 namespace hrzn {
 
 	/******************************************************************************************************************
-		Matrix container types
+		Maps and Cells
 	******************************************************************************************************************/
 
+
+	/// <summary>
+	/// Base Cell class which holds a reference to data along with a XY position.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
 	template <typename T>
 	class ICell {
 	protected:
@@ -105,10 +110,50 @@ namespace hrzn {
 					set(x, y, obj);
 		}
 
+		/// <summary>
+		/// Fill map utilizing a value returned by a fill function for each cell.
+		/// </summary>
+		/// <param name="f"></param>
 		void fill(fill_func f) {
 			for (hType_i x, y = y1; y < y2; ++y)
 				for (x = x1; x < x2; ++x)
 					set(x, y, f());
+		}
+
+		/// <summary>
+		/// Swap two cell values in place.
+		/// </summary>
+		virtual void swap(hPoint a, hPoint b) {
+			T value = this->at(a);
+			this->set(a, this->at(b));
+			this->set(b, value);
+		}
+
+		/// <summary>
+		/// Flip the map in place along the X axis.
+		/// </summary>
+		void flipX() {
+			for (hType_i x, y = y1; y < y2; ++y)
+				for (x = 0; x < std::floor(width() / 2); ++x)
+					this->swap({ this->x1 + x, y }, { this->x2 - x - 1, y });
+		}
+
+		/// <summary>
+		/// Flip the map in place along the Y axis.
+		/// </summary>
+		void flipY() {
+			for (hType_i y, x = x1; x < x2; ++x)
+				for (y = 0; y < std::floor(height() / 2); ++y)
+					this->swap({ x, this->y1 + y }, { x, this->y2 - y - 1 });
+		}
+
+		/// <summary>
+		/// Rotate the map 180 deg (equivalent to running both flipX() and flipY() operations).
+		/// </summary>
+		void reverse() {
+			for (hType_i x, y =  0; y < std::floor(height() / 2); ++y)
+				for (x = 0; x < std::floor(width() / 2); ++x)
+					this->swap({ this->x1 + x, this->y1 + y }, { this->x2 - x - 1, this->y2 - y - 1 });
 		}
 
 		// Abstract methods
@@ -192,13 +237,18 @@ namespace hrzn {
 		base* source() { return m_source; }
 
 		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
-			hArea new_rect = intersect(*this, { xa, ya, xb, yb });
+			hArea new_rect = hrzn::intersect(*this, { xa, ya, xb, yb });
 			hArea::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
-			//hArea::resize(xa, ya, xb, yb);
 		}
 
 	}; // class HMapRef<T>
 
+
+	/// <summary>
+	/// Create a referance to a map sub-area.
+	/// </summary>
+	/// <param name="area">The sub area of the base map to reference</param>
+	/// <param name="map">The base map object from which to to create a reference area</param>
 	template<typename T>
 	HMapRef<T> GetReferenceArea(hArea area, IMap<T>& map) {
 		hArea i_area = hrzn::intersect(area, map);
@@ -322,6 +372,16 @@ namespace hrzn {
 		for (int y = a.y1; y < a.y2; ++y)
 			for (int x = a.x1; x < a.x2; ++x)
 				result.set(x, y, !a.at(x, y));
+		return result;
+	}
+
+	// Explicit copy from an abstract map
+	template <typename T>
+	HMap<T> copy(const IMap<T>& map) {
+		HMap<T> result((hArea)map);
+		for (hType_i x, y = map.y1; y < map.y2; ++y)
+			for (x = map.x1; x < map.x2; ++x)
+				result.set(x, y, map.at(x, y));
 		return result;
 	}
 

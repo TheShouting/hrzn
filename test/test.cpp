@@ -107,8 +107,8 @@ namespace hrzn
 				a.corner(-1);
 			};
 
-			Assert::ExpectException<std::out_of_range>(f1, L"Did not catch upper out of reange index.");
-			Assert::ExpectException<std::out_of_range>(f2, L"Did not catch lower out of reange index.");
+			Assert::ExpectException<std::out_of_range>(f1, L"Did not catch upper out of range index.");
+			Assert::ExpectException<std::out_of_range>(f2, L"Did not catch lower out of range index.");
 
 		}
 
@@ -153,7 +153,7 @@ namespace hrzn
 
 	};
 
-	TEST_CLASS(HTL_MapContainter)
+	TEST_CLASS(HTL_Containers)
 	{
 	public:
 
@@ -213,6 +213,7 @@ namespace hrzn
 			};
 			Assert::ExpectException<std::out_of_range>(f);
 		}
+
 		TEST_METHOD(HMap_Iterator) {
 			hrzn::HMap<int> map(100, 100, -1);
 
@@ -231,6 +232,27 @@ namespace hrzn
 				}
 
 			Assert::AreEqual(0, deviations, L"Iterator assignment failure.");
+		}
+
+		TEST_METHOD(HMap_IteratorMacro) {
+			hrzn::HMap<int> map(100, 100, -1);
+
+			int i1 = 0;
+			HRZN_FOREACH_POINT(map, x, y) {
+				map.set(x, y, i1);
+				i1++;
+			}
+
+			int i2 = 0;
+			int deviations = 0;
+			for (int x, y = map.y1; y < map.y2; ++y)
+				for (x = map.x1; x < map.x2; ++x) {
+					if (i2 != map.at(x, y)) deviations++;
+					i2++;
+				}
+
+			Assert::AreEqual(0, deviations, L"Iterator assignment failure.");
+
 		}
 
 		TEST_METHOD(HMap_StdFillTest) {
@@ -261,6 +283,43 @@ namespace hrzn
 					c1++;
 			}
 			Assert::AreEqual(ref1.area(), c1, L"Source map sub-area does not map reference map.");
+		}
+
+
+		TEST_METHOD(IMap_InPlaceTransformations) {
+			
+			const hPoint edge(19, 19);
+
+			const hPoint top_left(0, 0);
+			const hPoint top_right(edge.x, 0);
+			const hPoint bottom_right(edge.x, edge.y);
+			const hPoint bottom_left(0, edge.y);
+
+			hrzn::HMap<char> map(edge.x + 1, edge.y + 1, '?');
+			
+			map.set(top_left, 'A');
+			map.flipX();
+			Assert::AreEqual('A', map.at(top_right), L"flipX() method failed.");
+
+			map.set(top_left, 'B');
+			map.flipY();
+			Assert::AreEqual('B', map.at(bottom_left), L"flipY() method failed.");
+
+			map.set(top_left, 'C');
+			map.reverse();
+			Assert::AreEqual('C', map.at(bottom_right), L"reverse() method failed.");
+		}
+
+		TEST_METHOD(IMap_ExplicitCopyTest) {
+			const hPoint pos = { 10, 10 };
+			hrzn::HMap<char> map(100, 100, '.');
+
+			auto copy = hrzn::copy(map);
+			Assert::IsTrue(copy, L"Copy method failed.");
+			Assert::AreEqual(copy.at(pos), map.at(pos), L"Map improperly copied.");
+
+			copy.set(10, 10, '#');
+			Assert::AreNotEqual(copy.at(pos), map.at(pos), L"Copied map is still improperly referenced.");
 		}
 	};
 
@@ -319,11 +378,11 @@ namespace hrzn
 			Assert::IsFalse(hrzn::contains(area1, hPoint{ 1000, 1000 }), L"Outside contain point failure.");
 		}
 
-		TEST_METHOD(Util_CastCopyFunction) {
+		TEST_METHOD(Util_CastCopyWriteFunction) {
 			HMap<bool> map_bool({ 50, 50 }, false);
 			HMap<int> map_int({ 2, 4, 30, 30 }, 99);
 
-			hrzn::copy(map_int, map_bool);
+			hrzn::copy_write(map_int, map_bool);
 
 			std::size_t count = 0;
 			for (auto b : map_bool) {

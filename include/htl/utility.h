@@ -168,10 +168,10 @@ namespace hrzn {
 	}
 
 	/// <summary>
-	/// Copy all cells from the intersection area of both maps. Can optionally specify a conversion function.
+	/// Copy all cells from the intersection area of one map into another. Can optionally specify a conversion function.
 	/// </summary>
 	template <typename Ta, typename Tb>
-	inline void copy(const IMap<Ta>& from, IMap<Tb>& to, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
+	inline void copy_write(const IMap<Ta>& from, IMap<Tb>& to, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
 		hArea area = hrzn::intersect(from, to);
 		HRZN_FOREACH_POINT(area, x, y) {
 			to.set(x, y, cast(from.at(x, y)));
