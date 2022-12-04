@@ -9,6 +9,65 @@ namespace hrzn {
 		Matrix container types
 	******************************************************************************************************************/
 
+	template <typename T>
+	class ICell {
+	protected:
+		hType_i x, y;
+	public:
+
+
+		ICell() : hPoint() {}
+		ICell(hPoint _position) : x(_position.x), y(_position.y) {}
+		ICell(hType_i _x, hType_i _y) : x(_x), y(_y) {}
+
+		hPoint position() const { return { x, y }; }
+
+		T& operator *() { return get(); }
+		T* operator ->() { return &(get()); }
+
+		void operator=(const ICell<T>& other) {
+			x = other.x;
+			y = other.y;
+			get() = other.get();
+		}
+
+		operator bool() { return x != 0 && y != 0; }
+
+		operator hPoint() const { return { x, y }; }
+
+		bool operator ==(const hPoint & other) { return x == other.x && y == other.y; }
+		bool operator ==(const ICell<T> & other) { return x == other.x && y == other.y; }
+		bool operator !=(const ICell<T> & other) { return x != other.x || y != other.y; }
+
+		void setPosition(hPoint _position) { setPosition(_position.x, _position.y); }
+		void setPosition(hType_i _x, hType_i _y) { x = _x; y = _y; }
+
+		virtual T& get() = 0;
+		virtual T get() const = 0;
+
+	};
+
+
+
+	template <typename T>
+	class Cell : public ICell<T> {
+	private:
+		T m_contents;
+	public:
+		using ICell<T>::get;
+
+		Cell() : hPoint(), m_contents() {}
+		Cell(hType_i _x, hType_i _y) : ICell<T>(_x, _y), m_contents() {}
+		Cell(hPoint _position) : ICell<T>(_position), m_contents() {}
+		Cell(hType_i _x, hType_i _y, const T & _contents) : ICell<T>(_x, _y), m_contents(_contents) {}
+		Cell(hPoint _position, const T & _contents) : ICell<T>(_position), m_contents(_contents) {}
+		//Cell(const ICell<T> _other) : ICell<T>(_other), m_contents(_other.get()) {}
+
+		T& get() override { return m_contents; }
+		T get() const override { return m_contents; }
+	};
+
+
 	/// <summary>
 	/// Abstract class for all Matrix-like containers and accessors.
 	/// </summary>
@@ -34,6 +93,12 @@ namespace hrzn {
 		T at(hPoint p) const { return at(p.x, p.y); }
 		void set(hPoint p, const T& val) { set(p.x, p.y, val); }
 
+		Cell<T> getCell(const hPoint & _p) const { return Cell<T>(_p, at(_p)); }
+
+		/// <summary>
+		/// Fill entire map with a single value.
+		/// </summary>
+		/// <param name="obj">The value with which to fill the map.</param>
 		virtual void fill(const T& obj) {
 			for (hType_i y = y1; y < y2; ++y)
 				for (hType_i x = x1; x < x2; ++x)
@@ -41,8 +106,8 @@ namespace hrzn {
 		}
 
 		void fill(fill_func f) {
-			for (hType_i y = y1; y < y2; ++y)
-				for (hType_i x = x1; x < x2; ++x)
+			for (hType_i x, y = y1; y < y2; ++y)
+				for (x = x1; x < x2; ++x)
 					set(x, y, f());
 		}
 
@@ -60,21 +125,27 @@ namespace hrzn {
 		}
 
 	public:
-		struct Iterator : hPoint {
+		class Iterator : public ICell<T> {
+		public:
+			using ICell<T>::get;
+
 			using iterator_category = std::forward_iterator_tag;
 			using difference_type = std::ptrdiff_t;
 
 			IMap& map;
 
-			Iterator(IMap& m, hPoint p) : map(m), hPoint(p) {}
+			Iterator(IMap& m, hPoint p) : ICell<T>(p), map(m) {}
 
-			T& operator *() { return map.at(x, y); }
-			T* operator ->() { return &map.at(x, y); }
+			//T& operator *() { return map.at(x, y); }
+			//T* operator ->() { return &map.at(x, y); }
+			
+			T& get() override { return map.at(this->x, this->y); }
+			T get() const override { return map.at(this->x, this->y); }
 
 			// Prefix increment
 			Iterator& operator++() {
-				y = y + (x == (map.x2 - 1_hi));
-				x = (x - map.x1 + 1) % map.width() + map.x1;
+				this->y = this->y + (this->x == (map.x2 - 1_hi));
+				this->x = (this->x - map.x1 + 1) % map.width() + map.x1;
 				return *this;
 			}
 
