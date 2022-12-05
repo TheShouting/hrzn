@@ -337,7 +337,7 @@ namespace hrzn
 			for (int i = 0; i < 4; ++i)
 				map_a.set(map_a.corner(i), val2);
 
-			hrzn::HMap<char> map_b = hrzn::duplicate<char>(map_a);
+			hrzn::HMap<char> map_b = hrzn::copy_each<char>(map_a);
 
 			Assert::AreEqual(val1, map_b.at(loc), L"Direct equivelence failure.");
 			Assert::AreEqual(val2, map_b.at(map_b.corner(0)), L"Comparison failure at corner 0.");
@@ -382,7 +382,7 @@ namespace hrzn
 			HMap<bool> map_bool({ 50, 50 }, false);
 			HMap<int> map_int({ 2, 4, 30, 30 }, 99);
 
-			hrzn::copy_write(map_int, map_bool);
+			hrzn::copy_into(map_int, map_bool);
 
 			std::size_t count = 0;
 			for (auto b : map_bool) {
@@ -395,6 +395,48 @@ namespace hrzn
 				for (x = map_int.x1; x < map_int.x2; ++x)
 					if (!map_bool.at(x, y)) error++;
 			Assert::AreEqual(0, error, L"Malformed copy.");
+
+		}
+
+		TEST_METHOD(Util_TransposeListToMap_Undersized) {
+
+			const int size = 67;
+			const int value = 42;
+			hrzn::hArea area(8, 3, 97, 53);
+
+			std::vector<int> list;
+			for (int i = 0; i < size; ++i)
+				list.emplace_back(value);
+
+			auto map = hrzn::transposeListToMap<int>(area, list.begin(), list.end());
+			Assert::IsTrue(area == (hrzn::hArea)map, L"Map incorrectly created.");
+
+			int count = 0;
+			for (const auto& cell : map)
+				if (cell == value) ++count;
+
+			Assert::AreEqual(size, count, L"Copy failed while transposing undersized list to map.");
+		}
+
+		TEST_METHOD(Util_TransposeListToMap_Oversized) {
+
+			const int value = 42;
+			hrzn::hArea area(8, 3, 97, 53);
+			const int size = (area.width() * area.height() + 13);
+
+			std::vector<int> list;
+			for (int i = 0; i < size; ++i)
+				list.emplace_back(value);
+
+			auto map = hrzn::transposeListToMap<int>(area, list.begin(), list.end());
+			Assert::IsTrue(area == (hrzn::hArea)map, L"Map incorrectly created.");
+
+			int count = 0;
+			for (const auto& cell : map)
+				if (cell == value) ++count;
+			
+			int area_size = area.area();
+			Assert::AreEqual(area_size, count, L"Copy failed while transposing oversized list to map.");
 
 		}
 

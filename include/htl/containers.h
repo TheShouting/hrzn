@@ -27,9 +27,6 @@ namespace hrzn {
 
 		hPoint position() const { return { x, y }; }
 
-		T& operator *() { return get(); }
-		T* operator ->() { return &(get()); }
-
 		void operator=(const ICell<T>& other) {
 			x = other.x;
 			y = other.y;
@@ -151,9 +148,10 @@ namespace hrzn {
 		/// Rotate the map 180 deg (equivalent to running both flipX() and flipY() operations).
 		/// </summary>
 		void reverse() {
-			for (hType_i x, y =  0; y < std::floor(height() / 2); ++y)
-				for (x = 0; x < std::floor(width() / 2); ++x)
-					this->swap({ this->x1 + x, this->y1 + y }, { this->x2 - x - 1, this->y2 - y - 1 });
+			//for (hType_i x, y =  0; y < std::floor(height() / 2); ++y)
+			//	for (x = 0; x < std::floor(width() / 2); ++x)
+			//		this->swap({ this->x1 + x, this->y1 + y }, { this->x2 - x - 1, this->y2 - y - 1 });
+			std::reverse(this->begin(), this->end());
 		}
 
 		// Abstract methods
@@ -174,18 +172,23 @@ namespace hrzn {
 		public:
 			using ICell<T>::get;
 
-			using iterator_category = std::forward_iterator_tag;
+			using iterator_category = std::bidirectional_iterator_tag;
 			using difference_type = std::ptrdiff_t;
+			using value_type = T;
+			using pointer = T*;
+			using reference = T&;
 
 			IMap& map;
 
 			Iterator(IMap& m, hPoint p) : ICell<T>(p), map(m) {}
 
-			//T& operator *() { return map.at(x, y); }
-			//T* operator ->() { return &map.at(x, y); }
-			
-			T& get() override { return map.at(this->x, this->y); }
-			T get() const override { return map.at(this->x, this->y); }
+			reference operator *() { return get(); }
+			pointer operator ->() { return &(get()); }
+
+			reference get() override { return map.at(this->x, this->y); }
+			value_type get() const override { return map.at(this->x, this->y); }
+
+			operator bool() { return *this != map.end(); }
 
 			// Prefix increment
 			Iterator& operator++() {
@@ -201,9 +204,24 @@ namespace hrzn {
 				return tmp;
 			}
 
+			// Prefix decrement
+			Iterator& operator--() {
+				this->y = this->y - (this->x == (map.x1));
+				this->x = (this->x - map.x1 - 1 + map.width()) % map.width() + map.x1;
+				return *this;
+			}
+
+			// Postfix decrement
+			Iterator operator--(int) {
+				Iterator tmp = *this;
+				--(*this);
+				return tmp;
+			}
+
+
 		}; // struct IMap>T>::Iterator
 
-		Iterator begin() { return Iterator(*this, { x1, x1 }); }
+		Iterator begin() { return Iterator(*this, { x1, y1 }); }
 		Iterator end() { return Iterator(*this, { x1, y2 }); }
 
 	}; // class IMap<T>
@@ -254,6 +272,40 @@ namespace hrzn {
 		hArea i_area = hrzn::intersect(area, map);
 		return HMapRef<T>(i_area, map);
 	}
+
+
+	template <typename T, typename TRef>
+	class MapReader : public IMap<T> {
+	public:
+		using IMap<T>::operator[];
+		using IMap<T>::at;
+		using IMap<T>::set;
+		using base = IMap<T>;
+	private:
+
+		T TRef::* m_member_ptr;
+
+		IMap<TRef>* m_reference;
+
+	public:
+
+		MapReader(IMap<TRef>& reference, T TRef::* m_ptr) : base((hArea)reference), m_reference(&reference), m_member_ptr(m_ptr) {}
+
+		operator bool() const override { return m_reference->operator bool(); }
+
+		T& at(hType_i x, hType_i y) override { return m_reference->at(x, y).*m_member_ptr; }
+
+		T at(hType_i x, hType_i y) const override { return m_reference->at(x, y).*m_member_ptr; }
+
+		void set(hType_i x, hType_i y, const T& val) override { m_reference->at(x, y).*m_member_ptr = val; }
+
+		void resize(hType_i xa, hType_i ya, hType_i xb, hType_i yb) override {
+			hArea new_rect = hrzn::intersect(*this, { xa, ya, xb, yb });
+			hArea::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
+		}
+	};
+
+
 
 
 	/// <summary>

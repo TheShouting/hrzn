@@ -32,7 +32,7 @@ SOFTWARE.
 namespace hrzn {
 
 	/******************************************************************************************************************
-		Transform Operations
+		Basic Type Operations
 	******************************************************************************************************************/
 
 	inline hPoint clampPoint(const hPoint& p, const hArea& area) {
@@ -80,11 +80,6 @@ namespace hrzn {
 		return hPoint(std::round(vec.x), std::round(vec.y));
 	}
 
-
-	/******************************************************************************************************************
-		hArea Operations
-	******************************************************************************************************************/
-
 	inline bool overlapping(const hArea& a, const hArea& b) {
 		return !(a.x1 > b.x2 || a.y1 > b.y2 || b.x1 > a.x2 || b.y1 > a.y2);
 	}
@@ -123,12 +118,21 @@ namespace hrzn {
 		return hArea(pos.x - radius, pos.y - radius, pos.x + radius, pos.y + radius);
 	}
 
-	/// Create an hArea object using offset, size.
+	/// Create an hArea object using offset and size.
 	inline hArea makeAreaOffsetAndSize(const hPoint offset, const hPoint size) {
 		return hArea(offset.x, offset.y, offset.x + size.x, offset.y + size.y);
 	}
 
+	/// Swap x and y values.
+	template<typename T>
+	inline ITuple<T> swizzle(const ITuple<T>& t) {
+		return { t.y, t.x };
+	}
 
+	/// Swap width and height values (same as rotating 90 deg)
+	inline hArea swizzle(const hArea& a) {
+		return hArea(a.y1, a.x1, a.y2, a.x2);
+	}
 
 	/// <summary>
 	/// Split the area of a <type>URect</type> along its longest axis into two smaller ones.
@@ -151,11 +155,11 @@ namespace hrzn {
 	}
 
 	/******************************************************************************************************************
-		Matrix Operations
+		Map Operations
 	******************************************************************************************************************/
 
 	/// <summary>
-	/// Compare the intersecting area of two maps. Returns true of all equivelantly positioned cells area the same.
+	/// Compare the intersecting area of two maps. Returns true if all cells in the intersection are the same.
 	/// </summary>
 	template <typename T>
 	inline bool compare(const IMap<T>& a, const IMap<T>& b) {
@@ -166,12 +170,27 @@ namespace hrzn {
 		}
 		return true;
 	}
+	
+	/// <summary>
+	/// Find and replaces all matched values in map with another.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="map">The map on which the operation is performed in-place.</param>
+	/// <param name="find">The value to search for in the map.</param>
+	/// <param name="replace">The value with which to replace all found values.</param>
+	template <typename T>
+	inline void replace(IMap<T>& map, const T& find, const T& replace) {
+		HRZN_FOREACH_POINT(map, x, y) {
+			if (map.at(x, y) == find)
+				map.at(x, y) = replace;
+		}
+	}
 
 	/// <summary>
-	/// Copy all cells from the intersection area of one map into another. Can optionally specify a conversion function.
+	/// Copy all cells from the intersection area of one map into another. Can optionally specify a conversion function (defaults to static cast).
 	/// </summary>
 	template <typename Ta, typename Tb>
-	inline void copy_write(const IMap<Ta>& from, IMap<Tb>& to, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
+	inline void copy_into(const IMap<Ta>& from, IMap<Tb>& to, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
 		hArea area = hrzn::intersect(from, to);
 		HRZN_FOREACH_POINT(area, x, y) {
 			to.set(x, y, cast(from.at(x, y)));
@@ -182,14 +201,20 @@ namespace hrzn {
 	/// Create a duplicate map from an existing map with an optional conversion method.
 	/// </summary>
 	template <typename Ta, typename Tb>
-	inline HMap<Ta> duplicate(const IMap<Tb>& map, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
-		HMap<Ta> dup(map);
+	inline HMap<Ta> copy_each(const IMap<Tb>& map, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
+		HMap<Ta> dup((hArea)map);
 		HRZN_FOREACH_POINT(map, x, y) {
 			dup.set(x, y, cast(map.at(x, y)));
 		}
 		return dup;
 	}
 
+	/// <summary>
+	/// Fill a map in place with specified value.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="map">The map which is modified in-place.</param>
+	/// <param name="fill_obj">The value with which to fill the map.</param>
 	template <typename T>
 	inline void fill(IMap<T>& map, const T& fill_obj) {
 		HRZN_FOREACH_POINT(map, x, y) {
@@ -197,6 +222,13 @@ namespace hrzn {
 		}
 	}
 
+	/// <summary>
+	/// Fill a map in place but only in the provided area.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="map">The map which is modified in-place.</param>
+	/// <param name="area">The area within which the operation is performed.</param>
+	/// <param name="fill_obj">The value with which to fill the map.</param>
 	template <typename T>
 	inline void fill(IMap<T>& map, const hArea area, const T& fill_obj) {
 		hArea fill_area = hrzn::intersect(map, area);
@@ -205,6 +237,13 @@ namespace hrzn {
 		}
 	}
 
+	/// <summary>
+	/// Fill the entire map in place utilizing a pure function.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="Tf"></typeparam>
+	/// <param name="map"></param>
+	/// <param name="fill_func"></param>
 	template <typename T, typename Tf>
 	inline void fill_each(IMap<T>& map, Tf& fill_func) {
 		HRZN_FOREACH_POINT(map, x, y) {
@@ -212,8 +251,16 @@ namespace hrzn {
 		}
 	}
 
+
+	/// <summary>
+	/// Fill a map in place using another map of booleans as a mask. If the value for the corresponding mask position is <c>true</c>, the value at that position in the map is replaced with the provided value.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="map">The map which is modified in-place.</param>
+	/// <param name="fill_obj">The value used to fill the map.</param>
+	/// <param name="mask">A boolean map to be used as a mask.</param>
 	template <typename T>
-	inline void maskfill(IMap<T>& map, const T& fill_obj, const IMap<bool>& mask) {
+	inline void fill_mask(IMap<T>& map, const T& fill_obj, const IMap<bool>& mask) {
 		hArea fill_area = hrzn::intersect(map, mask);
 		HRZN_FOREACH_POINT(fill_area, x, y) {
 			if (mask.at(x, y))
@@ -221,9 +268,14 @@ namespace hrzn {
 		}
 	}
 
+	/// <summary>
+	/// Generate a boolean map based on whether each value in the map is equivelent to the provided value.
+	/// </summary>
+	/// <param name="map">The map reference to search.</param>
+	/// <param name="i">The value with which to compare each cell in the map.</param>
 	template <typename T>
 	inline HMap<bool> select(const IMap<T>& map, const T& i) {
-		HMap<bool> mask((hArea)map, false);
+		HMap<bool> mask((hArea)map);
 		HRZN_FOREACH_POINT(map, x, y) {
 			mask.set(x, y, map.at(x, y) == i);
 		}
@@ -246,34 +298,74 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	inline HMap<T> transposeListToMap(hArea area, T* list) {
-		HMap<T> map(area);
-
-		for (int x = map.x1; x < map.x2; ++x) {
-			for (int y = map.y1; y < map.y2; ++y)
-				map.set(x, y, *list);
-			list++;
-		}
-		return map;
-	}
-
-	template <typename T>
 	inline std::vector<T> transposeMapToList(const IMap<T>& map) {
-		std::vector<T> list;
+		std::vector<T> list(;
 		list.reserve(map.area());
-		int i = 0;
-		for (int y = map.y1; y < map.y2; ++y)
-			for (int x = map.x1; x < map.x2; ++x)
-				list.emplace_back(map.at(x, y));
+		for (const auto& cell : map)
+			list.emplace_back(cell);
 		return list;
 	}
 
-	template <typename T>
-	inline HMap<T> transposeListToMap(hType_u width, hType_u height, T* list) {
-		return transposeListToMap(hArea(width, height), list);
+	/// <summary>
+	/// Create a map of the specified area and fill it from a list.
+	/// </summary>
+	template <typename T, typename TForwardIterator>
+	inline HMap<T> transposeListToMap(hArea area, TForwardIterator first, TForwardIterator last) {
+		HMap<T> map(area);
+		auto itr_map = map.begin();
+
+		while (itr_map != map.end() && first != last) {
+			*itr_map = *first;
+			++itr_map;
+			++first;
+		}
+
+		return map;
+	}
+
+	/// <summary>
+	/// Create a map of the specified area and fill it from a list.
+	/// </summary>
+	template <typename T, typename TForwardIterator>
+	inline HMap<T> transposeListToMap(hType_u width, hType_u height, TForwardIterator first, TForwardIterator last) {
+		return transposeListToMap<T, TForwardIterator>(hArea(width, height), first, last);
 	}
 
 
+	template<typename T>
+	HMap<T> swizzle_map(const IMap<T>& map) {
+		HMap<T> rotated(hrzn::swizzle((hArea)map));
+
+		HRZN_FOREACH_POINT(map, x, y) {
+			rotated.set(y, x, map.at(x, y));
+		}
+
+		return rotated;
+	}
+
+
+	template<typename T>
+	HMap<T> rotate_map(const IMap<T>& map, int turns) {
+		turns = ((turns % 4) + 4) % 4;
+
+		HMap<T> rotated;
+		switch (turns) {
+		case(1):
+			rotated = hrzn::swizzle_map(map);
+			rotated.flipX();
+			return rotated;
+		case(3):
+			rotated = hrzn::swizzle_map(map);
+			rotated.flipY();
+			return rotated;
+		case(2):
+			rotated = hrzn::copy(map);
+			rotated.reverse();
+			return rotated;
+		default:
+			return hrzn::copy(map);
+		}
+	}
 
 	/******************************************************************************************************************
 		Map generation algorithms
