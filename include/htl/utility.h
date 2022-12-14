@@ -299,7 +299,7 @@ namespace hrzn {
 
 	template <typename T>
 	inline std::vector<T> transposeMapToList(const IMap<T>& map) {
-		std::vector<T> list(;
+		std::vector<T> list;
 		list.reserve(map.area());
 		for (const auto& cell : map)
 			list.emplace_back(cell);
