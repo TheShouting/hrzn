@@ -44,51 +44,51 @@ namespace hrzn {
 	};
 
 	template <typename T>
-	inline std::ostream& operator<<(std::ostream& output, const ITuple<T>& tuple) {
+	inline std::ostream& operator<<(std::ostream& output, const tuple2<T>& tuple) {
 		output << tuple.x << tuple.y;
 		return output;
 	}
 
 	template <typename T>
-	inline std::istream& operator>>(std::istream& input, ITuple<T>& tuple) {
+	inline std::istream& operator>>(std::istream& input, tuple2<T>& tuple) {
 		input >> tuple.x >> tuple.y;
 		return input;
 	}
 
-	inline std::ostream& operator<<(std::ostream& output, const hRotation& rot) {
+	inline std::ostream& operator<<(std::ostream& output, const angle& rot) {
 		output << rot.tau;
 		return output;
 	}
 
-	inline std::istream& operator>>(std::istream& input, hRotation& rot) {
+	inline std::istream& operator>>(std::istream& input, angle& rot) {
 		input >> rot.tau;
 		return input;
 	}
 
-	inline std::ostream& operator<<(std::ostream& output, const hArea& rect) {
+	inline std::ostream& operator<<(std::ostream& output, const point_area& rect) {
 		output << rect.x1 << rect.y1 << rect.x2 << rect.y2;
 		return output;
 	}
 
-	inline std::istream& operator>>(std::istream& input, hArea& rect) {
+	inline std::istream& operator>>(std::istream& input, point_area& rect) {
 		input >> rect.x1 >> rect.y1 >> rect.x2 >> rect.y2;
 		return input;
 	}
 
 	template <typename T>
-	inline std::string toString(const ITuple<T>& tuple) {
+	inline std::string toString(const tuple2<T>& tuple) {
 		std::stringstream ss;
 		ss << "Tuple{" << tuple.x << ',' << tuple.y << '}';
 		return ss.str();
 	}
 
-	inline std::string toString(const hRotation& rot) {
+	inline std::string toString(const angle& rot) {
 		std::stringstream ss;
 		ss << "Rotation{" << rot.tau << "*TAU}";
 		return ss.str();
 	}
 
-	inline std::string toString(const hArea& rect) {
+	inline std::string toString(const point_area& rect) {
 		if (rect) {
 			std::stringstream ss;
 			ss << "Area{" << rect.x1 << ',' << rect.y1 << ',' << rect.x2 << ',' << rect.y2 << '}';
@@ -100,7 +100,7 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	inline std::string toString(const IMap<T>& mat, bool output_contents = false, bool line_breaks=true) {
+	inline std::string toString(const Map<T>& mat, bool output_contents = false, bool line_breaks=true) {
 		std::stringstream ss;
 		char br = line_breaks ? '\n' : ' ';
 		ss << "Map";
@@ -120,7 +120,7 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	inline std::ostream& streamOutRow(std::ostream& output, const IMap<T>& mat, int row) {
+	inline std::ostream& streamOutRow(std::ostream& output, const Map<T>& mat, int row) {
 		for (int x = mat.first().x; x < mat.last().x; x++) {
 			output << mat.at(x, row);
 		}
@@ -128,7 +128,7 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	inline std::ostream& streamOutColumn(std::ostream& output, const IMap<T>& mat, int col) {
+	inline std::ostream& streamOutColumn(std::ostream& output, const Map<T>& mat, int col) {
 		for (int y = mat.first().y; y < mat.last().y; y++) {
 			output << mat.at(col, y);
 		}
@@ -168,7 +168,7 @@ namespace hrzn {
 	/// <typeparam name="T"></typeparam>
 	/// <returns>A string containing the formatted table ready for printing or writing.</returns>
 	template <typename T>
-	inline std::string toStringTable(const IMap<T>& mat, const hStringTableStyle & style = hStringTableStyle())
+	inline std::string toStringTable(const Map<T>& mat, const hStringTableStyle & style = hStringTableStyle())
 	{
 		std::stringstream ss;
 		ss.precision(style.precision);
@@ -211,7 +211,7 @@ namespace hrzn {
 	/// </summary>
 	/// <returns>A string containing the formatted table ready for printing or writing.</returns>
 	/// <returns></returns>
-	inline std::string toStringMask(const IMap<bool>& mat, const hStringTableStyle & style = hStringTableStyle())
+	inline std::string toStringMask(const Map<bool>& mat, const hStringTableStyle & style = hStringTableStyle())
 	{
 
 		std::stringstream ss;

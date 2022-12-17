@@ -35,15 +35,15 @@ SOFTWARE.
 #define THROW_NOT_IMPLEMENTED(m) throw std::runtime_error(m " not implemented at line: " _TO_STRING(__LINE__) ", " _TO_STRING(__FILE__))
 
 #define _GENERATE_MATH_AND(F) \
-	template <typename T> inline bool F(const ITuple<T>& a) { \
+	template <typename T> inline bool F(const tuple2<T>& a) { \
 		return std::F(a.x) && std::F(a.y); }
 
 #define _GENERATE_MATH_B(F) \
-	template <typename T> inline ITuple<bool> F##_b(const ITuple<T>& a) { \
+	template <typename T> inline tuple2<bool> F##_b(const tuple2<T>& a) { \
 		return {std::F(a.x), std::F(a.y)}; }
 
 #define _GENERATE_MATHF(F) \
-	template <typename T> inline ITuple<T> F(const ITuple<T>& a) { \
+	template <typename T> inline tuple2<T> F(const tuple2<T>& a) { \
 		return { std::F(a.x), std::F(a.y) }; }
 
 
@@ -52,23 +52,23 @@ SOFTWARE.
 
 // Set floating precision Size
 #ifdef H_DOUBLE_TYPE
-	typedef double hType_f;
+	typedef double h_float;
 #else
-	typedef float hType_f;
+	typedef float h_float;
 #endif // H_DOUBLE_TYPE
 
 // Set integral size
 #ifdef H_LONG_TYPE
-	typedef long hType_i;
+	typedef long h_int;
 #else
-	typedef int hType_i;
+	typedef int h_int;
 #endif // H_LONG_TYPE
 
 // Aliased UNSIGNED INT type
-typedef unsigned long int hType_u;
+typedef unsigned long int h_unsigned;
 
-constexpr hType_f operator "" _hf(long double val) { return static_cast<::hType_f>(val); }
-constexpr hType_i operator "" _hi(unsigned long long int val) { return static_cast<::hType_i>(val); }
+constexpr h_float operator "" _hf(long double val) { return static_cast<::h_float>(val); }
+constexpr h_int operator "" _hi(unsigned long long int val) { return static_cast<::h_int>(val); }
 
 namespace hrzn {
 
@@ -116,21 +116,21 @@ namespace hrzn {
 	/// </summary>
 	/// <typeparam name="T">Template of a numeric type.</typeparam>
 	template <typename T>
-	struct ITuple {
+	struct tuple2 {
 
 		T x, y;
 
-		constexpr ITuple() : x(), y() {}
+		constexpr tuple2() : x(), y() {}
 
 		template <typename TCast>
-		constexpr ITuple(TCast xval, TCast yval) : x(static_cast<T>(xval)), y(static_cast<T>(yval)) {}
+		constexpr tuple2(TCast xval, TCast yval) : x(static_cast<T>(xval)), y(static_cast<T>(yval)) {}
 
-		explicit constexpr ITuple(T val) : x(val), y(val) {}
+		explicit constexpr tuple2(T val) : x(val), y(val) {}
 
-		constexpr ITuple(const ITuple<T>& t) = default;
+		constexpr tuple2(const tuple2<T>& t) = default;
 
 		template <typename TCast>
-		explicit constexpr ITuple(const ITuple<TCast>& t) : x(static_cast<T>(t.x)), y(static_cast<T>(t.y)) {}
+		explicit constexpr tuple2(const tuple2<TCast>& t) : x(static_cast<T>(t.x)), y(static_cast<T>(t.y)) {}
 
 		T operator [] (int i) const { return (&x)[i]; }
 
@@ -139,28 +139,28 @@ namespace hrzn {
 		operator bool() const { return x != 0 || y != 0; }
 
 		template <typename TCast>
-		void operator =(const ITuple<TCast>& t) {
+		void operator =(const tuple2<TCast>& t) {
 			x = static_cast<T>(t.x);
 			y = static_cast<T>(t.y);
 		}
 
-		ITuple<T> signumAxis() const { // TODO test signum axis
+		tuple2<T> signumAxis() const { // TODO test signum axis
 			return { (T(0) < this->x) - (this->x < T(0)), (T(0) < this->y) - (this->y < T(0)) };
 		}
 
 		void set(T xval, T yval) { this->x = xval; this->y = yval; }
 
-		void set(ITuple<T> other) { this->x = other.x; this->y = other.y; }
+		void set(tuple2<T> other) { this->x = other.x; this->y = other.y; }
 
 		void shift(T xshift, T yshift) { this->x += xshift; this->y += yshift; }
 
-		void shift(ITuple<T> const& amt) { this->shift(amt.x, amt.y); }
+		void shift(tuple2<T> const& amt) { this->shift(amt.x, amt.y); }
 
 		void scale(T mag) { this->x *= mag; this->y *= mag; }
 
 		double length() const { return std::sqrt(this->x * this->x + this->y * this->y); }
 
-		ITuple<T> swizzle() const { return { this->y, this->x }; }
+		tuple2<T> swizzle() const { return { this->y, this->x }; }
 
 		T lengthSqr() const { return this->x * this->x + this->y * this->y; }
 
@@ -170,7 +170,7 @@ namespace hrzn {
 		/// Find the unit vector of the tuple.
 		/// </summary>
 		/// <returns>A normailized tuple or vector.</returns>
-		ITuple<T> normal() const {
+		tuple2<T> normal() const {
 			double l = length();
 			if (l < EPSILON)
 				return { 0._hf, 0._hf };
@@ -196,74 +196,74 @@ namespace hrzn {
 		/// Create a new tuple contining the smallest values of x and y where the they are non-zero.
 		/// </summary>
 		/// <returns></returns>
-		ITuple<T> epsilon() const {
+		tuple2<T> epsilon() const {
 			return { vEpsilon<T>::value, vEpsilon<T>::value };
 		}
 
-		ITuple<T> epsilonSigned() const {
+		tuple2<T> epsilonSigned() const {
 			return { vEpsilon<T>::value * (T)std::signbit((double)this->x) * -2 + 1, vEpsilon<T>::value * (T)std::signbit((double)this->y) * -2 + 1 };
 		}
 
-	}; // struct ITuple<T>
+	}; // struct tuple2<T>
 
 
-	// Operator overloads for ITuple objects
+	// Operator overloads for tuple2 objects
 
 	template <typename T>
-	ITuple<T> operator - (const ITuple<T>& a) { return ITuple<T>(-a.x, -a.y); }
+	tuple2<T> operator - (const tuple2<T>& a) { return tuple2<T>(-a.x, -a.y); }
 
 	template <typename T, typename TCast>
-	bool operator ==(const ITuple<T>& a, const ITuple<TCast>& b) { return a.x == static_cast<T>(b.x) && a.y == static_cast<T>(b.y); }
+	bool operator ==(const tuple2<T>& a, const tuple2<TCast>& b) { return a.x == static_cast<T>(b.x) && a.y == static_cast<T>(b.y); }
 
 	template <typename T, typename TCast>
-	bool operator !=(const ITuple<T>& a, const ITuple<TCast>& b) { return !(a == b); }
+	bool operator !=(const tuple2<T>& a, const tuple2<TCast>& b) { return !(a == b); }
 
 	template <typename T, typename TCast>
-	ITuple<T>& operator += (ITuple<T>& a, const ITuple<TCast>& b) {
+	tuple2<T>& operator += (tuple2<T>& a, const tuple2<TCast>& b) {
 		a.x += static_cast<T>(b.x); a.y += static_cast<T>(b.y);
 		return a;
 	}
 
 	template <typename T, typename TCast>
-	ITuple<T>& operator -= (ITuple<T>& a, const ITuple<TCast>& b) {
+	tuple2<T>& operator -= (tuple2<T>& a, const tuple2<TCast>& b) {
 		a.x -= static_cast<T>(b.x); a.y -= static_cast<T>(b.y);
 		return a;
 	}
 
 	template <typename T, typename TCast>
-	ITuple<T> operator + (const ITuple<T>& a, const ITuple<TCast>& b) {
-		return ITuple<T>(a.x + static_cast<T>(b.x), a.y + static_cast<T>(b.y));
+	tuple2<T> operator + (const tuple2<T>& a, const tuple2<TCast>& b) {
+		return tuple2<T>(a.x + static_cast<T>(b.x), a.y + static_cast<T>(b.y));
 	}
 
 	template <typename T, typename TCast>
-	ITuple<T> operator - (const ITuple<T>& a, const ITuple<TCast>& b) {
-		return ITuple<T>(a.x - static_cast<T>(b.x), a.y - static_cast<T>(b.y));
+	tuple2<T> operator - (const tuple2<T>& a, const tuple2<TCast>& b) {
+		return tuple2<T>(a.x - static_cast<T>(b.x), a.y - static_cast<T>(b.y));
 	}
 
 	template <typename T, typename TCast>
-	ITuple<T> operator * (const ITuple<T>& a, const ITuple<TCast>& b) {
-		return ITuple<T>(a.x * static_cast<T>(b.x), a.y * static_cast<T>(b.y));
+	tuple2<T> operator * (const tuple2<T>& a, const tuple2<TCast>& b) {
+		return tuple2<T>(a.x * static_cast<T>(b.x), a.y * static_cast<T>(b.y));
 	}
 
 	template <typename T, typename TCast>
-	ITuple<T> operator / (const ITuple<T>& a, const ITuple<TCast>& b) {
-		return ITuple<T>(a.x / static_cast<T>(b.x), a.y / static_cast<T>(b.y));
+	tuple2<T> operator / (const tuple2<T>& a, const tuple2<TCast>& b) {
+		return tuple2<T>(a.x / static_cast<T>(b.x), a.y / static_cast<T>(b.y));
 	}
 
 	template <typename T, typename TCast>
-	ITuple<T> operator * (const ITuple<T>& a, TCast val) {
+	tuple2<T> operator * (const tuple2<T>& a, TCast val) {
 		static_assert(std::is_arithmetic_v<TCast>, "An arithmetic type is required for Tuple operations");
-		return ITuple<T>(a.x * static_cast<T>(val), a.y * static_cast<T>(val));
+		return tuple2<T>(a.x * static_cast<T>(val), a.y * static_cast<T>(val));
 	}
 
 	template <typename T, typename TCast>
-	ITuple<T> operator / (const ITuple<T>& a, TCast val) {
+	tuple2<T> operator / (const tuple2<T>& a, TCast val) {
 		static_assert(std::is_arithmetic_v<TCast>, "An arithmetic type is required for Tuple operations");
-		return ITuple<T>(a.x / static_cast<T>(val), a.y / static_cast<T>(val));
+		return tuple2<T>(a.x / static_cast<T>(val), a.y / static_cast<T>(val));
 	}
 
 	template <typename T>
-	ITuple<T> operator ~ (const ITuple<T>& a) { return ITuple<T>(a.y, a.x); }
+	tuple2<T> operator ~ (const tuple2<T>& a) { return tuple2<T>(a.y, a.x); }
 
 	_GENERATE_MATHF(sqrt);
 	_GENERATE_MATHF(abs);
@@ -282,14 +282,14 @@ namespace hrzn {
 	_GENERATE_MATH_B(signbit);
 
 	/// Type aliases for Tuples of FLOAT types.
-	using hVector = ITuple<hType_f>;
+	using vector2 = tuple2<h_float>;
 	/// Type alias for Tuples of INT types.
-	using hPoint = ITuple<hType_i>;
+	using point2 = tuple2<h_int>;
 
 	/// <summary>
 	/// An array of unit vectors containinf the vertices of a quadrilateral.
 	/// </summary>
-	constexpr ITuple<hType_f> h_quad[] = {
+	constexpr tuple2<h_float> h_quad[] = {
 		{0._hf, 0._hf},
 		{1._hf, 0._hf},
 		{1._hf, 1._hf},
@@ -299,7 +299,7 @@ namespace hrzn {
 	/// <summary>
 	/// An array contained the point offsets for each corner in a box or area.
 	/// </summary>
-	constexpr ITuple<hType_i> h_corner[4] = {
+	constexpr tuple2<h_int> h_corner[4] = {
 		{0_hi, 0_hi},
 		{1_hi, 0_hi},
 		{1_hi, 1_hi},
@@ -309,7 +309,7 @@ namespace hrzn {
 	/// <summary>
 	/// An array containing all offsets for a 4-way neighborhood.
 	/// </summary>
-	constexpr ITuple<hType_i> h_neighborhood4[] = {
+	constexpr tuple2<h_int> h_neighborhood4[] = {
 		{ 0_hi, -1_hi},
 		{ 1_hi,  0_hi},
 		{ 0_hi,  1_hi},
@@ -320,7 +320,7 @@ namespace hrzn {
 	/// <summary>
 	/// An array containing all offsets for a 4-way neighborhood.
 	/// </summary>
-	constexpr ITuple<hType_i> h_neighborhood8[] = {
+	constexpr tuple2<h_int> h_neighborhood8[] = {
 		{ 0_hi, -1_hi},
 		{ 1_hi, -1_hi},
 		{ 1_hi,  0_hi},
@@ -335,48 +335,48 @@ namespace hrzn {
 	/// <summary>
 	/// A class for managing rotations and angles.
 	/// </summary>
-	struct hRotation {
+	struct angle {
 
-		hType_f tau;
+		h_float tau;
 
-		constexpr hRotation() : tau(0.f) {}
+		constexpr angle() : tau(0.f) {}
 
-		constexpr hRotation(hType_f a) : tau(a) {}
+		constexpr angle(h_float a) : tau(a) {}
 
-		hRotation operator-() const { return hRotation(-tau); }
+		angle operator-() const { return angle(-tau); }
 
-		hRotation operator + (hRotation const& other) const { return hRotation(tau + other.tau); }
-		hRotation operator - (hRotation const& other) const { return hRotation(tau - other.tau); }
-		hRotation operator * (hRotation const& other) const { return hRotation(tau * other.tau); }
-		hRotation operator / (hRotation const& other) const { return hRotation(tau / other.tau); }
-
-		template <typename T>
-		hRotation operator + (T const& val) const { return hRotation(tau + static_cast<hType_f>(val)); }
+		angle operator + (angle const& other) const { return angle(tau + other.tau); }
+		angle operator - (angle const& other) const { return angle(tau - other.tau); }
+		angle operator * (angle const& other) const { return angle(tau * other.tau); }
+		angle operator / (angle const& other) const { return angle(tau / other.tau); }
 
 		template <typename T>
-		hRotation operator - (T const& val) const { return hRotation(tau - static_cast<hType_f>(val)); }
+		angle operator + (T const& val) const { return angle(tau + static_cast<h_float>(val)); }
 
 		template <typename T>
-		hRotation operator * (T const& val) const { return hRotation(tau * static_cast<hType_f>(val)); }
+		angle operator - (T const& val) const { return angle(tau - static_cast<h_float>(val)); }
 
 		template <typename T>
-		hRotation operator / (T const& val) const { return hRotation(tau / static_cast<hType_f>(val)); }
+		angle operator * (T const& val) const { return angle(tau * static_cast<h_float>(val)); }
 
-		auto addDeg(hType_f deg) {
+		template <typename T>
+		angle operator / (T const& val) const { return angle(tau / static_cast<h_float>(val)); }
+
+		auto addDeg(h_float deg) {
 			tau += (deg / DEG);
 			return tau * DEG;
 		}
 
-		auto addRad(hType_f rad) {
+		auto addRad(h_float rad) {
 			tau += (rad / RAD);
 			return tau * RAD;
 		}
 
-		void setDeg(hType_f deg) {
+		void setDeg(h_float deg) {
 			tau = deg / DEG;
 		}
 
-		void setRad(hType_f rad) {
+		void setRad(h_float rad) {
 			tau = rad / RAD;
 		}
 
@@ -384,90 +384,90 @@ namespace hrzn {
 
 		inline auto rad() const { return tau * RAD; }
 
-		inline void spin(hType_f t) {
+		inline void spin(h_float t) {
 			tau += t;
 		}
 
-		hRotation angle() const {
+		angle normalized() const {
 			return std::fmod(tau - std::trunc(tau) + 1._hf, 1._hf);
 		}
 
-		hRotation revolutions() const {
+		angle revolutions() const {
 			return std::trunc(tau);
 		}
 
-		hRotation flip() const {
-			return hRotation(tau + 0.5_hf).angle();
+		angle flip() const {
+			return angle(tau + 0.5_hf).normalized();
 		}
 
-		hRotation inverse() const {
-			return hRotation(1.0_hf - angle().tau);
+		angle inverse() const {
+			return angle(1.0_hf - angle().tau);
 		}
 
-		void setWithVector(hVector vec) {
+		void setWithVector(vector2 vec) {
 			tau = std::atan2(vec.y, vec.x) / RAD;
 			tau = tau - std::floor(tau);
 		}
 
-		hVector getForwardVector(hType_f length = 1._hf) const {
-			return hVector(std::cos(rad()) * length, std::sin(rad()) * length);
+		vector2 getForwardVector(h_float length = 1._hf) const {
+			return vector2(std::cos(rad()) * length, std::sin(rad()) * length);
 		}
 
-		hVector getRightVector(hType_f length = 1._hf) const {
-			return hVector(std::cos(rad() + PI * 0.5_hf) * length, std::sin(rad() + PI * 0.5_hf) * length);
+		vector2 getRightVector(h_float length = 1._hf) const {
+			return vector2(std::cos(rad() + PI * 0.5_hf) * length, std::sin(rad() + PI * 0.5_hf) * length);
 		}
 
-		hVector rotate(hVector const& vec) const {
-			hType_f a = angle().rad();
-			hType_f x = std::cos(a) * vec.x - std::sin(a) * vec.y;
-			hType_f y = std::sin(a) * vec.x + std::cos(a) * vec.y;
-			return hVector(x, y);
+		vector2 rotate(vector2 const& vec) const {
+			h_float a = angle().rad();
+			h_float x = std::cos(a) * vec.x - std::sin(a) * vec.y;
+			h_float y = std::sin(a) * vec.x + std::cos(a) * vec.y;
+			return vector2(x, y);
 		}
 
-		hVector unrotate(hVector const& vec) const {
-			hType_f a = angle().rad();
-			hType_f x = std::cos(-a) * vec.x - std::sin(-a) * vec.y;
-			hType_f y = std::sin(-a) * vec.x + std::cos(-a) * vec.y;
-			return hVector(x, y);
+		vector2 unrotate(vector2 const& vec) const {
+			h_float a = angle().rad();
+			h_float x = std::cos(-a) * vec.x - std::sin(-a) * vec.y;
+			h_float y = std::sin(-a) * vec.x + std::cos(-a) * vec.y;
+			return vector2(x, y);
 		}
 
-		static hRotation difference(hRotation a, hRotation b) {
-			hType_f diff = a.angle().tau - b.angle().tau + 0.5_hf;
-			return hRotation(diff - std::floor(diff) - 0.5_hf);
+		static angle difference(angle a, angle b) {
+			h_float diff = a.normalized().tau - b.normalized().tau + 0.5_hf;
+			return angle(diff - std::floor(diff) - 0.5_hf);
 		}
 
-		static hRotation Degrees(hType_f deg) { return hRotation(deg / DEG); }
+		static angle Degrees(h_float deg) { return angle(deg / DEG); }
 
-		static hRotation Radians(hType_f rad) { return hRotation(rad / RAD); }
+		static angle Radians(h_float rad) { return angle(rad / RAD); }
 
-	}; // struct hRotation
+	}; // struct angle
 
 
 	/******************************************************************************************************************
-		hArea data types
+		point_area data types
 	******************************************************************************************************************/
 
 	/// <summary>
 	/// A class for managing coordinates of a 2D area.
 	/// </summary>
-	struct hArea {
+	struct point_area {
 
-		hType_i x1, y1, x2, y2;
+		h_int x1, y1, x2, y2;
 
-		constexpr hArea() : x1(INT_MAX), y1(INT_MAX), x2(INT_MIN), y2(INT_MIN) {}
+		constexpr point_area() : x1(INT_MAX), y1(INT_MAX), x2(INT_MIN), y2(INT_MIN) {}
 
-		constexpr hArea(hType_u w, hType_u h) : x1(0), y1(0), x2((hType_i)w), y2((hType_i)h) {}
+		constexpr point_area(h_unsigned w, h_unsigned h) : x1(0), y1(0), x2((h_int)w), y2((h_int)h) {}
 
-		constexpr hArea(hType_i x_1, hType_i y_1, hType_i x_2, hType_i y_2) : x1(x_1), y1(y_1), x2(x_2), y2(y_2) {}
+		constexpr point_area(h_int x_1, h_int y_1, h_int x_2, h_int y_2) : x1(x_1), y1(y_1), x2(x_2), y2(y_2) {}
 
-		explicit constexpr hArea(hPoint p1, hPoint p2) : x1(p1.x), y1(p1.y), x2(p2.x), y2(p2.y) {}
+		explicit constexpr point_area(point2 p1, point2 p2) : x1(p1.x), y1(p1.y), x2(p2.x), y2(p2.y) {}
 
-		hArea& operator +=(hPoint dist) {
+		point_area& operator +=(point2 dist) {
 			move(dist.x, dist.y);
 			return *this;
 		}
 
-		hArea& operator -=(hPoint dist) {
+		point_area& operator -=(point2 dist) {
 			move(-dist.x, -dist.y);
 			return *this;
 		}
@@ -480,72 +480,72 @@ namespace hrzn {
 			return x1 < x2 && y1 < y2;
 		}
 
-		void move(hType_i move_x, hType_i move_y) {
+		void move(h_int move_x, h_int move_y) {
 			x1 += move_x;
 			y1 += move_y;
 			x2 += move_x;
 			y2 += move_y;
 		}
 
-		virtual void resize(hType_i x_1, hType_i y_1, hType_i x_2, hType_i y_2) {
+		virtual void resize(h_int x_1, h_int y_1, h_int x_2, h_int y_2) {
 			x1 = std::min(x_1, x_2);
 			x2 = std::max(x_1, x_2);
 			y1 = std::min(y_1, y_2);
 			y2 = std::max(y_1, y_2);
 		}
 
-		void resize(const hPoint& size) {
+		void resize(const point2& size) {
 			if (size) {
 				resize(std::min(x1, x1 + size.x), std::min(y1, y1 + size.y), std::max(x1, x1 + size.x), std::max(y1, y1 + size.y));
 			}
 		}
 
-		void resizeFromCenter(hPoint size) {
+		void resizeFromCenter(point2 size) {
 			resizeFromCenter(size.x, size.y);
 		}
 
-		void resizeFromCenter(hType_u size) {
+		void resizeFromCenter(h_unsigned size) {
 			resizeFromCenter(size, size);
 		}
 
-		void resizeFromCenter(hType_u w, hType_u h) {
+		void resizeFromCenter(h_unsigned w, h_unsigned h) {
 			if (valid()) {
-				hPoint ctr = center();
+				point2 ctr = center();
 				resize(ctr.x - w / 2, ctr.y - h / 2, x1 + w, y1 + h);
 			}
 		}
 
-		hArea normalized() const {
-			return hArea(0, 0, x2 - x1, y2 - y1);
+		point_area normalized() const {
+			return point_area(0, 0, x2 - x1, y2 - y1);
 		}
 
-		hPoint clamp(const hPoint& pt) const {
+		point2 clamp(const point2& pt) const {
 			return { std::min(x2, std::max(x1, pt.x)), std::min(y2, std::max(y1, pt.y)) };
 		}
 
-		hPoint wrap(const hPoint& pt) const {
-			hType_i x = ((hType_i)width() + ((pt.x - x1) % (hType_i)width())) % (hType_i)width() + x1;
-			hType_i y = ((hType_i)height() + ((pt.y - y1) % (hType_i)height())) % (hType_i)height() + y1;
+		point2 wrap(const point2& pt) const {
+			h_int x = ((h_int)width() + ((pt.x - x1) % (h_int)width())) % (h_int)width() + x1;
+			h_int y = ((h_int)height() + ((pt.y - y1) % (h_int)height())) % (h_int)height() + y1;
 			return { x, y };
 		}
 
 		std::size_t width() const {
-			return std::max(x2 - x1, 0_hi);
+			return std::abs(x2 - x1);
 		}
 
 		std::size_t height() const {
-			return std::max(y2 - y1, 0_hi);
+			return std::abs(y2 - y1);
 		}
 
-		hPoint dimensions() const {
+		point2 dimensions() const {
 			return { width(), height() };
 		}
 
-		hPoint first() const {
+		point2 first() const {
 			return { x1, x1 };
 		}
 
-		hPoint last() const {
+		point2 last() const {
 			return { x2, y2 };
 		}
 
@@ -553,44 +553,108 @@ namespace hrzn {
 			return width() * height();
 		}
 
-		hPoint corner(int i) const {
+		point2 corner(int i) const {
 			if (i < 0 || i > 3) throw std::out_of_range("Index is not a valid corner.");
 			return { x1 + h_corner[i].x * (width() - 1), y1 + h_corner[i].y * (height() - 1) };
 		}
 
-		hPoint center() const {
+		point2 center() const {
 			return { (x2 - x1) / 2 + x1, (y2 - y1) / 2 + y1 };
 		}
 
-		bool contains(const hPoint& pt) const {
+		bool contains(const point2& pt) const {
 			return this->contains(pt.x, pt.y);
 		}
 
-		bool contains(hType_i x, hType_i y) const {
+		bool contains(h_int x, h_int y) const {
 			return x >= x1 && x < x2 && y >= y1 && y < y2;
 		}
 
-		bool contains(const hArea& other) {
+		bool contains(const point_area& other) {
 			return false;
 		}
 
-	}; // struct hArea
+	}; // struct point_area
 
-	inline bool operator==(const hArea& a, const hArea& b) {
+	inline bool operator==(const point_area& a, const point_area& b) {
 		return a.x1 == b.x1 && a.y1 == b.y1 && a.x2 == b.x2 && a.y2 == b.y2;
 	}
 
-	inline hArea operator+(const hArea& a, const hPoint& b) {
-		return hArea(a.first() + b, a.last() + b);
+	inline point_area operator+(const point_area& a, const point2& b) {
+		return point_area(a.first() + b, a.last() + b);
+	}
+
+	inline point_area operator-(const point_area& a, const point2& b) {
+		return point_area(a.first() - b, a.last() - b);
 	}
 
 	/// <summary>
 	/// Create a new Area based on the overlap of two other Area objects.
 	/// </summary>
-	inline hArea intersect(const hArea& a, const hArea& b) {
-		return hArea(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
+	inline point_area intersect(point_area a, point_area b) {
+		return point_area(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
 	}
 
+	/// <summary>
+	/// Return true if both <type>point_area</type> objects overlap.
+	/// </summary>
+	inline bool overlap(point_area a, point_area b) {
+		return !(a.x1 > b.x2 || a.y1 > b.y2 || b.x1 > a.x2 || b.y1 > a.y2);
+	}
+
+	/// <summary>
+	/// Is true if <type>point_area</type> b is completely contained within <type>point_area</type> a.
+	/// </summary>
+	inline bool contains(point_area a, point_area b) {
+		return b.x1 >= a.x1 && b.y1 >= a.y1 && b.x2 <= a.x2 && b.y2 <= a.x2;
+	}
+
+	/// <summary>
+	/// Is true if <type>poin2</type> b is completely contained within <type>point_area</type> a.
+	/// </summary>
+	inline bool contains(point_area a, point2 b) {
+		return b.x >= a.x1 && b.y >= a.y1 && b.x < a.x2 && b.y < a.x2;
+	}
+
+	/// <summary>
+	/// Is true if <type>point2</type> is equal to any edge position of <type>point_area</type>.
+	/// </summary>
+	inline bool is_edge(point_area area, point2 pos) {
+		return pos.x == area.x1 || pos.x == area.x2 - 1_hi || pos.y == area.y1 || pos.y == area.y2 - 1_hi;
+	}
+
+	/// <summary>
+	/// Swap x and y values.
+	/// </summary>
+	template<typename T>
+	inline tuple2<T> swizzle(const tuple2<T>& t) {
+		return { t.y, t.x };
+	}
+
+	/// <summary>
+	/// Swap width and height values (same as rotating 90 deg)
+	/// </summary>
+	inline point_area swizzle(const point_area& a) {
+		return point_area(a.y1, a.x1, a.y2, a.x2);
+	}
+
+	/// <summary>
+	/// Snaps a point to an area edge if it is out of bounds.
+	/// </summary>
+	inline point2 clamp_point(const point2& p, const point_area& area) {
+		h_int x = std::min(std::max(p.x, area.x1), area.x2 - 1_hi);
+		h_int y = std::min(std::max(p.y, area.y1), area.y2 - 1_hi);
+		return { x, y };
+	}
+
+	/// <summary>
+	/// Wraps a point to the oppposite edge of an area if it is out of bounds.
+	/// </summary>
+	inline point2 wrap_point(const point2& p, const point_area& area) {
+		h_int x = (p.x % area.width() + area.width()) % area.width();
+		h_int y = (p.y % area.height() + area.height()) % area.height();
+		return { x, y };
+	}
 
 	/******************************************************************************************************************
 		Transformation types
@@ -598,46 +662,46 @@ namespace hrzn {
 
 
 	/// <summary>
-	/// A class holding position, rotation, and scale values for use in transformation of various other coordinates in 2D space.
+	/// A class holding position, angle, and scale values for use in transformation of various other coordinates in 2D space.
 	/// </summary>
-	struct hTransform {
-		hVector position;
-		hRotation rotation;
-		hVector scale;
+	struct transform {
+		hrzn::vector2 position;
+		hrzn::angle rotation;
+		hrzn::vector2 scale;
 
-		constexpr hTransform() : position(0._hf, 0._hf), rotation(0._hf), scale(1._hf, 1._hf) {}
+		constexpr transform() : position(0._hf, 0._hf), rotation(0._hf), scale(1._hf, 1._hf) {}
 
-		constexpr hTransform(hVector p, hRotation r, hVector s) : position(p), rotation(r), scale(s) {}
+		constexpr transform(hrzn::vector2 p, hrzn::angle r, hrzn::vector2 s) : position(p), rotation(r), scale(s) {}
 
-		hVector getForwardVector() const {
+		vector2 getForwardVector() const {
 			return rotation.getForwardVector(scale.y);
 		}
 
-		hVector getRightVector() const {
+		vector2 getRightVector() const {
 			return rotation.getRightVector(scale.x);
 		}
 
-		hVector childPositon(hVector pos) const {
+		vector2 childPositon(vector2 pos) const {
 			return position + rotation.rotate(pos * scale);
 		}
 
-		hRotation childRotation(hRotation r) const {
+		hrzn::angle childRotation(hrzn::angle r) const {
 			return rotation + r;
 		}
 
-		hVector childScale(hVector s) const {
+		vector2 childScale(vector2 s) const {
 			return scale * s;
 		}
 
-		hVector inversePosition(hVector pos) {
+		vector2 inversePosition(vector2 pos) {
 			return rotation.unrotate(pos / scale.epsilon()) - pos;
 		}
 
-		hTransform childTransform(const hTransform & child) const {
+		transform childTransform(const transform & child) const {
 			return { childPositon(child.position), childRotation(child.rotation), childScale(child.scale)};
 		}
 
-	}; // struct hTransform
+	}; // struct transform
 
 } // namespace hrzn
 
