@@ -98,12 +98,12 @@ namespace hrzn {
 
 	template<typename T>
 	struct vEpsilon<T, false> {
-		inline static T value = 1_hi;
+		inline static const T value = 1_hi;
 	};
 
 	template<typename T>
 	struct vEpsilon<T, true> {
-		inline static T value = EPSILON;
+		inline static const T value = EPSILON;
 	};
 
 
@@ -192,17 +192,31 @@ namespace hrzn {
 			return l;
 		}
 
+		///// <returns></returns>
+		//tuple2<T> epsilon() const {
+		//	return { vEpsilon<T>::value, vEpsilon<T>::value };
+		//}
+
 		/// <summary>
 		/// Create a new tuple contining the smallest values of x and y where the they are non-zero.
 		/// </summary>
 		/// <returns></returns>
-		tuple2<T> epsilon() const {
-			return { vEpsilon<T>::value, vEpsilon<T>::value };
-		}
-
 		tuple2<T> epsilonSigned() const {
 			return { vEpsilon<T>::value * (T)std::signbit((double)this->x) * -2 + 1, vEpsilon<T>::value * (T)std::signbit((double)this->y) * -2 + 1 };
 		}
+
+		///// <summary>
+		///// Create a new tuple contining the smallest values of x and y where the they are non-zero.
+		///// </summary>
+		static constexpr tuple2<T> EPSILON() { return { vEpsilon<T>::value, vEpsilon<T>::value }; }
+
+		static constexpr tuple2<T> UP() { return { 0, 1 }; }
+
+		static constexpr tuple2<T> DOWN() { return { 0, -1 }; }
+
+		static constexpr tuple2<T> RIGHT() { return { 1, 0 }; }
+
+		static constexpr tuple2<T> LEFT() { return { -1, 0 }; }
 
 	}; // struct tuple2<T>
 
@@ -694,7 +708,8 @@ namespace hrzn {
 		}
 
 		vector2 inversePosition(vector2 pos) {
-			return rotation.unrotate(pos / scale.epsilon()) - pos;
+			//return rotation.unrotate(pos / scale.epsilon()) - pos;
+			return rotation.unrotate(pos / vector2::EPSILON()) - pos;
 		}
 
 		transform childTransform(const transform & child) const {

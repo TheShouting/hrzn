@@ -23,7 +23,7 @@ namespace hrzn_test
 
 		TEST_METHOD(EpsilonTypeTest) {
 			
-#define ASSERT_EPSILON(T) Assert::AreNotEqual(T(0), hrzn::vEpsilon<T>::value, L#T)
+#define ASSERT_EPSILON(T) Assert::AreNotEqual(T(0), hrzn::vEpsilon<T>::value, L"Failed epsilon equivelency for " L#T)
 
 			ASSERT_EPSILON(bool);
 			
@@ -44,8 +44,8 @@ namespace hrzn_test
 		}
 
 		TEST_METHOD(tuple2_EpsilonTest) {
-			Assert::AreNotEqual(hrzn::vector2(), hrzn::vector2().epsilon(), L"vector2 epsilon failure.");
-			Assert::AreNotEqual(hrzn::point2(), hrzn::point2().epsilon(), L"point2 epsilon failure.");
+			Assert::AreNotEqual(hrzn::vector2(), hrzn::vector2::EPSILON(), L"vector2 epsilon failure.");
+			Assert::AreNotEqual(hrzn::point2(), hrzn::point2::EPSILON(), L"point2 epsilon failure.");
 
 
 			Assert::AreNotEqual(hrzn::vector2(), hrzn::vector2().epsilonSigned(), L"vector2 epsilonSigned failure.");
