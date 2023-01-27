@@ -15,19 +15,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="test_tuples.cpp">
+    <ClCompile Include="unitTuples.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test_rotation.cpp">
+    <ClCompile Include="unitRotations.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test_containers.cpp">
+    <ClCompile Include="unitContainers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test_algorithms.cpp">
+    <ClCompile Include="unitAlgorithms.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

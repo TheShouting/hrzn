@@ -27,7 +27,11 @@ SOFTWARE.
 #include <cmath>
 #include <cassert>
 #include <algorithm>
+
+#ifndef H_NOEXCEPTIONS
 #include <stdexcept>
+#endif // !H_NOEXCEPTIONS
+
  
 #define _TO_STRING_DEFERRED(n) #n
 #define _TO_STRING(n) _TO_STRING_DEFERRED(n)
@@ -143,9 +147,19 @@ namespace hrzn {
 		template <typename TCast>
 		explicit constexpr tuple2(const tuple2<TCast>& t) : x(static_cast<T>(t.x)), y(static_cast<T>(t.y)) {}
 
-		T operator [] (int i) const { return (&x)[i]; }
+		T operator [] (int i) const { 
+#ifndef H_NOEXCEPTIONS
+			if (i != 0 && i != 1) throw std::out_of_range("Index is not 0 or 1.");
+#endif // !H_NOEXCEPTIONS
+			return (&x)[i]; 
+		}
 
-		T& operator [] (int i) { return (&x)[i]; }
+		T& operator [] (int i) {
+#ifndef H_NOEXCEPTIONS
+			if (i != 0 && i != 1) throw std::out_of_range("Index is not 0 or 1.");
+#endif // !H_NOEXCEPTIONS
+				return (&x)[i];
+		}
 
 		operator bool() const { return x != 0 || y != 0; }
 
@@ -622,7 +636,9 @@ namespace hrzn {
 		}
 
 		point2 corner(int i) const {
+#ifndef H_NOEXCEPTIONS
 			if (i < 0 || i > 3) throw std::out_of_range("Index is not a valid corner.");
+#endif // !H_NOEXCEPTIONS
 			return { x1 + h_corner[i].x * (width() - 1), y1 + h_corner[i].y * (height() - 1) };
 		}
 

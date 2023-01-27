@@ -108,6 +108,7 @@ namespace hrznBasicTypesTest
 
 		}
 
+#ifndef H_NOEXCEPT
 		TEST_METHOD(CornerIndexOutOfRange_point_area) {
 			auto f1 = [this] {
 				hrzn::point_area a = { 0, 0, 1, 1 };
@@ -122,6 +123,7 @@ namespace hrznBasicTypesTest
 			Assert::ExpectException<std::out_of_range>(f2, L"Did not catch lower out of range index.");
 
 		}
+#endif // !H_NOEXCEPT
 
 		TEST_METHOD(CornerTests) {
 			int x1 = -3;

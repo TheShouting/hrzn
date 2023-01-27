@@ -163,13 +163,10 @@ namespace hrzn {
 
 	protected:
 		std::size_t f_index(h_int x, h_int y) const {
-#ifdef H_NOEXCEPTIONS
+#ifndef H_NOEXCEPTIONS
+			if (!contains(x, y)) throw std::out_of_range("Point not located in Map.");
+#endif // !H_NOEXCEPTIONS
 			return (x - x1) + (y - y1) * width();
-#else
-			if (contains(x, y))
-				return (x - x1) + (y - y1) * width();
-			throw std::out_of_range("Point not located in Matrix.");
-#endif // H_EXCEPTIONS
 		}
 
 	public:
