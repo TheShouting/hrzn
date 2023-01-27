@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 #pragma once
 
 #include <cmath>
@@ -36,19 +35,6 @@ SOFTWARE.
 #define _TO_STRING_DEFERRED(n) #n
 #define _TO_STRING(n) _TO_STRING_DEFERRED(n)
 #define THROW_NOT_IMPLEMENTED(m) throw std::runtime_error(m " not implemented at line: " _TO_STRING(__LINE__) ", " _TO_STRING(__FILE__))
-
-#define _GENERATE_MATH_AND(F) \
-	template <typename T> inline bool F(const tuple2<T>& a) { \
-		return std::F(a.x) && std::F(a.y); }
-
-#define _GENERATE_MATH_B(F) \
-	template <typename T> inline tuple2<bool> F##_b(const tuple2<T>& a) { \
-		return {std::F(a.x), std::F(a.y)}; }
-
-#define _GENERATE_MATHF(F) \
-	template <typename T> inline tuple2<T> F(const tuple2<T>& a) { \
-		return { std::F(a.x), std::F(a.y) }; }
-
 
 //#define H_DOUBLE_TYPE
 //#define H_LONG_TYPE
@@ -299,21 +285,38 @@ namespace hrzn {
 	template <typename T>
 	tuple2<T> operator ~ (const tuple2<T>& a) { return tuple2<T>(a.y, a.x); }
 
-	_GENERATE_MATHF(sqrt);
-	_GENERATE_MATHF(abs);
-	_GENERATE_MATHF(round);
-	_GENERATE_MATHF(floor);
-	_GENERATE_MATHF(ceil);
-	_GENERATE_MATHF(trunc);
 
-	_GENERATE_MATH_AND(isnormal);
-	_GENERATE_MATH_AND(isfinite);
+#define MACRO_GENERATE_MATH_AND(F) \
+	template <typename T> inline bool F(const tuple2<T>& a) { \
+		return std::F(a.x) && std::F(a.y); }
 
-	_GENERATE_MATH_B(isnormal);
-	_GENERATE_MATH_B(isfinite);
-	_GENERATE_MATH_B(isnan);
-	_GENERATE_MATH_B(isinf);
-	_GENERATE_MATH_B(signbit);
+#define MACRO_GENERATE_MATH_B(F) \
+	template <typename T> inline tuple2<bool> F##_b(const tuple2<T>& a) { \
+		return {std::F(a.x), std::F(a.y)}; }
+
+#define MACRO_GENERATE_MATH_F(F) \
+	template <typename T> inline tuple2<T> F(const tuple2<T>& a) { \
+		return { std::F(a.x), std::F(a.y) }; }
+
+	MACRO_GENERATE_MATH_F(sqrt);
+	MACRO_GENERATE_MATH_F(abs);
+	MACRO_GENERATE_MATH_F(round);
+	MACRO_GENERATE_MATH_F(floor);
+	MACRO_GENERATE_MATH_F(ceil);
+	MACRO_GENERATE_MATH_F(trunc);
+
+	MACRO_GENERATE_MATH_AND(isnormal);
+	MACRO_GENERATE_MATH_AND(isfinite);
+
+	MACRO_GENERATE_MATH_B(isnormal);
+	MACRO_GENERATE_MATH_B(isfinite);
+	MACRO_GENERATE_MATH_B(isnan);
+	MACRO_GENERATE_MATH_B(isinf);
+	MACRO_GENERATE_MATH_B(signbit);
+
+#undef MACRO_GENERATE_MATH_F
+#undef MACRO_GENERATE_MATH_AND
+#undef MACRO_GENERATE_MATH_B
 
 	/// Type aliases for Tuples of FLOAT types.
 	using vector2 = tuple2<h_float>;
@@ -791,7 +794,3 @@ namespace hrzn {
 } // namespace hrzn
 
 #undef THROW_NOT_IMPLEMENTED
-
-#undef _GENERATE_MATHF
-#undef _GENERATE_MATH_AND
-#undef _GENERATE_MATH_OR
