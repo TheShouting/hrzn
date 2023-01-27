@@ -160,7 +160,7 @@
   <ItemGroup>
     <ClInclude Include="include\htl\containers.h" />
     <ClInclude Include="include\htl\geometry.h" />
-    <ClInclude Include="include\htl\hrzn.h" />
+    <ClInclude Include="include\htl\basic_types.h" />
     <ClInclude Include="include\htl\stringify.h" />
     <ClInclude Include="include\htl\utility.h" />
   </ItemGroup>

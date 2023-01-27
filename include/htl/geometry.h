@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hrzn.h"
+#include "basic_types.h"
 #include <vector>
 
 namespace hrzn {

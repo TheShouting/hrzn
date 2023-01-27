@@ -1,7 +1,8 @@
 #pragma once
 
-#include "hrzn.h"
+#include "basic_types.h"
 
+#include <iterator>
 
 namespace hrzn {
 
@@ -11,63 +12,73 @@ namespace hrzn {
 
 
 	/// <summary>
-	/// Base Cell class which holds a reference to data along with a XY position.
+	/// An abstract container class which holds data that is tied to an XY position.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	template <typename T>
-	class ICell {
-	protected:
-		h_int x, y;
+	class Cell : public point2 {
 	public:
 
 
-		ICell() : point2() {}
-		ICell(point2 _position) : x(_position.x), y(_position.y) {}
-		ICell(h_int _x, h_int _y) : x(_x), y(_y) {}
+		Cell() : point2() {}
+		Cell(point2 _position) : point2(_position) {}
+		Cell(h_int _x, h_int _y) : point2(_x, _y) {}
 
 		point2 position() const { return { x, y }; }
 
-		void operator=(const ICell<T>& other) {
+		Cell<T> & operator=(const Cell<T>& other) {
 			x = other.x;
 			y = other.y;
 			get() = other.get();
+			return *this;
 		}
-
-		operator bool() { return x != 0 && y != 0; }
-
-		operator point2() const { return { x, y }; }
-
-		bool operator ==(const point2 & other) { return x == other.x && y == other.y; }
-		bool operator ==(const ICell<T> & other) { return x == other.x && y == other.y; }
-		bool operator !=(const ICell<T> & other) { return x != other.x || y != other.y; }
-
-		void setPosition(point2 _position) { setPosition(_position.x, _position.y); }
-		void setPosition(h_int _x, h_int _y) { x = _x; y = _y; }
 
 		virtual T& get() = 0;
 		virtual T get() const = 0;
-
-	};
-
+	}; // class Cell<T>
 
 
+	/// <summary>
+	/// A cell object that holds a copy of a veriable.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
 	template <typename T>
-	class Cell : public ICell<T> {
+	class CellObject : public Cell<T> {
 	private:
 		T m_contents;
 	public:
-		using ICell<T>::get;
+		using Cell<T>::get;
 
-		Cell() : point2(), m_contents() {}
-		Cell(h_int _x, h_int _y) : ICell<T>(_x, _y), m_contents() {}
-		Cell(point2 _position) : ICell<T>(_position), m_contents() {}
-		Cell(h_int _x, h_int _y, const T & _contents) : ICell<T>(_x, _y), m_contents(_contents) {}
-		Cell(point2 _position, const T & _contents) : ICell<T>(_position), m_contents(_contents) {}
-		//Cell(const ICell<T> _other) : ICell<T>(_other), m_contents(_other.get()) {}
+		CellObject() : Cell<T>(), m_contents() {}
+		CellObject(h_int _x, h_int _y) : Cell<T>(_x, _y), m_contents() {}
+		CellObject(point2 _position) : Cell<T>(_position), m_contents() {}
+		CellObject(h_int _x, h_int _y, const T & _contents) : Cell<T>(_x, _y), m_contents(_contents) {}
+		CellObject(point2 _position, const T & _contents) : Cell<T>(_position), m_contents(_contents) {}
+		CellObject(const Cell<T> & _other) : Cell<T>(_other), m_contents(_other.get()) {}
 
 		T& get() override { return m_contents; }
 		T get() const override { return m_contents; }
-	};
+	}; // class CellObject<T>
+
+
+	/// <summary>
+	/// A cell object that holds a reference to a Map element.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	template <typename T>
+	class CellReference : public Cell<T> {
+	private:
+		T & m_contents;
+	public:
+		using Cell<T>::get;
+
+		CellReference(h_int _x, h_int _y, const T& _contents) : Cell<T>(_x, _y), m_contents(_contents) {}
+		CellReference(point2 _position, const T _contents) : Cell<T>(_position), m_contents(_contents) {}
+		CellReference(Cell<T>& _other) : Cell<T>(_other), m_contents(_other.get()) {}
+
+		T& get() override { return m_contents; }
+		T get() const override { return m_contents; }
+	}; // CellRefereence<T>
 
 
 	/// <summary>
@@ -95,7 +106,7 @@ namespace hrzn {
 		T at(point2 p) const { return at(p.x, p.y); }
 		void set(point2 p, const T& val) { set(p.x, p.y, val); }
 
-		Cell<T> getCell(const point2 & _p) const { return Cell<T>(_p, at(_p)); }
+		CellObject<T> getCell(const point2 & _p) const { return CellObject<T>(_p, at(_p)); }
 
 		/// <summary>
 		/// Fill entire map with a single value.
@@ -105,16 +116,6 @@ namespace hrzn {
 			for (h_int y = y1; y < y2; ++y)
 				for (h_int x = x1; x < x2; ++x)
 					set(x, y, obj);
-		}
-
-		/// <summary>
-		/// Fill map utilizing a value returned by a fill function for each cell.
-		/// </summary>
-		/// <param name="f"></param>
-		void fill(fill_func f) {
-			for (h_int x, y = y1; y < y2; ++y)
-				for (x = x1; x < x2; ++x)
-					set(x, y, f());
 		}
 
 		/// <summary>
@@ -162,15 +163,19 @@ namespace hrzn {
 
 	protected:
 		std::size_t f_index(h_int x, h_int y) const {
+#ifdef H_NOEXCEPTIONS
+			return (x - x1) + (y - y1) * width();
+#else
 			if (contains(x, y))
 				return (x - x1) + (y - y1) * width();
 			throw std::out_of_range("Point not located in Matrix.");
+#endif // H_EXCEPTIONS
 		}
 
 	public:
-		class Iterator : public ICell<T> {
+		class Iterator : public Cell<T> {
 		public:
-			using ICell<T>::get;
+			using Cell<T>::get;
 
 			using iterator_category = std::bidirectional_iterator_tag;
 			using difference_type = std::ptrdiff_t;
@@ -180,8 +185,9 @@ namespace hrzn {
 
 			Map& map;
 
-			Iterator(Map& m, point2 p) : ICell<T>(p), map(m) {}
+			Iterator(Map& m, point2 p) : Cell<T>(p), map(m) {}
 
+			value_type operator *() const { return get(); } // TODO move dereference and pointer operators to base Cell class
 			reference operator *() { return get(); }
 			pointer operator ->() { return &(get()); }
 
@@ -254,11 +260,6 @@ namespace hrzn {
 
 		base* source() { return m_source; }
 
-		//void resize(h_int xa, h_int ya, h_int xb, h_int yb) override {
-		//	point_area new_rect = hrzn::intersect(*this, { xa, ya, xb, yb });
-		//	point_area::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
-		//}
-
 	}; // class MapReference<T>
 
 
@@ -273,7 +274,11 @@ namespace hrzn {
 		return MapReference<T>(i_area, map);
 	}
 
-
+	/// <summary>
+	/// A map object that hides the referenced map data type and only exposes a member variable for access. 
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <typeparam name="TRef"></typeparam>
 	template <typename T, typename TRef>
 	class MapReader : public Map<T> {
 	public:
@@ -307,7 +312,6 @@ namespace hrzn {
 
 
 
-
 	/// <summary>
 	/// Map container for storing any variables by position in a 2 dimensional grid.
 	/// </summary>
@@ -324,7 +328,7 @@ namespace hrzn {
 	private:
 
 		T* m_contents = nullptr;
-		// TODO keep a member varuable for contents size. Used independently from parent point_area class.
+		// TODO keep a member variable for contents size. Used independently from parent point_area class.
 
 	public:
 
@@ -334,15 +338,18 @@ namespace hrzn {
 		MapContainer(const point_area& rect) : base(rect), m_contents(new T[rect.area()]) {}
 		MapContainer(const point_area& rect, const T& obj) : base(rect), m_contents(new T[rect.area()]) { for (int i = 0; i < rect.area(); ++i) m_contents[i] = obj; }
 
-		MapContainer(const MapContainer<T>& other) : base(other), m_contents(new T[other.area()]) {
+		MapContainer(const MapContainer<T>& other) : base((point_area)other), m_contents(new T[other.area()]) {
 			std::copy(other.m_contents, other.m_contents + other.area(), m_contents);
 		}
 
-		// TODO: implement move constructor for map container. (test to see if needed)
-		// TODO: implement construction fromm abstract map.
+		MapContainer(MapContainer<T>&& other) noexcept : base((point_area)other), m_contents(other.m_contents) {
+			other.m_contents = nullptr;
+			other.x1 = other.x2;
+			other.y1 = other.y2;
+		}
 
 		~MapContainer() {
-			delete[] m_contents;
+			if (m_contents) delete[] m_contents;
 			m_contents = nullptr;
 		}
 
@@ -374,6 +381,10 @@ namespace hrzn {
 			m_contents[this->f_index(x, y)] = val;
 		}
 
+		bool valid() const {
+			return m_contents;
+		}
+
 		//void resize(h_int xa, h_int ya, h_int xb, h_int yb) override {
 		//	resize(xa, ya, xb, yb, T());
 		//}
@@ -396,7 +407,7 @@ namespace hrzn {
 
 
 	/// <summary>
-	/// A map container which returns a reference for a single object for all positions. 
+	/// A map container which returns a single reference for all positions. 
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	template <typename T>
@@ -430,7 +441,7 @@ namespace hrzn {
 	};
 
 
-	// Bitwise AND operation between two boolean Matrices
+	/// Bitwise AND operation between two boolean Matrices
 	inline MapContainer<bool> operator & (const Map<bool>& a, const Map<bool>& b) {
 		MapContainer<bool> result(intersect(a, b));
 		for (int y = result.y1; y < result.y2; ++y)
@@ -439,7 +450,7 @@ namespace hrzn {
 		return result;
 	}
 
-	// Bitwise OR operation between two boolean Matrices
+	/// Bitwise OR operation between two boolean Matrices
 	inline MapContainer<bool> operator | (const Map<bool>& a, const Map<bool>& b) {
 		MapContainer<bool> result(intersect(a, b));
 		for (int y = result.y1; y < result.y2; ++y)
@@ -448,7 +459,7 @@ namespace hrzn {
 		return result;
 	}
 
-	// Bitwise XOR operation between two boolean Matrices
+	/// Bitwise XOR operation between two boolean Matrices
 	inline MapContainer<bool> operator ^ (const Map<bool>& a, const Map<bool>& b) {
 		MapContainer<bool> result(intersect(a, b));
 		for (int y = result.y1; y < result.y2; ++y)
@@ -457,7 +468,7 @@ namespace hrzn {
 		return result;
 	}
 
-	// Bitwise Invert operation between on a boolean Matrix
+	/// Bitwise Invert operation between on a boolean Matrix
 	inline MapContainer<bool> operator ~ (const Map<bool>& a) {
 		MapContainer<bool> result((point_area)a);
 		for (int y = a.y1; y < a.y2; ++y)
@@ -492,7 +503,7 @@ namespace hrzn {
 	}
 
 	/// <summary>
-	/// Find and replaces all matched values in map with another.
+	/// Find and replaces all values in map that match the proveded value and replace it with another.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <param name="map">The map on which the operation is performed in-place.</param>
@@ -505,4 +516,4 @@ namespace hrzn {
 				map.at(x, y) = replace;
 	}
 
-} // namespace hrzn
+} // namespace hrzn 

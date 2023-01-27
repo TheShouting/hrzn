@@ -28,7 +28,6 @@ SOFTWARE.
 #include <cassert>
 #include <algorithm>
 #include <stdexcept>
-#include <iterator>
  
 #define _TO_STRING_DEFERRED(n) #n
 #define _TO_STRING(n) _TO_STRING_DEFERRED(n)
@@ -67,44 +66,56 @@ SOFTWARE.
 // Aliased UNSIGNED INT type
 typedef unsigned long int h_unsigned;
 
-constexpr h_float operator "" _hf(long double val) { return static_cast<::h_float>(val); }
-constexpr h_int operator "" _hi(unsigned long long int val) { return static_cast<::h_int>(val); }
+static constexpr h_float operator "" _hf(long double val) { return static_cast<::h_float>(val); }
+static constexpr h_int operator "" _hi(unsigned long long int val) { return static_cast<::h_int>(val); }
 
 namespace hrzn {
 
-	constexpr auto PI = 3.1415926535897932384626433832795_hf;
-	constexpr auto DEGTORAD = 0.017453_hf;
-	constexpr auto RADTODEG = 57.29578_hf;
-	constexpr auto DEG = 360.0_hf;
-	constexpr auto RAD = 6.283185307179586476925286766559_hf;
-	constexpr auto EPSILON = 1.192092896e-07_hf;
+	static constexpr auto PI = 3.1415926535897932384626433832795_hf;
+	static constexpr auto DEGTORAD = 0.01745329251994329576923690768489_hf;
+	static constexpr auto RADTODEG = 57.295779513082320876798154814105_hf;
+	static constexpr auto DEG = 360.0_hf;
+	static constexpr auto RAD = 6.283185307179586476925286766559_hf;
+	//static constexpr auto EPSILON = 1.192092896e-07_hf; // Epsilon is too small unless h_float=double 
+	static constexpr auto EPSILON = 1.192092896e-06_hf; // TODO expand based on h_float precision
 
-	constexpr auto TOPLEFT = 0;
-	constexpr auto TOPRIGHT = 1;
-	constexpr auto LOWERRIGHT = 2;
-	constexpr auto LOWERLEFT = 3;
+	static constexpr auto TOPLEFT = 0;
+	static constexpr auto TOPRIGHT = 1;
+	static constexpr auto LOWERRIGHT = 2;
+	static constexpr auto LOWERLEFT = 3;
 
-	constexpr auto DIR_N = 0;
-	constexpr auto DIR_NE = 1;
-	constexpr auto DIR_E = 2;
-	constexpr auto DIR_SE = 3;
-	constexpr auto DIR_S = 4;
-	constexpr auto DIR_SW = 5;
-	constexpr auto DIR_W = 6;
-	constexpr auto DIR_NW = 7;
+	static constexpr auto DIR_N = 0;
+	static constexpr auto DIR_NE = 1;
+	static constexpr auto DIR_E = 2;
+	static constexpr auto DIR_SE = 3;
+	static constexpr auto DIR_S = 4;
+	static constexpr auto DIR_SW = 5;
+	static constexpr auto DIR_W = 6;
+	static constexpr auto DIR_NW = 7;
 
-	template<typename T, bool = std::is_floating_point_v<T>>
-	struct vEpsilon {};
 
-	template<typename T>
-	struct vEpsilon<T, false> {
-		inline static const T value = 1_hi;
-	};
+	namespace _lib {
 
-	template<typename T>
-	struct vEpsilon<T, true> {
-		inline static const T value = EPSILON;
-	};
+		template<typename T, bool = std::is_floating_point_v<T>>
+		struct vEpsilon {};
+
+		template<typename T>
+		struct vEpsilon<T, false> {
+			inline static const T value = 1_hi;
+		};
+
+		template<typename T>
+		struct vEpsilon<T, true> {
+			inline static const T value = EPSILON;
+		};
+
+
+		inline constexpr h_float normalizef(const h_float f) {
+			//return std::fmod(std::fmod(f, 1._hf) + 1._hf, 1._hf);
+			h_float a = f - (h_int)f + 1._hf;
+			return a - (h_int)a;
+		}
+	}
 
 
 	/******************************************************************************************************************
@@ -158,9 +169,9 @@ namespace hrzn {
 
 		void scale(T mag) { this->x *= mag; this->y *= mag; }
 
-		double length() const { return std::sqrt(this->x * this->x + this->y * this->y); }
-
 		tuple2<T> swizzle() const { return { this->y, this->x }; }
+
+		auto length() const { return std::sqrt(this->x * this->x + this->y * this->y); }
 
 		T lengthSqr() const { return this->x * this->x + this->y * this->y; }
 
@@ -171,10 +182,10 @@ namespace hrzn {
 		/// </summary>
 		/// <returns>A normailized tuple or vector.</returns>
 		tuple2<T> normal() const {
-			double l = length();
+			h_float l = length();
 			if (l < EPSILON)
 				return { 0._hf, 0._hf };
-			double il = 1.0 / l;
+			h_float il = 1._hf / l;
 			return { static_cast<T>(this->x * il), static_cast<T>(this->y * il) };
 		}
 
@@ -192,23 +203,18 @@ namespace hrzn {
 			return l;
 		}
 
-		///// <returns></returns>
-		//tuple2<T> epsilon() const {
-		//	return { vEpsilon<T>::value, vEpsilon<T>::value };
-		//}
-
 		/// <summary>
 		/// Create a new tuple contining the smallest values of x and y where the they are non-zero.
 		/// </summary>
 		/// <returns></returns>
 		tuple2<T> epsilonSigned() const {
-			return { vEpsilon<T>::value * (T)std::signbit((double)this->x) * -2 + 1, vEpsilon<T>::value * (T)std::signbit((double)this->y) * -2 + 1 };
+			return { _lib::vEpsilon<T>::value * (T)std::signbit((double)this->x) * -2 + 1, _lib::vEpsilon<T>::value * (T)std::signbit((double)this->y) * -2 + 1 };
 		}
 
 		///// <summary>
 		///// Create a new tuple contining the smallest values of x and y where the they are non-zero.
 		///// </summary>
-		static constexpr tuple2<T> EPSILON() { return { vEpsilon<T>::value, vEpsilon<T>::value }; }
+		static constexpr tuple2<T> EPSILON2() { return { _lib::vEpsilon<T>::value, _lib::vEpsilon<T>::value }; }
 
 		static constexpr tuple2<T> UP() { return { 0, 1 }; }
 
@@ -303,7 +309,7 @@ namespace hrzn {
 	/// <summary>
 	/// An array of unit vectors containinf the vertices of a quadrilateral.
 	/// </summary>
-	constexpr tuple2<h_float> h_quad[] = {
+	static constexpr tuple2<h_float> h_quad[] = {
 		{0._hf, 0._hf},
 		{1._hf, 0._hf},
 		{1._hf, 1._hf},
@@ -313,7 +319,7 @@ namespace hrzn {
 	/// <summary>
 	/// An array contained the point offsets for each corner in a box or area.
 	/// </summary>
-	constexpr tuple2<h_int> h_corner[4] = {
+	static constexpr tuple2<h_int> h_corner[4] = {
 		{0_hi, 0_hi},
 		{1_hi, 0_hi},
 		{1_hi, 1_hi},
@@ -323,7 +329,7 @@ namespace hrzn {
 	/// <summary>
 	/// An array containing all offsets for a 4-way neighborhood.
 	/// </summary>
-	constexpr tuple2<h_int> h_neighborhood4[] = {
+	static constexpr tuple2<h_int> h_neighborhood4[] = {
 		{ 0_hi, -1_hi},
 		{ 1_hi,  0_hi},
 		{ 0_hi,  1_hi},
@@ -334,7 +340,7 @@ namespace hrzn {
 	/// <summary>
 	/// An array containing all offsets for a 4-way neighborhood.
 	/// </summary>
-	constexpr tuple2<h_int> h_neighborhood8[] = {
+	static constexpr tuple2<h_int> h_neighborhood8[] = {
 		{ 0_hi, -1_hi},
 		{ 1_hi, -1_hi},
 		{ 1_hi,  0_hi},
@@ -347,7 +353,7 @@ namespace hrzn {
 	};
 
 	/// <summary>
-	/// A class for managing rotations and angles.
+	/// Normalized angles.
 	/// </summary>
 	struct angle {
 
@@ -355,106 +361,154 @@ namespace hrzn {
 
 		constexpr angle() : tau(0.f) {}
 
-		constexpr angle(h_float a) : tau(a) {}
+		constexpr angle(h_float a) : tau(_lib::normalizef(a)) {}
 
-		angle operator-() const { return angle(-tau); }
-
-		angle operator + (angle const& other) const { return angle(tau + other.tau); }
-		angle operator - (angle const& other) const { return angle(tau - other.tau); }
-		angle operator * (angle const& other) const { return angle(tau * other.tau); }
-		angle operator / (angle const& other) const { return angle(tau / other.tau); }
-
-		template <typename T>
-		angle operator + (T const& val) const { return angle(tau + static_cast<h_float>(val)); }
-
-		template <typename T>
-		angle operator - (T const& val) const { return angle(tau - static_cast<h_float>(val)); }
-
-		template <typename T>
-		angle operator * (T const& val) const { return angle(tau * static_cast<h_float>(val)); }
-
-		template <typename T>
-		angle operator / (T const& val) const { return angle(tau / static_cast<h_float>(val)); }
-
-		auto addDeg(h_float deg) {
-			tau += (deg / DEG);
-			return tau * DEG;
-		}
-
-		auto addRad(h_float rad) {
-			tau += (rad / RAD);
-			return tau * RAD;
-		}
-
-		void setDeg(h_float deg) {
-			tau = deg / DEG;
-		}
-
-		void setRad(h_float rad) {
-			tau = rad / RAD;
-		}
+		constexpr angle(const angle & a) = default;
 
 		inline auto deg() const { return tau * DEG; }
 
 		inline auto rad() const { return tau * RAD; }
 
-		inline void spin(h_float t) {
-			tau += t;
+		auto rotateByDeg(h_float deg) {
+			tau = _lib::normalizef(deg / DEG + tau);
+			return tau * DEG;
 		}
 
-		angle normalized() const {
-			return std::fmod(tau - std::trunc(tau) + 1._hf, 1._hf);
+		auto rotateByRad(h_float rad) {
+			tau = _lib::normalizef(rad / RAD + tau);
+			return tau * RAD;
 		}
 
-		angle revolutions() const {
-			return std::trunc(tau);
+		void set(h_float t) {
+			tau = _lib::normalizef(t);
+		}
+
+		void setByDeg(h_float deg) {
+			tau = _lib::normalizef(deg / DEG);
+		}
+
+		void setByRad(h_float rad) {
+			tau = _lib::normalizef(rad / RAD);
+		}
+
+		void spin(h_float rotations) {
+			tau = _lib::normalizef(tau + rotations);
 		}
 
 		angle flip() const {
-			return angle(tau + 0.5_hf).normalized();
+			return angle(tau + 0.5_hf);
 		}
 
-		angle inverse() const {
-			return angle(1.0_hf - angle().tau);
-		}
-
-		void setWithVector(vector2 vec) {
-			tau = std::atan2(vec.y, vec.x) / RAD;
-			tau = tau - std::floor(tau);
+		angle invert() const {
+			angle a;
+			a.tau = 1._hf - tau;
+			return a;
 		}
 
 		vector2 getForwardVector(h_float length = 1._hf) const {
-			return vector2(std::cos(rad()) * length, std::sin(rad()) * length);
+			return vector2(std::sin(rad()) * length, std::cos(rad()) * length);
 		}
 
 		vector2 getRightVector(h_float length = 1._hf) const {
-			return vector2(std::cos(rad() + PI * 0.5_hf) * length, std::sin(rad() + PI * 0.5_hf) * length);
+			return vector2(std::sin(rad() + PI * 0.5_hf) * length, std::cos(rad() + PI * 0.5_hf) * length);
 		}
 
 		vector2 rotate(vector2 const& vec) const {
-			h_float a = angle().rad();
-			h_float x = std::cos(a) * vec.x - std::sin(a) * vec.y;
-			h_float y = std::sin(a) * vec.x + std::cos(a) * vec.y;
-			return vector2(x, y);
+			h_float a = rad();
+			h_float cs = std::cos(a);
+			h_float sn = std::sin(a);
+			return { cs * vec.x + sn * vec.y, sn * -vec.x + cs * vec.y };
 		}
 
 		vector2 unrotate(vector2 const& vec) const {
-			h_float a = angle().rad();
-			h_float x = std::cos(-a) * vec.x - std::sin(-a) * vec.y;
-			h_float y = std::sin(-a) * vec.x + std::cos(-a) * vec.y;
-			return vector2(x, y);
+			h_float a = -rad();
+			h_float cs = std::cos(a);
+			h_float sn = std::sin(a);
+			return { cs * vec.x + sn * vec.y, sn * -vec.x + cs * vec.y };
 		}
 
-		static angle difference(angle a, angle b) {
-			h_float diff = a.normalized().tau - b.normalized().tau + 0.5_hf;
-			return angle(diff - std::floor(diff) - 0.5_hf);
+		static constexpr angle fromDegrees(h_float deg) { return angle(deg / DEG); }
+
+		static constexpr angle fromRadians(h_float rad) { return angle(rad / RAD); }
+
+		template <typename T>
+		static constexpr angle fromVector(tuple2<T> vec) {
+			h_float tau = std::atan2(vec.y, vec.x) / RAD + 0.75_hf;
+			return angle(-tau);
 		}
 
-		static angle Degrees(h_float deg) { return angle(deg / DEG); }
+		static constexpr angle HALF() { return angle(0.5_hf); }
+		
+		static constexpr angle UP() { return angle(0._hf); }
 
-		static angle Radians(h_float rad) { return angle(rad / RAD); }
+		static constexpr angle DOWN() { return angle(0.5_hf); }
+
+		static constexpr angle RIGHT() { return angle(0.25_hf); }
+
+		static constexpr angle LEFT() { return angle(0.75_hf); }
 
 	}; // struct angle
+
+
+	/// <summary>
+	/// Get the smallest rotation between two angles.
+	/// </summary>
+	inline angle difference(angle a, angle b) {
+		/*h_float phi = std::fmod(std::abs(a.tau - b.tau), 1._hf);
+		a.tau = phi > 0.5_hf ? 1._hf - phi : phi;
+		return a;*/
+		h_float phi = a.tau - b.tau + 0.5_hf;
+		return { std::abs(phi - std::floor(phi) - 0.5_hf) };
+	}
+
+	/// <summary>
+	/// Returns true if the shortest angle for A to reach B is clockwise (positive angle).
+	/// </summary>
+	inline bool direction(angle from, angle to) {
+		return std::fmod(to.tau - from.tau + 1.5_hf, 1._hf) > 0.5_hf;
+	}
+
+	/// <summary>
+	/// Compare equality of two angles using the library defined epsilon value.
+	/// </summary>
+	inline bool compare(angle a, angle b) {
+		return difference(a, b).tau < EPSILON;
+	}
+
+	/// <summary>
+	/// Compare equality of two angles using a user defined epsilon value.
+	/// </summary>
+	inline bool compare(angle a, angle b, h_float epsilon) {
+		return difference(a, b).tau < epsilon;
+	}
+	
+	inline bool operator == (const angle& a, const angle& b) { return a.tau == b.tau; }
+	inline bool operator < (const angle& a, const angle& b) { return a.tau < b.tau; }
+
+	inline angle operator ~ (const angle & a) { return a.invert(); }
+	inline angle operator - (const angle & a) { return a.flip(); }
+
+	inline angle operator + (const angle & a, const angle & b) { return { a.tau + b.tau }; }
+	inline angle operator + (const angle & a, const h_float & val) { return { a.tau + val }; }
+
+	inline angle operator - (const angle& a, const angle& b) { return { a.tau - b.tau }; }
+	inline angle operator - (const angle& a, const h_float& val) { return { a.tau - val }; }
+	
+	inline angle operator * (const angle& a, const angle& b) { return { a.tau * b.tau }; }
+	inline angle operator * (const angle& a, const h_float& val) { return { a.tau * val }; }
+	
+	inline angle operator / (const angle& a, const angle& b) { return { a.tau / b.tau }; }
+	inline angle operator / (const angle& a, const h_float& val) { return { a.tau / val }; }
+
+	//angle& operator += (angle& a, const angle& b) {
+	//	a.tau = _lib::normalizef(a.tau + b.tau);
+	//	return a;
+	//}
+
+	//angle& operator -= (angle& a, const angle& b) {
+	//	a.tau = _lib::normalizef(a.tau - b.tau);
+	//	return a;
+	//}
 
 
 	/******************************************************************************************************************
@@ -707,10 +761,10 @@ namespace hrzn {
 			return scale * s;
 		}
 
-		vector2 inversePosition(vector2 pos) {
-			//return rotation.unrotate(pos / scale.epsilon()) - pos;
-			return rotation.unrotate(pos / vector2::EPSILON()) - pos;
-		}
+		//vector2 inversePosition(vector2 pos) {
+		//	//return rotation.unrotate(pos / scale.epsilon()) - pos;
+		//	return rotation.unrotate(pos / vector2::EPSILON2()) - pos;
+		//}
 
 		transform childTransform(const transform & child) const {
 			return { childPositon(child.position), childRotation(child.rotation), childScale(child.scale)};

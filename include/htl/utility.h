@@ -23,9 +23,10 @@ SOFTWARE.
 */
 #pragma once
 
-#include "hrzn.h"
+#include "basic_types.h"
 #include "geometry.h"
 #include "containers.h"
+
 
 #define HRZN_FOREACH_POINT(A, X, Y) for (h_int X, Y = A.y1; Y < A.y2; ++Y) for (X = A.x1; X < A.x2; ++X) 
 
@@ -61,7 +62,7 @@ namespace hrzn {
 	}
 
 	inline angle findRotation(vector2 v) {
-		return angle::Radians(std::atan2(v.y, v.x));
+		return angle::fromRadians(std::atan2(v.y, v.x));
 	}
 
 	inline point2 roundToPoint(const vector2& vec) {
@@ -184,12 +185,11 @@ namespace hrzn {
 	/// <param name="map"></param>
 	/// <param name="fill_func"></param>
 	template <typename T, typename Tf>
-	inline void fill_each(Map<T>& map, Tf& fill_func) {
+	inline void fill_each(Map<T>& map, Tf& fill_func) { // TODO fill function should be in the format of [T (*)(h_int, h_int)]
 		HRZN_FOREACH_POINT(map, x, y) {
 			map.set(x, y, fill_func());
 		}
 	}
-
 
 	/// <summary>
 	/// Fill a map in place using another map of booleans as a mask. If the value for the corresponding mask position is <c>true</c>, the value at that position in the map is replaced with the provided value.
@@ -270,7 +270,10 @@ namespace hrzn {
 		return transposeListToMap<T, TForwardIterator>(point_area(width, height), first, last);
 	}
 
-
+	/// <summary>
+	/// Return a new map that is transformed where each column is now a row and each row is now a column.
+	/// </summary>
+	/// <returns>A transformed copy of the map parameter.</returns>
 	template<typename T>
 	MapContainer<T> swizzle_map(const Map<T>& map) {
 		MapContainer<T> rotated(hrzn::swizzle((point_area)map));
@@ -409,14 +412,28 @@ namespace hrzn {
 			return { lerp(a.position, b.position, f), lerp(a.rotation, b.rotation, f), lerp(a.scale, b.scale, f) };
 		}
 
-		template <typename T>
-		inline T smoothstep(const T& a, const T& b, const h_float& f) {
-			return lerp(a, b, f * f * (3._hf - 2._hf * f));
+		inline float linearClamp(h_float t) {
+			return std::clamp(t, 0._hf, 1._hf);
 		}
 
-		template <typename T>
-		inline T smootherstep(const T& a, const T& b, const h_float& f) {
-			return lerp(a, b, f * f * f * (f * (6._hf * f - 15._hf) + 10._hf));
+		inline float repeat(h_float t) {
+			return std::fmod(t, 1._hf);
+		}
+
+		inline float pingpong(h_float t) {
+			return 1._hf - std::abs(2._hf * std::fmod(t * 0.5_hf, 1._hf) - 1._hf);
+		}
+
+		inline float bounce(h_float t) {
+			return 1._hf - std::abs(2._hf * t - 1._hf);
+		}
+
+		inline float smoothstep(h_float t) {
+			return t * t * (3._hf - 2._hf * t);
+		}
+
+		inline float smootherstep(h_float t) {
+			return t * t * t * (t * (6._hf * t - 15._hf) + 10._hf);
 		}
 
 	} // namespace lerp

@@ -20,7 +20,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\htl\hrzn.h">
+    <ClInclude Include="include\htl\basic_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\htl\stringify.h">
