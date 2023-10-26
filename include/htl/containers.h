@@ -35,7 +35,7 @@ namespace hrzn {
 
 
 	/// <summary>
-	/// An immutable object meant to hold a reference to data at a position.
+	/// An immutable object meant to hold a reference to data stored at a position.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	template <typename T>
@@ -43,11 +43,12 @@ namespace hrzn {
 		const point2 position;
 		T& contents;
 
-		cell_pointer(point2 p, T& o) : position(p), contents(o) {}
+		cell_pointer(point2 p, T& o) noexcept : position(p), contents(o) {}
 
 		T& operator*() { return contents; }
 		T* operator->() { return &contents; };
 	}; // struct cell_pointer<T>
+
 
 	/// <summary>
 	/// Abstract class for all Matrix-like containers and accessors.
@@ -268,12 +269,7 @@ namespace hrzn {
 
 		void set(h_int x, h_int y, const T& val) override { m_reference->at(x, y).*m_member_ptr = val; }
 
-		//void resize(h_int xa, h_int ya, h_int xb, h_int yb) override {
-		//	point_area new_rect = hrzn::intersect(*this, { xa, ya, xb, yb });
-		//	point_area::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
-		//}
-	};
-
+	}; // class MapReader<T>
 
 
 	/// <summary>
@@ -349,24 +345,6 @@ namespace hrzn {
 			return m_contents;
 		}
 
-		//void resize(h_int xa, h_int ya, h_int xb, h_int yb) override {
-		//	resize(xa, ya, xb, yb, T());
-		//}
-
-		//void resize(h_int xa, h_int ya, h_int xb, h_int yb, const T& fill_obj) {
-		//	assert(m_contents != nullptr);
-		//	point_area new_rect(xa, ya, xb, yb);
-		//	T* new_block = new T[new_rect.area()];
-		//	for (h_int y = new_rect.y1; y < new_rect.y2; ++y)
-		//		for (h_int x = new_rect.x1; x < new_rect.x2; ++x) {
-		//			h_int i = (x - new_rect.x1) + (y - new_rect.y1) * (h_int)new_rect.width();
-		//			new_block[i] = point_area::contains(x, y) ? std::move(m_contents[base::f_index(x, y)]) : fill_obj;
-		//		}
-		//	delete[]m_contents;
-		//	m_contents = new_block;
-		//	point_area::resize(new_rect.x1, new_rect.y1, new_rect.x2, new_rect.y2);
-		//}
-
 	}; // class MapContainer<T>
 
 
@@ -402,7 +380,8 @@ namespace hrzn {
 		void set(h_int x, h_int y, const T& val) override {
 			m_contents = val;
 		}
-	};
+
+	}; // class MapSingleton<T>
 
 
 	/// Bitwise AND operation between two boolean Matrices

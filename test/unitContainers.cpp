@@ -32,19 +32,12 @@ namespace hrznContainerTests {
 public:
 
 	TEST_METHOD(refernce_test) {
-
 		hrzn::MapContainer<char> map(10, 10);
-
 		map.fill('.');
-		
 		hrzn::point2 pt{ 5, 5 };
-
 		hrzn::cell_pointer cell = map.get_cell(pt);
-
 		cell.contents = 'X';
-
 		Assert::AreEqual(cell.contents, map.at(pt), L"Reference variable of cell connector is not valid.");
-
 	}
 
 	};
