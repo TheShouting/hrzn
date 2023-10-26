@@ -28,45 +28,25 @@ SOFTWARE.
 
 namespace hrznContainerTests {
 
-	TEST_CLASS(CellType) {
+	TEST_CLASS(cell_pointer_type) {
 public:
 
-	TEST_METHOD(CellType_BasicMethods) {
+	TEST_METHOD(refernce_test) {
 
-		hrzn::CellObject<char> cell_a(10, 10, 'A');
+		hrzn::MapContainer<char> map(10, 10);
 
-		hrzn::CellObject<char> cell_b(10, 10, 'B');
+		map.fill('.');
+		
+		hrzn::point2 pt{ 5, 5 };
 
-		Assert::IsTrue(cell_a == cell_b, L"Comparison between cells failed.");
-		Assert::IsFalse(cell_a != cell_b, L"Difference comparison between cells failed.");
-		Assert::IsTrue(cell_a.get() != cell_b.get(), L"Comparison between cell contents using get() failed.");
+		hrzn::cell_pointer cell = map.get_cell(pt);
 
-		Assert::AreEqual('A', cell_a.get(), L"Cell accessor method failed.");
-		Assert::IsTrue(cell_a == hrzn::point2(10, 10), L"Cell and point2 comparison failed.");
+		cell.contents = 'X';
 
-		cell_a = cell_b;
-		Assert::AreEqual('B', cell_a.get(), L"Cell to Cell assignment failed.");
-
-		cell_b.get() = 'C';
-		Assert::AreEqual('C', cell_b.get(), L"Cell get() method failed.");
+		Assert::AreEqual(cell.contents, map.at(pt), L"Reference variable of cell connector is not valid.");
 
 	}
 
-	TEST_METHOD(CellType_AbstractionAssignment) {
-
-		hrzn::CellObject<char> cell_a(10, 10, 'A');
-		hrzn::CellObject<char> cell_b(15, 7, 'B');
-		hrzn::CellObject<char> cell_c(10, 10, 'C');
-
-		hrzn::Cell<char>& a = cell_a;
-		hrzn::Cell<char>& b = cell_b;
-
-		a = b;
-
-		Assert::IsTrue(cell_a.position() == cell_b.position(), L"Refrence assignment of cell positions failed.");
-		Assert::IsTrue(cell_a.get() == cell_b.get(), L"Refrence assignment of cell contents failed.");
-
-	}
 	};
 
 	TEST_CLASS(MapType) {

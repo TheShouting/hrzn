@@ -35,74 +35,19 @@ namespace hrzn {
 
 
 	/// <summary>
-	/// An abstract container class which holds data that is tied to an XY position.
+	/// An immutable object meant to hold a reference to data at a position.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	template <typename T>
-	class Cell : public point2 {
-	public:
+	struct cell_pointer {
+		const point2 position;
+		T& contents;
 
+		cell_pointer(point2 p, T& o) : position(p), contents(o) {}
 
-		Cell() : point2() {}
-		Cell(point2 _position) : point2(_position) {}
-		Cell(h_int _x, h_int _y) : point2(_x, _y) {}
-
-		point2 position() const { return { x, y }; }
-
-		Cell<T> & operator=(const Cell<T>& other) {
-			x = other.x;
-			y = other.y;
-			get() = other.get();
-			return *this;
-		}
-
-		virtual T& get() = 0;
-		virtual T get() const = 0;
-	}; // class Cell<T>
-
-
-	/// <summary>
-	/// A cell object that holds a copy of a veriable.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	template <typename T>
-	class CellObject : public Cell<T> {
-	private:
-		T m_contents;
-	public:
-		using Cell<T>::get;
-
-		CellObject() : Cell<T>(), m_contents() {}
-		CellObject(h_int _x, h_int _y) : Cell<T>(_x, _y), m_contents() {}
-		CellObject(point2 _position) : Cell<T>(_position), m_contents() {}
-		CellObject(h_int _x, h_int _y, const T & _contents) : Cell<T>(_x, _y), m_contents(_contents) {}
-		CellObject(point2 _position, const T & _contents) : Cell<T>(_position), m_contents(_contents) {}
-		CellObject(const Cell<T> & _other) : Cell<T>(_other), m_contents(_other.get()) {}
-
-		T& get() override { return m_contents; }
-		T get() const override { return m_contents; }
-	}; // class CellObject<T>
-
-
-	/// <summary>
-	/// A cell object that holds a reference to a Map element.
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	template <typename T>
-	class CellReference : public Cell<T> {
-	private:
-		T & m_contents;
-	public:
-		using Cell<T>::get;
-
-		CellReference(h_int _x, h_int _y, const T& _contents) : Cell<T>(_x, _y), m_contents(_contents) {}
-		CellReference(point2 _position, const T _contents) : Cell<T>(_position), m_contents(_contents) {}
-		CellReference(Cell<T>& _other) : Cell<T>(_other), m_contents(_other.get()) {}
-
-		T& get() override { return m_contents; }
-		T get() const override { return m_contents; }
-	}; // CellRefereence<T>
-
+		T& operator*() { return contents; }
+		T* operator->() { return &contents; };
+	}; // struct cell_pointer<T>
 
 	/// <summary>
 	/// Abstract class for all Matrix-like containers and accessors.
@@ -129,7 +74,7 @@ namespace hrzn {
 		T at(point2 p) const { return at(p.x, p.y); }
 		void set(point2 p, const T& val) { set(p.x, p.y, val); }
 
-		CellObject<T> getCell(const point2 & _p) const { return CellObject<T>(_p, at(_p)); }
+		cell_pointer<T> get_cell(const point2& _p) { return { _p, at(_p) }; }
 
 		/// <summary>
 		/// Fill entire map with a single value.
@@ -193,9 +138,8 @@ namespace hrzn {
 		}
 
 	public:
-		class Iterator : public Cell<T> {
+		class Iterator : public point2 {
 		public:
-			using Cell<T>::get;
 
 			using iterator_category = std::bidirectional_iterator_tag;
 			using difference_type = std::ptrdiff_t;
@@ -205,14 +149,14 @@ namespace hrzn {
 
 			Map& map;
 
-			Iterator(Map& m, point2 p) : Cell<T>(p), map(m) {}
+			Iterator(Map& m, point2 p) : point2(p), map(m) {}
 
 			value_type operator *() const { return get(); } // TODO move dereference and pointer operators to base Cell class
 			reference operator *() { return get(); }
 			pointer operator ->() { return &(get()); }
 
-			reference get() override { return map.at(this->x, this->y); }
-			value_type get() const override { return map.at(this->x, this->y); }
+			reference get() { return map.at(this->x, this->y); }
+			value_type get() const { return map.at(this->x, this->y); }
 
 			operator bool() { return *this != map.end(); }
 
