@@ -221,13 +221,23 @@ namespace hrzn {
 		return mask;
 	}
 
+	/// <summary>
+	/// Starting from a point and moving in a driection, create a list of cell references of each point along the path.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="map"></param>
+	/// <param name="first"></param>
+	/// <param name="length"></param>
+	/// <param name="direction"></param>
+	/// <returns></returns>
 	template <typename T>
-	inline std::vector<T> projectFromPoint(const Map<T>& map, point2 first, int length, point2 direction) {
-		std::vector<T> list;
+	inline std::vector<cell_pointer<T>> project_from_point(Map<T>& map, point2 first, point2 direction, int length) { //TODO decide on a clearer definition and what to do for copy.
+		std::vector<cell_pointer<T>> list;
 		for (int i = 0; i < length; ++i) {
 			point2 pt = first + (direction * i);
 			if (map.contains(pt)) {
-				list.push_back(map.at(pt));
+				cell_pointer<T> ptr(pt, map.at(pt));
+				list.push_back(ptr);
 			}
 			else {
 				return list;

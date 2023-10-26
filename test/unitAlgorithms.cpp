@@ -143,5 +143,28 @@ namespace hrznAlgorithmTests {
 
 		}
 
+		TEST_METHOD(project_from_point) {
+
+			const int length = 10;
+
+			hrzn::MapContainer<char> map(100, 100);
+
+			map.fill('0');
+
+			auto l = hrzn::project_from_point(map, { 10, 10 }, { 0, 1 }, length);
+
+			for (auto i : l) {
+				i.contents = 'A';
+			}
+
+			int count = 0;
+			for (auto c : map) {
+				if (c == 'A') count++;
+			}
+
+			Assert::AreEqual(count, length, L"projection length error");
+			
+		}
+
 	};
 }
