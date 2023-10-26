@@ -98,7 +98,7 @@ namespace hrzn {
 		hBox(vector2 v1, vector2 v2) : v1(v1), v2(v2) {}
 		hBox(h_float w, h_float h) : v1(0._hf), v2(w, h) {}
 		hBox(h_float ax, h_float ay, h_float bx, h_float by) : v1(ax, ay), v2(bx, by) {}
-		hBox(point_area area) : v1(area.x1, area.y1), v2(area.x2, area.y2) {}
+		hBox(rectangle area) : v1(area.x1, area.y1), v2(area.x2, area.y2) {}
 
 		vector2 get(std::size_t index) const override {
 			return { (&v1)[h_corner[index].x].x, (&v1)[h_corner[index].y].y };

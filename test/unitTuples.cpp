@@ -111,11 +111,11 @@ namespace hrznBasicTypesTest
 #ifndef H_NOEXCEPT
 		TEST_METHOD(CornerIndexOutOfRange_point_area) {
 			auto f1 = [this] {
-				hrzn::point_area a = { 0, 0, 1, 1 };
+				hrzn::rectangle a = { 0, 0, 1, 1 };
 				a.corner(4);
 			};
 			auto f2 = [this] {
-				hrzn::point_area a = { 0, 0, 1, 1 };
+				hrzn::rectangle a = { 0, 0, 1, 1 };
 				a.corner(-1);
 			};
 
@@ -130,7 +130,7 @@ namespace hrznBasicTypesTest
 			int y1 = -3;
 			int x2 = 3;
 			int y2 = 3;
-			hrzn::point_area area = { x1, y1, x2, y2 };
+			hrzn::rectangle area = { x1, y1, x2, y2 };
 			Assert::IsTrue(area.contains(area.center()), L"Center");
 			Assert::IsTrue(area.contains(area.corner(0)), L"Top left corner");
 			Assert::IsTrue(area.contains(area.corner(1)), L"Top right corner");
@@ -149,13 +149,13 @@ namespace hrznBasicTypesTest
 			hrzn::point2 p3 = { -5, -4 };
 			hrzn::point2 p4 = { 8, 9 };
 
-			hrzn::point_area area1(p1, p2);
-			hrzn::point_area area2(p3, p4);
+			hrzn::rectangle area1(p1, p2);
+			hrzn::rectangle area2(p3, p4);
 
-			Assert::AreEqual(hrzn::point_area(p3, p2), hrzn::intersect(area1, area2), L"Overlapping instersection does not match.");
+			Assert::AreEqual(hrzn::rectangle(p3, p2), hrzn::intersect(area1, area2), L"Overlapping instersection does not match.");
 
-			hrzn::point_area big_area = { 0, 0, 100, 100 };
-			hrzn::point_area small_area = { 44, 7, 55, 60 };
+			hrzn::rectangle big_area = { 0, 0, 100, 100 };
+			hrzn::rectangle small_area = { 44, 7, 55, 60 };
 
 			Assert::AreEqual(small_area, hrzn::intersect(big_area, small_area), L"Contained intersection of does not match.");
 

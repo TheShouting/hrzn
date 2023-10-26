@@ -55,7 +55,7 @@ namespace hrzn {
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	template <typename T>
-	class Map : public point_area {
+	class Map : public rectangle {
 	public:
 
 		using fill_func = T(*)();
@@ -63,7 +63,7 @@ namespace hrzn {
 
 		bool repeat_boundary = false;
 
-		Map(const point_area& area) : point_area(area) {}
+		Map(const rectangle& area) : rectangle(area) {}
 
 		virtual ~Map() {}
 
@@ -213,7 +213,7 @@ namespace hrzn {
 		using Map<T>::set;
 		using base = Map<T>;
 
-		MapReference(const point_area& area, base& mat) : base(area), m_source(&mat) {}
+		MapReference(const rectangle& area, base& mat) : base(area), m_source(&mat) {}
 
 		operator bool() const override { return m_source->operator bool(); }
 
@@ -234,8 +234,8 @@ namespace hrzn {
 	/// <param name="area">The sub area of the base map to reference</param>
 	/// <param name="map">The base map object from which to to create a reference area</param>
 	template<typename T>
-	MapReference<T> GetReferenceArea(point_area area, Map<T>& map) {
-		point_area i_area = hrzn::intersect(area, map);
+	MapReference<T> GetReferenceArea(rectangle area, Map<T>& map) {
+		rectangle i_area = hrzn::intersect(area, map);
 		return MapReference<T>(i_area, map);
 	}
 
@@ -259,7 +259,7 @@ namespace hrzn {
 
 	public:
 
-		MapReader(Map<TRef>& reference, T TRef::* m_ptr) : base((point_area)reference), m_reference(&reference), m_member_ptr(m_ptr) {}
+		MapReader(Map<TRef>& reference, T TRef::* m_ptr) : base((rectangle)reference), m_reference(&reference), m_member_ptr(m_ptr) {}
 
 		operator bool() const override { return m_reference->operator bool(); }
 
@@ -288,21 +288,21 @@ namespace hrzn {
 	private:
 
 		T* m_contents = nullptr;
-		// TODO keep a member variable for contents size. Used independently from parent point_area class.
+		// TODO keep a member variable for contents size. Used independently from parent rectangle class.
 
 	public:
 
-		MapContainer() : base(point_area()) {}
-		MapContainer(std::size_t w, std::size_t h) : base(point_area(w, h)), m_contents(new T[w * h]) {}
-		MapContainer(std::size_t w, std::size_t h, const T& obj) : base(point_area(w, h)), m_contents(new T[w * h]) { for (int i = 0; i < (w * h); ++i) m_contents[i] = obj; }
-		MapContainer(const point_area& rect) : base(rect), m_contents(new T[rect.area()]) {}
-		MapContainer(const point_area& rect, const T& obj) : base(rect), m_contents(new T[rect.area()]) { for (int i = 0; i < rect.area(); ++i) m_contents[i] = obj; }
+		MapContainer() : base(rectangle()) {}
+		MapContainer(std::size_t w, std::size_t h) : base(rectangle(w, h)), m_contents(new T[w * h]) {}
+		MapContainer(std::size_t w, std::size_t h, const T& obj) : base(rectangle(w, h)), m_contents(new T[w * h]) { for (int i = 0; i < (w * h); ++i) m_contents[i] = obj; }
+		MapContainer(const rectangle& rect) : base(rect), m_contents(new T[rect.area()]) {}
+		MapContainer(const rectangle& rect, const T& obj) : base(rect), m_contents(new T[rect.area()]) { for (int i = 0; i < rect.area(); ++i) m_contents[i] = obj; }
 
-		MapContainer(const MapContainer<T>& other) : base((point_area)other), m_contents(new T[other.area()]) {
+		MapContainer(const MapContainer<T>& other) : base((rectangle)other), m_contents(new T[other.area()]) {
 			std::copy(other.m_contents, other.m_contents + other.area(), m_contents);
 		}
 
-		MapContainer(MapContainer<T>&& other) noexcept : base((point_area)other), m_contents(other.m_contents) {
+		MapContainer(MapContainer<T>&& other) noexcept : base((rectangle)other), m_contents(other.m_contents) {
 			other.m_contents = nullptr;
 			other.x1 = other.x2;
 			other.y1 = other.y2;
@@ -318,7 +318,7 @@ namespace hrzn {
 				delete[] m_contents;
 				m_contents = new T[other.area()];
 				std::copy(other.m_contents, other.m_contents + other.area(), m_contents);
-				point_area::resize(other.x1, other.y1, other.x2, other.y2);
+				rectangle::resize(other.x1, other.y1, other.x2, other.y2);
 			}
 			return *this;
 		}
@@ -367,7 +367,7 @@ namespace hrzn {
 
 	public:
 
-		MapSingleton() : base(point_area()) {}
+		MapSingleton() : base(rectangle()) {}
 
 		T& at(h_int x, h_int y) override {
 			return m_contents;
@@ -413,7 +413,7 @@ namespace hrzn {
 
 	/// Bitwise Invert operation between on a boolean Matrix
 	inline MapContainer<bool> operator ~ (const Map<bool>& a) {
-		MapContainer<bool> result((point_area)a);
+		MapContainer<bool> result((rectangle)a);
 		for (int y = a.y1; y < a.y2; ++y)
 			for (int x = a.x1; x < a.x2; ++x)
 				result.set(x, y, !a.at(x, y));
@@ -425,7 +425,7 @@ namespace hrzn {
 	/// </summary>
 	template <typename T>
 	MapContainer<T> copy(const Map<T>& map) {
-		MapContainer<T> result((point_area)map);
+		MapContainer<T> result((rectangle)map);
 		for (h_int x, y = map.y1; y < map.y2; ++y)
 			for (x = map.x1; x < map.x2; ++x)
 				result.set(x, y, map.at(x, y));
@@ -437,7 +437,7 @@ namespace hrzn {
 	/// </summary>
 	template <typename T>
 	inline bool equal(const Map<T>& a, const Map<T>& b) {
-		point_area area = hrzn::intersect(a, b);
+		rectangle area = hrzn::intersect(a, b);
 		for (h_int x, y = area.y1; y < area.y2; ++y)
 			for (x = area.x1; x < area.x2; ++x)
 				if (a.at(x, y) != b.at(x, y))

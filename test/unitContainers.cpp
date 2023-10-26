@@ -112,7 +112,7 @@ public:
 	}
 
 	TEST_METHOD(MapContainer_Retrieval) {
-		const hrzn::point_area area = { 20, 20, 100, 100 };
+		const hrzn::rectangle area = { 20, 20, 100, 100 };
 		const hrzn::point2 location = { 25, 30 };
 		const char value = 'X';
 		const char fill = '-';
@@ -174,7 +174,7 @@ public:
 	}
 
 	TEST_METHOD(MapReference_AccessTest) {
-		hrzn::point_area area = { -10, -10, 110, 110 };
+		hrzn::rectangle area = { -10, -10, 110, 110 };
 		hrzn::MapContainer<char> map(100, 100, '.');
 
 		auto ref1 = hrzn::GetReferenceArea(area, map);

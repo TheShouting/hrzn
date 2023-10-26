@@ -70,9 +70,9 @@ namespace hrzn {
 	}
 
 
-	/// Create a contiguous point_area based on the extreme corners of a point_area list.
-	inline point_area make_boundary(const std::initializer_list<point_area>& areas) {
-		point_area area = *areas.begin();
+	/// Create a contiguous rectangle based on the extreme corners of a rectangle list.
+	inline rectangle make_boundary(const std::initializer_list<rectangle>& areas) {
+		rectangle area = *areas.begin();
 		for (auto a = areas.begin() + 1; a != areas.end(); ++a) {
 			area.x1 = std::min(area.x1, a->x1);
 			area.y1 = std::min(area.y1, a->y1);
@@ -83,9 +83,9 @@ namespace hrzn {
 	}
 
 
-	/// Create an point_area object which contains all points in a list.
-	inline point_area make_boundary(const std::initializer_list<point2> & pts) {
-		point_area r (pts.begin()->x, pts.begin()->y);
+	/// Create an rectangle object which contains all points in a list.
+	inline rectangle make_boundary(const std::initializer_list<point2> & pts) {
+		rectangle r (pts.begin()->x, pts.begin()->y);
 		for (auto p = pts.begin() + 1; p != pts.end(); ++p) {
 			r.x1 = std::min(r.x1, p->x);
 			r.y1 = std::min(r.y1, p->y);
@@ -95,20 +95,20 @@ namespace hrzn {
 		return r;
 	}
 
-	/// Create an point_area object ussing a position and radius.
-	inline point_area makeAreaRadius(const point2 pos, const h_int radius) {
-		return point_area(pos.x - radius, pos.y - radius, pos.x + radius, pos.y + radius);
+	/// Create an rectangle object ussing a position and radius.
+	inline rectangle makeAreaRadius(const point2 pos, const h_int radius) {
+		return rectangle(pos.x - radius, pos.y - radius, pos.x + radius, pos.y + radius);
 	}
 
 
 	/// <summary>
-	/// Split the area of a <type>point_area</type> along its longest axis into two smaller ones.
+	/// Split the area of a <type>rectangle</type> along its longest axis into two smaller ones.
 	/// </summary>
-	/// <param name="area">The <type>point_area</type> to be split</param>
+	/// <param name="area">The <type>rectangle</type> to be split</param>
 	/// <returns>A container with the new URect objects. If <paramref name="rec"/> is only a single cell (width and height are equal to 1), then both are simply a copy of the orignal parameter. </returns>
-	inline std::pair<point_area, point_area> split(const point_area& area) {
-		point_area a1 = area;
-		point_area a2 = area;
+	inline std::pair<rectangle, rectangle> split(const rectangle& area) {
+		rectangle a1 = area;
+		rectangle a2 = area;
 		point2 cp = area.center();
 		if (area.height() > 1 && area.height() > area.width()) {
 			a1.y2 = cp.y;
@@ -131,7 +131,7 @@ namespace hrzn {
 	/// </summary>
 	template <typename Ta, typename Tb>
 	inline void copy_into(const Map<Ta>& from, Map<Tb>& to, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
-		point_area area = hrzn::intersect(from, to);
+		rectangle area = hrzn::intersect(from, to);
 		HRZN_FOREACH_POINT(area, x, y) {
 			to.set(x, y, cast(from.at(x, y)));
 		}
@@ -142,7 +142,7 @@ namespace hrzn {
 	/// </summary>
 	template <typename Ta, typename Tb>
 	inline MapContainer<Ta> copy_each(const Map<Tb>& map, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
-		MapContainer<Ta> dup((point_area)map);
+		MapContainer<Ta> dup((rectangle)map);
 		HRZN_FOREACH_POINT(map, x, y) {
 			dup.set(x, y, cast(map.at(x, y)));
 		}
@@ -170,8 +170,8 @@ namespace hrzn {
 	/// <param name="area">The area within which the operation is performed.</param>
 	/// <param name="fill_obj">The value with which to fill the map.</param>
 	template <typename T>
-	inline void fill(Map<T>& map, const point_area area, const T& fill_obj) {
-		point_area fill_area = hrzn::intersect(map, area);
+	inline void fill(Map<T>& map, const rectangle area, const T& fill_obj) {
+		rectangle fill_area = hrzn::intersect(map, area);
 		HRZN_FOREACH_POINT(fill_area, x, y) {
 			map.set(x, y, fill_obj);
 		}
@@ -200,7 +200,7 @@ namespace hrzn {
 	/// <param name="mask">A boolean map to be used as a mask.</param>
 	template <typename T>
 	inline void fill_mask(Map<T>& map, const T& fill_obj, const Map<bool>& mask) {
-		point_area fill_area = hrzn::intersect(map, mask);
+		rectangle fill_area = hrzn::intersect(map, mask);
 		HRZN_FOREACH_POINT(fill_area, x, y) {
 			if (mask.at(x, y))
 				map.set(x, y, fill_obj);
@@ -214,7 +214,7 @@ namespace hrzn {
 	/// <param name="i">The value with which to equal each cell in the map.</param>
 	template <typename T>
 	inline MapContainer<bool> select(const Map<T>& map, const T& i) {
-		MapContainer<bool> mask((point_area)map);
+		MapContainer<bool> mask((rectangle)map);
 		HRZN_FOREACH_POINT(map, x, y) {
 			mask.set(x, y, map.at(x, y) == i);
 		}
@@ -249,7 +249,7 @@ namespace hrzn {
 	/// Create a map of the specified area and fill it from a list.
 	/// </summary>
 	template <typename T, typename TForwardIterator>
-	inline MapContainer<T> transposeListToMap(point_area area, TForwardIterator first, TForwardIterator last) {
+	inline MapContainer<T> transposeListToMap(rectangle area, TForwardIterator first, TForwardIterator last) {
 		MapContainer<T> map(area);
 		auto itr_map = map.begin();
 
@@ -267,7 +267,7 @@ namespace hrzn {
 	/// </summary>
 	template <typename T, typename TForwardIterator>
 	inline MapContainer<T> transposeListToMap(h_unsigned width, h_unsigned height, TForwardIterator first, TForwardIterator last) {
-		return transposeListToMap<T, TForwardIterator>(point_area(width, height), first, last);
+		return transposeListToMap<T, TForwardIterator>(rectangle(width, height), first, last);
 	}
 
 	/// <summary>
@@ -276,7 +276,7 @@ namespace hrzn {
 	/// <returns>A transformed copy of the map parameter.</returns>
 	template<typename T>
 	MapContainer<T> swizzle_map(const Map<T>& map) {
-		MapContainer<T> rotated(hrzn::swizzle((point_area)map));
+		MapContainer<T> rotated(hrzn::swizzle((rectangle)map));
 
 		HRZN_FOREACH_POINT(map, x, y) {
 			rotated.set(y, x, map.at(x, y));
@@ -323,7 +323,7 @@ namespace hrzn {
 
 	template <typename T>
 	inline void floodFill(point2 first, Map<T>& region, Map<bool>& result, bool edge = false, bool use8 = false) {
-		point_area area = hrzn::intersect(region, result);
+		rectangle area = hrzn::intersect(region, result);
 		result.set(first, true);
 
 		for (int i = 0; i < (use8 ? 8 : 4); ++i) {
@@ -339,7 +339,7 @@ namespace hrzn {
 	}
 
 	inline void cellularAutomata(Map<bool>* mask, int birth_rate, bool wrap_position) {
-		MapContainer<int> neighbor_counts((point_area)(*mask), 0);
+		MapContainer<int> neighbor_counts((rectangle)(*mask), 0);
 		for (h_int y = mask->y1; y < mask->y2; ++y)
 			for (h_int x = mask->x1; x < mask->x2; ++x) {
 				point2 cell = { x, y };

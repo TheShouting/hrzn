@@ -529,30 +529,30 @@ namespace hrzn {
 
 
 	/******************************************************************************************************************
-		point_area data types
+		rectangle data types
 	******************************************************************************************************************/
 
 	/// <summary>
 	/// A class for managing coordinates of a 2D area.
 	/// </summary>
-	struct point_area {
+	struct rectangle {
 
 		h_int x1, y1, x2, y2;
 
-		constexpr point_area() : x1(INT_MAX), y1(INT_MAX), x2(INT_MIN), y2(INT_MIN) {}
+		constexpr rectangle() : x1(INT_MAX), y1(INT_MAX), x2(INT_MIN), y2(INT_MIN) {}
 
-		constexpr point_area(h_unsigned w, h_unsigned h) : x1(0), y1(0), x2((h_int)w), y2((h_int)h) {}
+		constexpr rectangle(h_unsigned w, h_unsigned h) : x1(0), y1(0), x2((h_int)w), y2((h_int)h) {}
 
-		constexpr point_area(h_int x_1, h_int y_1, h_int x_2, h_int y_2) : x1(x_1), y1(y_1), x2(x_2), y2(y_2) {}
+		constexpr rectangle(h_int x_1, h_int y_1, h_int x_2, h_int y_2) : x1(x_1), y1(y_1), x2(x_2), y2(y_2) {}
 
-		explicit constexpr point_area(point2 p1, point2 p2) : x1(p1.x), y1(p1.y), x2(p2.x), y2(p2.y) {}
+		explicit constexpr rectangle(point2 p1, point2 p2) : x1(p1.x), y1(p1.y), x2(p2.x), y2(p2.y) {}
 
-		point_area& operator +=(point2 dist) {
+		rectangle& operator +=(point2 dist) {
 			move(dist.x, dist.y);
 			return *this;
 		}
 
-		point_area& operator -=(point2 dist) {
+		rectangle& operator -=(point2 dist) {
 			move(-dist.x, -dist.y);
 			return *this;
 		}
@@ -600,8 +600,8 @@ namespace hrzn {
 			}
 		}
 
-		point_area normalized() const {
-			return point_area(0, 0, x2 - x1, y2 - y1);
+		rectangle normalized() const {
+			return rectangle(0, 0, x2 - x1, y2 - y1);
 		}
 
 		point2 clamp(const point2& pt) const {
@@ -657,56 +657,56 @@ namespace hrzn {
 			return x >= x1 && x < x2 && y >= y1 && y < y2;
 		}
 
-		bool contains(const point_area& other) {
+		bool contains(const rectangle& other) {
 			return false;
 		}
 
-	}; // struct point_area
+	}; // struct rectangle
 
-	inline bool operator==(const point_area& a, const point_area& b) {
+	inline bool operator==(const rectangle& a, const rectangle& b) {
 		return a.x1 == b.x1 && a.y1 == b.y1 && a.x2 == b.x2 && a.y2 == b.y2;
 	}
 
-	inline point_area operator+(const point_area& a, const point2& b) {
-		return point_area(a.first() + b, a.last() + b);
+	inline rectangle operator+(const rectangle& a, const point2& b) {
+		return rectangle(a.first() + b, a.last() + b);
 	}
 
-	inline point_area operator-(const point_area& a, const point2& b) {
-		return point_area(a.first() - b, a.last() - b);
+	inline rectangle operator-(const rectangle& a, const point2& b) {
+		return rectangle(a.first() - b, a.last() - b);
 	}
 
 	/// <summary>
 	/// Create a new Area based on the overlap of two other Area objects.
 	/// </summary>
-	inline point_area intersect(point_area a, point_area b) {
-		return point_area(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
+	inline rectangle intersect(rectangle a, rectangle b) {
+		return rectangle(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
 	}
 
 	/// <summary>
-	/// Return true if both <type>point_area</type> objects overlap.
+	/// Return true if both <type>rectangle</type> objects overlap.
 	/// </summary>
-	inline bool overlap(point_area a, point_area b) {
+	inline bool overlap(rectangle a, rectangle b) {
 		return !(a.x1 > b.x2 || a.y1 > b.y2 || b.x1 > a.x2 || b.y1 > a.y2);
 	}
 
 	/// <summary>
-	/// Is true if <type>point_area</type> b is completely contained within <type>point_area</type> a.
+	/// Is true if <type>rectangle</type> b is completely contained within <type>rectangle</type> a.
 	/// </summary>
-	inline bool contains(point_area a, point_area b) {
+	inline bool contains(rectangle a, rectangle b) {
 		return b.x1 >= a.x1 && b.y1 >= a.y1 && b.x2 <= a.x2 && b.y2 <= a.x2;
 	}
 
 	/// <summary>
-	/// Is true if <type>poin2</type> b is completely contained within <type>point_area</type> a.
+	/// Is true if <type>poin2</type> b is completely contained within <type>rectangle</type> a.
 	/// </summary>
-	inline bool contains(point_area a, point2 b) {
+	inline bool contains(rectangle a, point2 b) {
 		return b.x >= a.x1 && b.y >= a.y1 && b.x < a.x2 && b.y < a.x2;
 	}
 
 	/// <summary>
-	/// Is true if <type>point2</type> is equal to any edge position of <type>point_area</type>.
+	/// Is true if <type>point2</type> is equal to any edge position of <type>rectangle</type>.
 	/// </summary>
-	inline bool is_edge(point_area area, point2 pos) {
+	inline bool is_edge(rectangle area, point2 pos) {
 		return pos.x == area.x1 || pos.x == area.x2 - 1_hi || pos.y == area.y1 || pos.y == area.y2 - 1_hi;
 	}
 
@@ -721,14 +721,14 @@ namespace hrzn {
 	/// <summary>
 	/// Swap width and height values (same as rotating 90 deg)
 	/// </summary>
-	inline point_area swizzle(const point_area& a) {
-		return point_area(a.y1, a.x1, a.y2, a.x2);
+	inline rectangle swizzle(const rectangle& a) {
+		return rectangle(a.y1, a.x1, a.y2, a.x2);
 	}
 
 	/// <summary>
 	/// Snaps a point to an area edge if it is out of bounds.
 	/// </summary>
-	inline point2 clamp_point(const point2& p, const point_area& area) {
+	inline point2 clamp_point(const point2& p, const rectangle& area) {
 		h_int x = std::min(std::max(p.x, area.x1), area.x2 - 1_hi);
 		h_int y = std::min(std::max(p.y, area.y1), area.y2 - 1_hi);
 		return { x, y };
@@ -737,7 +737,7 @@ namespace hrzn {
 	/// <summary>
 	/// Wraps a point to the oppposite edge of an area if it is out of bounds.
 	/// </summary>
-	inline point2 wrap_point(const point2& p, const point_area& area) {
+	inline point2 wrap_point(const point2& p, const rectangle& area) {
 		h_int x = (p.x % area.width() + area.width()) % area.width();
 		h_int y = (p.y % area.height() + area.height()) % area.height();
 		return { x, y };

@@ -65,12 +65,12 @@ namespace hrzn {
 		return input;
 	}
 
-	inline std::ostream& operator<<(std::ostream& output, const point_area& rect) {
+	inline std::ostream& operator<<(std::ostream& output, const rectangle& rect) {
 		output << rect.x1 << rect.y1 << rect.x2 << rect.y2;
 		return output;
 	}
 
-	inline std::istream& operator>>(std::istream& input, point_area& rect) {
+	inline std::istream& operator>>(std::istream& input, rectangle& rect) {
 		input >> rect.x1 >> rect.y1 >> rect.x2 >> rect.y2;
 		return input;
 	}
@@ -88,7 +88,7 @@ namespace hrzn {
 		return ss.str();
 	}
 
-	inline std::string toString(const point_area& rect) {
+	inline std::string toString(const rectangle& rect) {
 		if (rect) {
 			std::stringstream ss;
 			ss << "Area{" << rect.x1 << ',' << rect.y1 << ',' << rect.x2 << ',' << rect.y2 << '}';
