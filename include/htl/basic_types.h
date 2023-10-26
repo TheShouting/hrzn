@@ -517,16 +517,6 @@ namespace hrzn {
 	inline angle operator / (const angle& a, const angle& b) { return { a.tau / b.tau }; }
 	inline angle operator / (const angle& a, const h_float& val) { return { a.tau / val }; }
 
-	//angle& operator += (angle& a, const angle& b) {
-	//	a.tau = _lib::normalizef(a.tau + b.tau);
-	//	return a;
-	//}
-
-	//angle& operator -= (angle& a, const angle& b) {
-	//	a.tau = _lib::normalizef(a.tau - b.tau);
-	//	return a;
-	//}
-
 
 	/******************************************************************************************************************
 		rectangle data types
