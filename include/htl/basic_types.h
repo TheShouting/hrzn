@@ -26,6 +26,7 @@ SOFTWARE.
 #include <cmath>
 #include <cassert>
 #include <algorithm>
+#include <array>
 
 #ifndef H_NOEXCEPTIONS
 #include <stdexcept>
@@ -272,13 +273,13 @@ namespace hrzn {
 
 	template <typename T, typename TCast>
 	tuple2<T> operator * (const tuple2<T>& a, TCast val) {
-		static_assert(std::is_arithmetic_v<TCast>, "An arithmetic type is required for Tuple operations");
+		static_assert(std::is_arithmetic_v<TCast>, "An arithmetic type is required for Tuple operations"); // TODO give line number or type info for static assert
 		return tuple2<T>(a.x * static_cast<T>(val), a.y * static_cast<T>(val));
 	}
 
 	template <typename T, typename TCast>
 	tuple2<T> operator / (const tuple2<T>& a, TCast val) {
-		static_assert(std::is_arithmetic_v<TCast>, "An arithmetic type is required for Tuple operations");
+		static_assert(std::is_arithmetic_v<TCast>, "An arithmetic type is required for Tuple operations");// TODO give line number or type info for static assert
 		return tuple2<T>(a.x / static_cast<T>(val), a.y / static_cast<T>(val));
 	}
 
@@ -525,9 +526,9 @@ namespace hrzn {
 	/// <summary>
 	/// A class for managing coordinates of a 2D area.
 	/// </summary>
-	struct rectangle {
+	struct rectangle { // TODO make abstract
 
-		h_int x1, y1, x2, y2;
+		h_int x1, y1, x2, y2; // TODO refactor to use x, y, w, h
 
 		constexpr rectangle() : x1(INT_MAX), y1(INT_MAX), x2(INT_MIN), y2(INT_MIN) {}
 
@@ -733,53 +734,41 @@ namespace hrzn {
 		return { x, y };
 	}
 
-	/******************************************************************************************************************
-		Transformation types
-	******************************************************************************************************************/
+
+	/// <summary>
+	/// Split a rectangle into 4 seperate reperate rectangles based on the defined center point.
+	/// </summary>
+	/// <param name="area">The <type>rectangle</type> to be split.</param>
+	/// <param name="center">The center point were the split occurs.</param>
+	/// <returns></returns>
+	inline constexpr std::array<rectangle, 4> quad_split(rectangle area, point2 center) {
+		return std::array<rectangle, 4> {
+			rectangle{ area.x1, area.y1, center.x, center.y },
+			rectangle{ center.x, area.y1, area.x2, center.y },
+			rectangle{ area.x1, center.y, center.x, area.y2 },
+			rectangle{ center.x, center.y, area.x2, area.y2 }
+		};
+	}
 
 
 	/// <summary>
-	/// A class holding position, angle, and scale values for use in transformation of various other coordinates in 2D space.
+	/// Split the area of a <type>rectangle</type> along its longest axis into two smaller ones.
 	/// </summary>
-	struct transform {
-		hrzn::vector2 position;
-		hrzn::angle rotation;
-		hrzn::vector2 scale;
-
-		constexpr transform() : position(0._hf, 0._hf), rotation(0._hf), scale(1._hf, 1._hf) {}
-
-		constexpr transform(hrzn::vector2 p, hrzn::angle r, hrzn::vector2 s) : position(p), rotation(r), scale(s) {}
-
-		vector2 getForwardVector() const {
-			return rotation.getForwardVector(scale.y);
+	/// <param name="area">The <type>rectangle</type> to be split</param>
+	/// <returns>A container with the new URect objects. If <paramref name="rec"/> is only a single cell (width and height are equal to 1), then both are simply a copy of the orignal parameter. </returns>
+	inline std::array<rectangle, 2> split(rectangle area) {
+		rectangle a1 = area;
+		rectangle a2 = area;
+		point2 cp = area.center();
+		if (area.height() > 1 && area.height() > area.width()) {
+			a1.y2 = cp.y;
+			a2.y1 = cp.y;
+		} else if (area.width() > 1) {
+			a1.x2 = cp.x;
+			a2.x1 = cp.x;
 		}
-
-		vector2 getRightVector() const {
-			return rotation.getRightVector(scale.x);
-		}
-
-		vector2 childPositon(vector2 pos) const {
-			return position + rotation.rotate(pos * scale);
-		}
-
-		hrzn::angle childRotation(hrzn::angle r) const {
-			return rotation + r;
-		}
-
-		vector2 childScale(vector2 s) const {
-			return scale * s;
-		}
-
-		//vector2 inversePosition(vector2 pos) {
-		//	//return rotation.unrotate(pos / scale.epsilon()) - pos;
-		//	return rotation.unrotate(pos / vector2::EPSILON2()) - pos;
-		//}
-
-		transform childTransform(const transform & child) const {
-			return { childPositon(child.position), childRotation(child.rotation), childScale(child.scale)};
-		}
-
-	}; // struct transform
+		return { a1, a2 };
+	}
 
 } // namespace hrzn
 

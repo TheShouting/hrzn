@@ -28,6 +28,55 @@ SOFTWARE.
 
 namespace hrzn {
 
+
+	/******************************************************************************************************************
+		Transformation types
+	******************************************************************************************************************/
+
+
+	/// <summary>
+	/// A class holding position, angle, and scale values for use in transformation of various other coordinates in 2D space.
+	/// </summary>
+	struct transform {
+		hrzn::vector2 position;
+		hrzn::angle rotation;
+		hrzn::vector2 scale;
+
+		constexpr transform() : position(0._hf, 0._hf), rotation(0._hf), scale(1._hf, 1._hf) {}
+
+		constexpr transform(hrzn::vector2 p, hrzn::angle r, hrzn::vector2 s) : position(p), rotation(r), scale(s) {}
+
+		vector2 getForwardVector() const {
+			return rotation.getForwardVector(scale.y);
+		}
+
+		vector2 getRightVector() const {
+			return rotation.getRightVector(scale.x);
+		}
+
+		vector2 childPositon(vector2 pos) const {
+			return position + rotation.rotate(pos * scale);
+		}
+
+		hrzn::angle childRotation(hrzn::angle r) const {
+			return rotation + r;
+		}
+
+		vector2 childScale(vector2 s) const {
+			return scale * s;
+		}
+
+		//vector2 inversePosition(vector2 pos) {
+		//	//return rotation.unrotate(pos / scale.epsilon()) - pos;
+		//	return rotation.unrotate(pos / vector2::EPSILON2()) - pos;
+		//}
+
+		transform childTransform(const transform& child) const {
+			return { childPositon(child.position), childRotation(child.rotation), childScale(child.scale) };
+		}
+
+	}; // struct transform
+
 	struct IPolygon {
 
 		IPolygon() {}

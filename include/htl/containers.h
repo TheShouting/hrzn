@@ -152,7 +152,7 @@ namespace hrzn {
 
 			Iterator(Map& m, point2 p) : point2(p), map(m) {}
 
-			value_type operator *() const { return get(); } // TODO move dereference and pointer operators to base Cell class
+			value_type operator *() const { return get(); }
 			reference operator *() { return get(); }
 			pointer operator ->() { return &(get()); }
 

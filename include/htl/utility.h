@@ -95,30 +95,9 @@ namespace hrzn {
 		return r;
 	}
 
-	/// Create an rectangle object ussing a position and radius.
+	/// Create an rectangle object using a position and radius.
 	inline rectangle makeAreaRadius(const point2 pos, const h_int radius) {
 		return rectangle(pos.x - radius, pos.y - radius, pos.x + radius, pos.y + radius);
-	}
-
-
-	/// <summary>
-	/// Split the area of a <type>rectangle</type> along its longest axis into two smaller ones.
-	/// </summary>
-	/// <param name="area">The <type>rectangle</type> to be split</param>
-	/// <returns>A container with the new URect objects. If <paramref name="rec"/> is only a single cell (width and height are equal to 1), then both are simply a copy of the orignal parameter. </returns>
-	inline std::pair<rectangle, rectangle> split(const rectangle& area) {
-		rectangle a1 = area;
-		rectangle a2 = area;
-		point2 cp = area.center();
-		if (area.height() > 1 && area.height() > area.width()) {
-			a1.y2 = cp.y;
-			a2.y1 = cp.y;
-		}
-		else if (area.width() > 1) {
-			a1.x2 = cp.x;
-			a2.x1 = cp.x;
-		}
-		return std::make_pair(a1, a2);
 	}
 
 	/******************************************************************************************************************
