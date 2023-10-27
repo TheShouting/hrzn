@@ -59,8 +59,8 @@ namespace hrznBasicTypesTest
 			Assert::AreNotEqual(hrzn::point2(), hrzn::point2::EPSILON2(), L"point2 epsilon failure.");
 
 
-			Assert::AreNotEqual(hrzn::vector2(), hrzn::vector2().epsilonSigned(), L"vector2 epsilonSigned failure.");
-			Assert::AreNotEqual(hrzn::point2(), hrzn::point2().epsilonSigned(), L"point2 epsilonSigned failure.");
+			Assert::AreNotEqual(hrzn::vector2(), hrzn::vector2().epsilon_signed(), L"vector2 epsilon_signed failure.");
+			Assert::AreNotEqual(hrzn::point2(), hrzn::point2().epsilon_signed(), L"point2 epsilon_signed failure.");
 		}
 
 		TEST_METHOD(TypeTraits) {

@@ -70,12 +70,12 @@ public:
 		hrzn::MapContainer<char> map(edge.x + 1, edge.y + 1, '?');
 
 		map.set(top_left, 'A');
-		map.flipX();
-		Assert::AreEqual('A', map.at(top_right), L"flipX() method failed.");
+		map.flip_x();
+		Assert::AreEqual('A', map.at(top_right), L"flip_x() method failed.");
 
 		map.set(top_left, 'B');
-		map.flipY();
-		Assert::AreEqual('B', map.at(bottom_left), L"flipY() method failed.");
+		map.flip_y();
+		Assert::AreEqual('B', map.at(bottom_left), L"flip_y() method failed.");
 
 		map.set(top_left, 'C');
 		map.reverse();
@@ -88,7 +88,7 @@ public:
 
 		auto copy = hrzn::copy(map);
 		Assert::IsTrue(copy, L"Copy method failed.");
-		Assert::AreEqual(copy.at(pos), map.at(pos), L"Map improperly copied.");
+		Assert::AreEqual(copy.at(pos), map.at(pos), L"I_Map improperly copied.");
 
 		copy.set(10, 10, '#');
 		Assert::AreNotEqual(copy.at(pos), map.at(pos), L"Copied map is still improperly referenced.");

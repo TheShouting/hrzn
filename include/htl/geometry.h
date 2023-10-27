@@ -46,16 +46,16 @@ namespace hrzn {
 
 		constexpr transform(hrzn::vector2 p, hrzn::angle r, hrzn::vector2 s) : position(p), rotation(r), scale(s) {}
 
-		vector2 getForwardVector() const {
-			return rotation.getForwardVector(scale.y);
+		vector2 get_forward_vector() const {
+			return rotation.get_forward_vector(scale.y);
 		}
 
-		vector2 getRightVector() const {
-			return rotation.getRightVector(scale.x);
+		vector2 get_right_vector() const {
+			return rotation.get_right_vector(scale.x);
 		}
 
 		vector2 childPositon(vector2 pos) const {
-			return position + rotation.rotate(pos * scale);
+			return position + rotation.rotate_vector(pos * scale);
 		}
 
 		hrzn::angle childRotation(hrzn::angle r) const {
@@ -67,8 +67,8 @@ namespace hrzn {
 		}
 
 		//vector2 inversePosition(vector2 pos) {
-		//	//return rotation.unrotate(pos / scale.epsilon()) - pos;
-		//	return rotation.unrotate(pos / vector2::EPSILON2()) - pos;
+		//	//return rotation.unrotate_vector(pos / scale.epsilon()) - pos;
+		//	return rotation.unrotate_vector(pos / vector2::EPSILON2()) - pos;
 		//}
 
 		transform childTransform(const transform& child) const {
@@ -77,10 +77,10 @@ namespace hrzn {
 
 	}; // struct transform
 
-	struct IPolygon {
+	struct i_polygon {
 
-		IPolygon() {}
-		virtual ~IPolygon() {}
+		i_polygon() {}
+		virtual ~i_polygon() {}
 
 		virtual std::size_t count() const = 0;
 		virtual vector2 get(std::size_t index) const = 0;
@@ -116,28 +116,28 @@ namespace hrzn {
 			return length;
 		}
 
-	}; // struct IPolygon
+	}; // struct i_polygon
 
 
-	struct hPolygon : public IPolygon {
+	struct polygon : public i_polygon {
 		std::vector<vector2> vertices;
 
-		hPolygon() {}
-		hPolygon(std::initializer_list<vector2> verts) : vertices(verts) {}
-		hPolygon(const IPolygon& polygon) : vertices(polygon.list()) {}
+		polygon() {}
+		polygon(std::initializer_list<vector2> verts) : vertices(verts) {}
+		polygon(const i_polygon& polygon) : vertices(polygon.list()) {}
 
 		std::size_t count() const override { return vertices.size(); }
 		vector2 get(std::size_t index) const { return vertices[index]; }
-	}; // struct hPolygon
+	}; // struct polygon
 
 
 	template <unsigned int N>
-	struct IPolygonN : public IPolygon {
+	struct i_ngon : public i_polygon {
 		std::size_t count() const override { return N; }
-	}; // struct IPolygonN<int>
+	}; // struct i_ngon<int>
 
 
-	struct hBox : public IPolygonN<4> {
+	struct hBox : public i_ngon<4> {
 
 		vector2 v1;
 		vector2 v2;
@@ -156,17 +156,17 @@ namespace hrzn {
 	}; // struct hBox
 
 
-	struct hQuad : public transform, IPolygonN<4> {
+	struct quad : public transform, i_ngon<4> {
 
-		hQuad() : transform() {}
-		hQuad(h_float w, h_float h) : transform({ 0,0 }, 0.f, { w, h }) {}
-		hQuad(vector2 dim) : transform() {}
-		hQuad(transform tform) : transform(tform) {}
+		quad() : transform() {}
+		quad(h_float w, h_float h) : transform({ 0,0 }, 0.f, { w, h }) {}
+		quad(vector2 dim) : transform() {}
+		quad(transform tform) : transform(tform) {}
 
 		vector2 get(std::size_t index) const override {
-			return position + rotation.rotate(scale * vector2(h_quad[index].x - 0.5_hf, h_quad[index].y - 0.5_hf));
+			return position + rotation.rotate_vector(scale * vector2(h_quad[index].x - 0.5_hf, h_quad[index].y - 0.5_hf));
 		}
 
-	}; // struct hQuad
+	}; // struct quad
 
 } // namespace hrzn

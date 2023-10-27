@@ -55,7 +55,7 @@ namespace hrzn {
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	template <typename T>
-	class Map : public rectangle {
+	class I_Map : public rectangle {
 	public:
 
 		using fill_func = T(*)();
@@ -63,9 +63,9 @@ namespace hrzn {
 
 		bool repeat_boundary = false;
 
-		Map(const rectangle& area) : rectangle(area) {}
+		I_Map(const rectangle& area) : rectangle(area) {}
 
-		virtual ~Map() {}
+		virtual ~I_Map() {}
 
 		// Common inherited methods
 		T& operator[](point2 pt) { return at(pt.x, pt.y); }
@@ -99,7 +99,7 @@ namespace hrzn {
 		/// <summary>
 		/// Flip the map in place along the X axis.
 		/// </summary>
-		void flipX() {
+		void flip_x() {
 			for (h_int x, y = y1; y < y2; ++y)
 				for (x = 0; x < std::floor(width() / 2); ++x)
 					this->swap({ this->x1 + x, y }, { this->x2 - x - 1, y });
@@ -108,14 +108,14 @@ namespace hrzn {
 		/// <summary>
 		/// Flip the map in place along the Y axis.
 		/// </summary>
-		void flipY() {
+		void flip_y() {
 			for (h_int y, x = x1; x < x2; ++x)
 				for (y = 0; y < std::floor(height() / 2); ++y)
 					this->swap({ x, this->y1 + y }, { x, this->y2 - y - 1 });
 		}
 
 		/// <summary>
-		/// Rotate the map 180 deg (equivalent to running both flipX() and flipY() operations).
+		/// Rotate the map 180 deg (equivalent to running both flip_x() and flip_y() operations).
 		/// </summary>
 		void reverse() {
 			//for (h_int x, y =  0; y < std::floor(height() / 2); ++y)
@@ -132,9 +132,9 @@ namespace hrzn {
 
 	protected:
 		std::size_t f_index(h_int x, h_int y) const {
-#ifndef H_NOEXCEPTIONS
-			if (!contains(x, y)) throw std::out_of_range("Point not located in Map.");
-#endif // !H_NOEXCEPTIONS
+#ifndef HRZN_NOEXCEPTIONS
+			if (!contains(x, y)) throw std::out_of_range("Point not located in I_Map.");
+#endif // !HRZN_NOEXCEPTIONS
 			return (x - x1) + (y - y1) * width();
 		}
 
@@ -148,9 +148,9 @@ namespace hrzn {
 			using pointer = T*;
 			using reference = T&;
 
-			Map& map;
+			I_Map& map;
 
-			Iterator(Map& m, point2 p) : point2(p), map(m) {}
+			Iterator(I_Map& m, point2 p) : point2(p), map(m) {}
 
 			value_type operator *() const { return get(); }
 			reference operator *() { return get(); }
@@ -190,12 +190,12 @@ namespace hrzn {
 			}
 
 
-		}; // struct Map>T>::Iterator
+		}; // struct I_Map>T>::Iterator
 
 		Iterator begin() { return Iterator(*this, { x1, y1 }); }
 		Iterator end() { return Iterator(*this, { x1, y2 }); }
 
-	}; // class Map<T>
+	}; // class I_Map<T>
 
 
 	/// <summary>
@@ -203,15 +203,15 @@ namespace hrzn {
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	template <typename T>
-	class MapReference : public Map<T> {
+	class MapReference : public I_Map<T> {
 	private:
-		Map<T>* m_source;
+		I_Map<T>* m_source;
 	public:
 
-		using Map<T>::operator[];
-		using Map<T>::at;
-		using Map<T>::set;
-		using base = Map<T>;
+		using I_Map<T>::operator[];
+		using I_Map<T>::at;
+		using I_Map<T>::set;
+		using base = I_Map<T>;
 
 		MapReference(const rectangle& area, base& mat) : base(area), m_source(&mat) {}
 
@@ -234,32 +234,32 @@ namespace hrzn {
 	/// <param name="area">The sub area of the base map to reference</param>
 	/// <param name="map">The base map object from which to to create a reference area</param>
 	template<typename T>
-	MapReference<T> GetReferenceArea(rectangle area, Map<T>& map) {
+	MapReference<T> GetReferenceArea(rectangle area, I_Map<T>& map) {
 		rectangle i_area = hrzn::intersect(area, map);
 		return MapReference<T>(i_area, map);
 	}
 
 	/// <summary>
-	/// A map object that hides the referenced map data type and only exposes a member variable for access. 
+	/// A map object that hides the referenced map data type but provides direct access to contained object type member. 
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <typeparam name="TRef"></typeparam>
 	template <typename T, typename TRef>
-	class MapReader : public Map<T> {
+	class MapReader : public I_Map<T> {
 	public:
-		using Map<T>::operator[];
-		using Map<T>::at;
-		using Map<T>::set;
-		using base = Map<T>;
+		using I_Map<T>::operator[];
+		using I_Map<T>::at;
+		using I_Map<T>::set;
+		using base = I_Map<T>;
 	private:
 
 		T TRef::* m_member_ptr;
 
-		Map<TRef>* m_reference;
+		I_Map<TRef>* m_reference;
 
 	public:
 
-		MapReader(Map<TRef>& reference, T TRef::* m_ptr) : base((rectangle)reference), m_reference(&reference), m_member_ptr(m_ptr) {}
+		MapReader(I_Map<TRef>& reference, T TRef::* m_ptr) : base((rectangle)reference), m_reference(&reference), m_member_ptr(m_ptr) {}
 
 		operator bool() const override { return m_reference->operator bool(); }
 
@@ -273,17 +273,17 @@ namespace hrzn {
 
 
 	/// <summary>
-	/// Map container for storing any variables by position in a 2 dimensional grid.
+	/// I_Map container for storing any variables by position in a 2 dimensional grid.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	template <typename T>
-	class MapContainer : public Map<T> {
+	class MapContainer : public I_Map<T> {
 	public:
 
-		using Map<T>::operator[];
-		using Map<T>::at;
-		using Map<T>::set;
-		using base = Map<T>;
+		using I_Map<T>::operator[];
+		using I_Map<T>::at;
+		using I_Map<T>::set;
+		using base = I_Map<T>;
 
 	private:
 
@@ -353,13 +353,13 @@ namespace hrzn {
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	template <typename T>
-	class MapSingleton : public Map<T> {
+	class MapSingleton : public I_Map<T> {
 	public:
 
-		using Map<T>::operator[];
-		using Map<T>::at;
-		using Map<T>::set;
-		using base = Map<T>;
+		using I_Map<T>::operator[];
+		using I_Map<T>::at;
+		using I_Map<T>::set;
+		using base = I_Map<T>;
 
 	private:
 
@@ -385,7 +385,7 @@ namespace hrzn {
 
 
 	/// Bitwise AND operation between two boolean Matrices
-	inline MapContainer<bool> operator & (const Map<bool>& a, const Map<bool>& b) {
+	inline MapContainer<bool> operator & (const I_Map<bool>& a, const I_Map<bool>& b) {
 		MapContainer<bool> result(intersect(a, b));
 		for (int y = result.y1; y < result.y2; ++y)
 			for (int x = result.x1; x < result.x2; ++x)
@@ -394,7 +394,7 @@ namespace hrzn {
 	}
 
 	/// Bitwise OR operation between two boolean Matrices
-	inline MapContainer<bool> operator | (const Map<bool>& a, const Map<bool>& b) {
+	inline MapContainer<bool> operator | (const I_Map<bool>& a, const I_Map<bool>& b) {
 		MapContainer<bool> result(intersect(a, b));
 		for (int y = result.y1; y < result.y2; ++y)
 			for (int x = result.x1; x < result.x2; ++x)
@@ -403,7 +403,7 @@ namespace hrzn {
 	}
 
 	/// Bitwise XOR operation between two boolean Matrices
-	inline MapContainer<bool> operator ^ (const Map<bool>& a, const Map<bool>& b) {
+	inline MapContainer<bool> operator ^ (const I_Map<bool>& a, const I_Map<bool>& b) {
 		MapContainer<bool> result(intersect(a, b));
 		for (int y = result.y1; y < result.y2; ++y)
 			for (int x = result.x1; x < result.x2; ++x)
@@ -412,7 +412,7 @@ namespace hrzn {
 	}
 
 	/// Bitwise Invert operation between on a boolean Matrix
-	inline MapContainer<bool> operator ~ (const Map<bool>& a) {
+	inline MapContainer<bool> operator ~ (const I_Map<bool>& a) {
 		MapContainer<bool> result((rectangle)a);
 		for (int y = a.y1; y < a.y2; ++y)
 			for (int x = a.x1; x < a.x2; ++x)
@@ -424,7 +424,7 @@ namespace hrzn {
 	/// Explicit copy from an abstract map into a map container
 	/// </summary>
 	template <typename T>
-	MapContainer<T> copy(const Map<T>& map) {
+	MapContainer<T> copy(const I_Map<T>& map) {
 		MapContainer<T> result((rectangle)map);
 		for (h_int x, y = map.y1; y < map.y2; ++y)
 			for (x = map.x1; x < map.x2; ++x)
@@ -436,7 +436,7 @@ namespace hrzn {
 	/// Compare the intersecting area of two maps. Returns true if all cells in the intersection are the same.
 	/// </summary>
 	template <typename T>
-	inline bool equal(const Map<T>& a, const Map<T>& b) {
+	inline bool equal(const I_Map<T>& a, const I_Map<T>& b) {
 		rectangle area = hrzn::intersect(a, b);
 		for (h_int x, y = area.y1; y < area.y2; ++y)
 			for (x = area.x1; x < area.x2; ++x)
@@ -453,7 +453,7 @@ namespace hrzn {
 	/// <param name="find">The value to search for in the map.</param>
 	/// <param name="replace">The value with which to replace all found values.</param>
 	template <typename T>
-	inline void replace(Map<T>& map, const T& find, const T& replace) {
+	inline void replace(I_Map<T>& map, const T& find, const T& replace) {
 		for (h_int x, y = map.y1; y < map.y2; ++y)
 			for (x = map.x1; x < map.x2; ++x)
 				map.at(x, y) = replace;

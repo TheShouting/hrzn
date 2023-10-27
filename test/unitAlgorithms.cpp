@@ -29,7 +29,7 @@ SOFTWARE.
 namespace hrznAlgorithmTests {
 
 	TEST_CLASS(UtilityFunctions) {
-		TEST_METHOD(DuplicateAndCompare) {
+		TEST_METHOD(ClassMap_DuplicateAndCompare) {
 			char val1 = 'X';
 			char val2 = '+';
 			hrzn::point2 loc = { 2, 2 };
@@ -55,7 +55,7 @@ namespace hrznAlgorithmTests {
 			Assert::IsFalse(hrzn::equal(map_a, map_b), L"Comparison function faild.");
 		}
 
-		TEST_METHOD(IsEdgePoint) {
+		TEST_METHOD(rectangle_IsEdgePoint) {
 			hrzn::rectangle area = { 1, 2, 12, 13 };
 			int error = 0;
 			for (int i = 0; i < 4; ++i) {
@@ -66,7 +66,7 @@ namespace hrznAlgorithmTests {
 			Assert::IsFalse(hrzn::is_edge(area, area.center()), L"False positive test for center.");
 		}
 
-		TEST_METHOD(OverlapAndContain) {
+		TEST_METHOD(rectangle_OverlapAndContain) {
 			hrzn::rectangle area1 = { -10, -10, 50, 50 };
 			hrzn::rectangle area2 = { 20, 25, 100, 100 };
 			hrzn::rectangle area3 = { -3, -1, 10, 10 };
@@ -81,7 +81,7 @@ namespace hrznAlgorithmTests {
 			Assert::IsFalse(hrzn::contains(area1, hrzn::point2{ 1000, 1000 }), L"Outside contain point failure.");
 		}
 
-		TEST_METHOD(CastCopyWriteFunction) {
+		TEST_METHOD(Map_CastCopyWriteFunction) {
 			hrzn::MapContainer<bool> map_bool({ 50, 50 }, false);
 			hrzn::MapContainer<int> map_int({ 2, 4, 30, 30 }, 99);
 
@@ -101,7 +101,7 @@ namespace hrznAlgorithmTests {
 
 		}
 
-		TEST_METHOD(TransposeListToMap_Undersized) {
+		TEST_METHOD(method_transpose_list_to_map_test_undersized) {
 
 			const int size = 67;
 			const int value = 42;
@@ -111,8 +111,8 @@ namespace hrznAlgorithmTests {
 			for (int i = 0; i < size; ++i)
 				list.emplace_back(value);
 
-			auto map = hrzn::transposeListToMap<int>(area, list.begin(), list.end());
-			Assert::IsTrue(area == (hrzn::rectangle)map, L"Map incorrectly created.");
+			auto map = hrzn::transpose_list_to_map<int>(area, list.begin(), list.end());
+			Assert::IsTrue(area == (hrzn::rectangle)map, L"I_Map incorrectly created.");
 
 			int count = 0;
 			for (const auto& cell : map)
@@ -121,7 +121,7 @@ namespace hrznAlgorithmTests {
 			Assert::AreEqual(size, count, L"Copy failed while transposing undersized list to map.");
 		}
 
-		TEST_METHOD(TransposeListToMap_Oversized) {
+		TEST_METHOD(method_transpose_list_to_map_test_oversized) {
 
 			const int value = 42;
 			hrzn::rectangle area(8, 3, 97, 53);
@@ -131,8 +131,8 @@ namespace hrznAlgorithmTests {
 			for (int i = 0; i < size; ++i)
 				list.emplace_back(value);
 
-			auto map = hrzn::transposeListToMap<int>(area, list.begin(), list.end());
-			Assert::IsTrue(area == (hrzn::rectangle)map, L"Map incorrectly created.");
+			auto map = hrzn::transpose_list_to_map<int>(area, list.begin(), list.end());
+			Assert::IsTrue(area == (hrzn::rectangle)map, L"I_Map incorrectly created.");
 
 			int count = 0;
 			for (const auto& cell : map)
@@ -143,7 +143,7 @@ namespace hrznAlgorithmTests {
 
 		}
 
-		TEST_METHOD(project_from_point) {
+		TEST_METHOD(method_project_from_point) {
 
 			const int length = 10;
 

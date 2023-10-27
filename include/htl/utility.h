@@ -36,7 +36,7 @@ namespace hrzn {
 		Basic Type Operations
 	******************************************************************************************************************/
 
-	inline h_float dotProduct(const vector2& a, const vector2& b) {
+	inline h_float dot_product(const vector2& a, const vector2& b) {
 		return a.x * b.x + a.y * b.y;
 	}
 
@@ -44,15 +44,15 @@ namespace hrzn {
 		return std::sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 	}
 
-	inline h_float distanceSqr(const vector2& a, const vector2& b) {
+	inline h_float distance_sqr(const vector2& a, const vector2& b) {
 		return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
 	}
 
-	inline h_float distanceManhattan(const vector2& a, const vector2& b) {
+	inline h_float distance_manhattan(const vector2& a, const vector2& b) {
 		return std::abs(a.x - b.x) + std::abs(a.y - b.y);
 	}
 
-	inline vector2 getNormalized(vector2 const& vec) {
+	inline vector2 get_normalized(vector2 const& vec) {
 		double l = vec.length();
 		if (l < EPSILON) {
 			return vector2();
@@ -61,11 +61,11 @@ namespace hrzn {
 		return vector2(vec.x * il, vec.y * il);
 	}
 
-	inline angle findRotation(vector2 v) {
-		return angle::fromRadians(std::atan2(v.y, v.x));
+	inline angle find_rotation(vector2 v) {
+		return angle::from_radians(std::atan2(v.y, v.x));
 	}
 
-	inline point2 roundToPoint(const vector2& vec) {
+	inline point2 round_to_point(const vector2& vec) {
 		return point2(std::round(vec.x), std::round(vec.y));
 	}
 
@@ -96,12 +96,12 @@ namespace hrzn {
 	}
 
 	/// Create an rectangle object using a position and radius.
-	inline rectangle makeAreaRadius(const point2 pos, const h_int radius) {
+	inline rectangle area_from_radius(const point2 pos, const h_int radius) {
 		return rectangle(pos.x - radius, pos.y - radius, pos.x + radius, pos.y + radius);
 	}
 
 	/******************************************************************************************************************
-		Map Operations
+		I_Map Operations
 	******************************************************************************************************************/
 
 
@@ -109,7 +109,7 @@ namespace hrzn {
 	/// Copy all cells from the intersection area of one map into another. Can optionally specify a conversion function (defaults to static cast).
 	/// </summary>
 	template <typename Ta, typename Tb>
-	inline void copy_into(const Map<Ta>& from, Map<Tb>& to, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
+	inline void copy_into(const I_Map<Ta>& from, I_Map<Tb>& to, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
 		rectangle area = hrzn::intersect(from, to);
 		HRZN_FOREACH_POINT(area, x, y) {
 			to.set(x, y, cast(from.at(x, y)));
@@ -120,7 +120,7 @@ namespace hrzn {
 	/// Create a duplicate map from an existing map with an optional conversion method.
 	/// </summary>
 	template <typename Ta, typename Tb>
-	inline MapContainer<Ta> copy_each(const Map<Tb>& map, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
+	inline MapContainer<Ta> copy_each(const I_Map<Tb>& map, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
 		MapContainer<Ta> dup((rectangle)map);
 		HRZN_FOREACH_POINT(map, x, y) {
 			dup.set(x, y, cast(map.at(x, y)));
@@ -135,7 +135,7 @@ namespace hrzn {
 	/// <param name="map">The map which is modified in-place.</param>
 	/// <param name="fill_obj">The value with which to fill the map.</param>
 	template <typename T>
-	inline void fill(Map<T>& map, const T& fill_obj) {
+	inline void fill(I_Map<T>& map, const T& fill_obj) {
 		HRZN_FOREACH_POINT(map, x, y) {
 			map.set(x, y, fill_obj);
 		}
@@ -149,7 +149,7 @@ namespace hrzn {
 	/// <param name="area">The area within which the operation is performed.</param>
 	/// <param name="fill_obj">The value with which to fill the map.</param>
 	template <typename T>
-	inline void fill(Map<T>& map, const rectangle area, const T& fill_obj) {
+	inline void fill(I_Map<T>& map, const rectangle area, const T& fill_obj) {
 		rectangle fill_area = hrzn::intersect(map, area);
 		HRZN_FOREACH_POINT(fill_area, x, y) {
 			map.set(x, y, fill_obj);
@@ -164,7 +164,7 @@ namespace hrzn {
 	/// <param name="map"></param>
 	/// <param name="fill_func"></param>
 	template <typename T, typename Tf>
-	inline void fill_each(Map<T>& map, Tf& fill_func) { // TODO fill function should be in the format of [T (*)(h_int, h_int)]
+	inline void fill_each(I_Map<T>& map, Tf& fill_func) { // TODO fill function should be in the format of [T (*)(h_int, h_int)]
 		HRZN_FOREACH_POINT(map, x, y) {
 			map.set(x, y, fill_func());
 		}
@@ -178,7 +178,7 @@ namespace hrzn {
 	/// <param name="fill_obj">The value used to fill the map.</param>
 	/// <param name="mask">A boolean map to be used as a mask.</param>
 	template <typename T>
-	inline void fill_mask(Map<T>& map, const T& fill_obj, const Map<bool>& mask) {
+	inline void fill_mask(I_Map<T>& map, const T& fill_obj, const I_Map<bool>& mask) {
 		rectangle fill_area = hrzn::intersect(map, mask);
 		HRZN_FOREACH_POINT(fill_area, x, y) {
 			if (mask.at(x, y))
@@ -192,7 +192,7 @@ namespace hrzn {
 	/// <param name="map">The map reference to search.</param>
 	/// <param name="i">The value with which to equal each cell in the map.</param>
 	template <typename T>
-	inline MapContainer<bool> select(const Map<T>& map, const T& i) {
+	inline MapContainer<bool> select(const I_Map<T>& map, const T& i) {
 		MapContainer<bool> mask((rectangle)map);
 		HRZN_FOREACH_POINT(map, x, y) {
 			mask.set(x, y, map.at(x, y) == i);
@@ -210,7 +210,7 @@ namespace hrzn {
 	/// <param name="direction"></param>
 	/// <returns></returns>
 	template <typename T>
-	inline std::vector<cell_pointer<T>> project_from_point(Map<T>& map, point2 first, point2 direction, int length) { //TODO decide on a clearer definition and what to do for copy.
+	inline std::vector<cell_pointer<T>> project_from_point(I_Map<T>& map, point2 first, point2 direction, int length) { //TODO decide on a clearer definition and what to do for copy.
 		std::vector<cell_pointer<T>> list;
 		for (int i = 0; i < length; ++i) {
 			point2 pt = first + (direction * i);
@@ -226,7 +226,7 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	inline std::vector<T> transposeMapToList(const Map<T>& map) {
+	inline std::vector<T> transpose_map_to_list(const I_Map<T>& map) {
 		std::vector<T> list;
 		list.reserve(map.area());
 		for (const auto& cell : map)
@@ -238,7 +238,7 @@ namespace hrzn {
 	/// Create a map of the specified area and fill it from a list.
 	/// </summary>
 	template <typename T, typename TForwardIterator>
-	inline MapContainer<T> transposeListToMap(rectangle area, TForwardIterator first, TForwardIterator last) {
+	inline MapContainer<T> transpose_list_to_map(rectangle area, TForwardIterator first, TForwardIterator last) {
 		MapContainer<T> map(area);
 		auto itr_map = map.begin();
 
@@ -255,8 +255,8 @@ namespace hrzn {
 	/// Create a map of the specified area and fill it from a list.
 	/// </summary>
 	template <typename T, typename TForwardIterator>
-	inline MapContainer<T> transposeListToMap(h_unsigned width, h_unsigned height, TForwardIterator first, TForwardIterator last) {
-		return transposeListToMap<T, TForwardIterator>(rectangle(width, height), first, last);
+	inline MapContainer<T> transpose_list_to_map(h_unsigned width, h_unsigned height, TForwardIterator first, TForwardIterator last) {
+		return transpose_list_to_map<T, TForwardIterator>(rectangle(width, height), first, last);
 	}
 
 	/// <summary>
@@ -264,7 +264,7 @@ namespace hrzn {
 	/// </summary>
 	/// <returns>A transformed copy of the map parameter.</returns>
 	template<typename T>
-	MapContainer<T> swizzle_map(const Map<T>& map) {
+	MapContainer<T> swizzle_map(const I_Map<T>& map) {
 		MapContainer<T> rotated(hrzn::swizzle((rectangle)map));
 
 		HRZN_FOREACH_POINT(map, x, y) {
@@ -276,18 +276,18 @@ namespace hrzn {
 
 
 	template<typename T>
-	MapContainer<T> rotate_map(const Map<T>& map, int turns) {
+	MapContainer<T> rotate_map(const I_Map<T>& map, int turns) {
 		turns = ((turns % 4) + 4) % 4;
 
 		MapContainer<T> rotated;
 		switch (turns) {
 		case(1):
 			rotated = hrzn::swizzle_map(map);
-			rotated.flipX();
+			rotated.flip_x();
 			return rotated;
 		case(3):
 			rotated = hrzn::swizzle_map(map);
-			rotated.flipY();
+			rotated.flip_y();
 			return rotated;
 		case(2):
 			rotated = hrzn::copy(map);
@@ -299,11 +299,11 @@ namespace hrzn {
 	}
 
 	/******************************************************************************************************************
-		Map generation algorithms
+		I_Map generation algorithms
 	******************************************************************************************************************/
 
 	template <typename T>
-	inline void scatter(Map<T>& map, T val, double threshold) {
+	inline void scatter(I_Map<T>& map, T val, double threshold) {
 		HRZN_FOREACH_POINT(map, x, y) {
 			if (((double)std::rand() / (double)RAND_MAX) > threshold)
 				map.set(x, y, val);
@@ -311,15 +311,15 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	inline void floodFill(point2 first, Map<T>& region, Map<bool>& result, bool edge = false, bool use8 = false) {
+	inline void flood_fill(point2 first, I_Map<T>& region, I_Map<bool>& result, bool edge = false, bool use8 = false) {
 		rectangle area = hrzn::intersect(region, result);
 		result.set(first, true);
 
 		for (int i = 0; i < (use8 ? 8 : 4); ++i) {
-			point2 pos = first + (use8 ? h_neighborhood8 : h_neighborhood4)[i];
+			point2 pos = first + (use8 ? h_neighborhood8[i] : h_neighborhood4[i]);
 			if (area.contains(pos) && !result.at(pos)) {
 				if (region.at(pos) == region.at(first))
-					hrzn::floodFill(pos, region, result, edge, use8);
+					hrzn::flood_fill(pos, region, result, edge, use8);
 				else if (edge)
 					result.set(pos, true);
 			}
@@ -327,7 +327,7 @@ namespace hrzn {
 
 	}
 
-	inline void cellularAutomata(Map<bool>* mask, int birth_rate, bool wrap_position) {
+	inline void cellular_automata(I_Map<bool>* mask, int birth_rate, bool wrap_position) {
 		MapContainer<int> neighbor_counts((rectangle)(*mask), 0);
 		for (h_int y = mask->y1; y < mask->y2; ++y)
 			for (h_int x = mask->x1; x < mask->x2; ++x) {
@@ -357,7 +357,7 @@ namespace hrzn {
 	******************************************************************************************************************/
 
 
-	inline hBox boundingBox(const IPolygon& polygon) {
+	inline hBox bounding_box(const i_polygon& polygon) {
 		vector2 min = polygon.get(0);
 		vector2 max = polygon.get(0);
 
@@ -401,7 +401,7 @@ namespace hrzn {
 			return { lerp(a.position, b.position, f), lerp(a.rotation, b.rotation, f), lerp(a.scale, b.scale, f) };
 		}
 
-		inline float linearClamp(h_float t) {
+		inline float linear_clamp(h_float t) { // TODO linear_clamp(): is this redundant?
 			return std::clamp(t, 0._hf, 1._hf);
 		}
 

@@ -38,18 +38,18 @@ namespace hrznBasicTypesTest {
 
 			const auto degrees = 180._hf;
 			const auto radian = 3.141592_hf;
-			Assert::AreEqual(degrees, hrzn::angle::fromDegrees(degrees).deg(), hrzn::EPSILON, L"Construction of angle with degrees failed.");
-			Assert::AreEqual(radian, hrzn::angle::fromRadians(radian).rad(), hrzn::EPSILON, L"Construction of angle with radians failed.");
+			Assert::AreEqual(degrees, hrzn::angle::from_degrees(degrees).deg(), hrzn::EPSILON, L"Construction of angle with degrees failed.");
+			Assert::AreEqual(radian, hrzn::angle::from_radians(radian).rad(), hrzn::EPSILON, L"Construction of angle with radians failed.");
 			
 			// TODO This comparison fail if Epsilon is too small.
-			Assert::AreEqual(1._hf, hrzn::angle::fromRadians(1._hf).rad(), hrzn::EPSILON, L"Construction of angle with radian literals failed.");
+			Assert::AreEqual(1._hf, hrzn::angle::from_radians(1._hf).rad(), hrzn::EPSILON, L"Construction of angle with radian literals failed.");
 		}
 
 		TEST_METHOD(AngleFromVector) {
 
 			auto f = [this](h_float angle_t) {
 				const hrzn::angle a(angle_t);
-				hrzn::angle v_angle = hrzn::angle::fromVector(a.getForwardVector());
+				hrzn::angle v_angle = hrzn::angle::from_vector(a.get_forward_vector());
 				Assert::AreEqual(a.tau, v_angle.tau, hrzn::EPSILON, L"Failed to constuct angle from vector");
 			};
 
@@ -104,29 +104,29 @@ namespace hrznBasicTypesTest {
 
 		TEST_METHOD(VectorDerivation) {
 			const h_float epsilon = hrzn::EPSILON;
-			Assert::AreEqual(hrzn::angle::UP().getForwardVector().x, hrzn::vector2::UP().x, epsilon, L"Incorrect UP X Forward vector from angle.");
-			Assert::AreEqual(hrzn::angle::UP().getForwardVector().y, hrzn::vector2::UP().y, epsilon, L"Incorrect UP Y Forward vector from angle.");
+			Assert::AreEqual(hrzn::angle::UP().get_forward_vector().x, hrzn::vector2::UP().x, epsilon, L"Incorrect UP X Forward vector from angle.");
+			Assert::AreEqual(hrzn::angle::UP().get_forward_vector().y, hrzn::vector2::UP().y, epsilon, L"Incorrect UP Y Forward vector from angle.");
 
-			Assert::AreEqual(hrzn::angle::LEFT().getForwardVector().x, hrzn::vector2::LEFT().x, epsilon, L"Incorrect LEFT X Forward vector from angle.");
-			Assert::AreEqual(hrzn::angle::LEFT().getForwardVector().y, hrzn::vector2::LEFT().y, epsilon, L"Incorrect LEFT Y Forward vector from angle.");
+			Assert::AreEqual(hrzn::angle::LEFT().get_forward_vector().x, hrzn::vector2::LEFT().x, epsilon, L"Incorrect LEFT X Forward vector from angle.");
+			Assert::AreEqual(hrzn::angle::LEFT().get_forward_vector().y, hrzn::vector2::LEFT().y, epsilon, L"Incorrect LEFT Y Forward vector from angle.");
 
-			Assert::AreEqual(hrzn::angle::DOWN().getForwardVector().x, hrzn::vector2::DOWN().x, epsilon, L"Incorrect DOWN X Forward vector from angle.");
-			Assert::AreEqual(hrzn::angle::DOWN().getForwardVector().y, hrzn::vector2::DOWN().y, epsilon, L"Incorrect DOWN Y Forward vector from angle.");
+			Assert::AreEqual(hrzn::angle::DOWN().get_forward_vector().x, hrzn::vector2::DOWN().x, epsilon, L"Incorrect DOWN X Forward vector from angle.");
+			Assert::AreEqual(hrzn::angle::DOWN().get_forward_vector().y, hrzn::vector2::DOWN().y, epsilon, L"Incorrect DOWN Y Forward vector from angle.");
 
-			Assert::AreEqual(hrzn::angle::RIGHT().getForwardVector().x, hrzn::vector2::RIGHT().x, epsilon, L"Incorrect RIGHT X Forward vector from angle.");
-			Assert::AreEqual(hrzn::angle::RIGHT().getForwardVector().y, hrzn::vector2::RIGHT().y, epsilon, L"Incorrect RIGHT Y Forward vector from angle.");
+			Assert::AreEqual(hrzn::angle::RIGHT().get_forward_vector().x, hrzn::vector2::RIGHT().x, epsilon, L"Incorrect RIGHT X Forward vector from angle.");
+			Assert::AreEqual(hrzn::angle::RIGHT().get_forward_vector().y, hrzn::vector2::RIGHT().y, epsilon, L"Incorrect RIGHT Y Forward vector from angle.");
 
-			Assert::AreEqual(hrzn::angle::UP().getRightVector().x, hrzn::vector2::RIGHT().x, epsilon, L"Incorrect UP X Right vector from angle.");
-			Assert::AreEqual(hrzn::angle::UP().getRightVector().y, hrzn::vector2::RIGHT().y, epsilon, L"Incorrect UP Y Right vector from angle.");
+			Assert::AreEqual(hrzn::angle::UP().get_right_vector().x, hrzn::vector2::RIGHT().x, epsilon, L"Incorrect UP X Right vector from angle.");
+			Assert::AreEqual(hrzn::angle::UP().get_right_vector().y, hrzn::vector2::RIGHT().y, epsilon, L"Incorrect UP Y Right vector from angle.");
 
-			Assert::AreEqual(hrzn::angle::RIGHT().getRightVector().x, hrzn::vector2::DOWN().x, epsilon, L"Incorrect RIGHT X Right vector from angle.");
-			Assert::AreEqual(hrzn::angle::RIGHT().getRightVector().y, hrzn::vector2::DOWN().y, epsilon, L"Incorrect RIGHT Y Right vector from angle.");
+			Assert::AreEqual(hrzn::angle::RIGHT().get_right_vector().x, hrzn::vector2::DOWN().x, epsilon, L"Incorrect RIGHT X Right vector from angle.");
+			Assert::AreEqual(hrzn::angle::RIGHT().get_right_vector().y, hrzn::vector2::DOWN().y, epsilon, L"Incorrect RIGHT Y Right vector from angle.");
 
-			Assert::AreEqual(hrzn::angle::DOWN().getRightVector().x, hrzn::vector2::LEFT().x, epsilon, L"Incorrect DOWN X Right vector from angle.");
-			Assert::AreEqual(hrzn::angle::DOWN().getRightVector().y, hrzn::vector2::LEFT().y, epsilon, L"Incorrect DOWN Y Right vector from angle.");
+			Assert::AreEqual(hrzn::angle::DOWN().get_right_vector().x, hrzn::vector2::LEFT().x, epsilon, L"Incorrect DOWN X Right vector from angle.");
+			Assert::AreEqual(hrzn::angle::DOWN().get_right_vector().y, hrzn::vector2::LEFT().y, epsilon, L"Incorrect DOWN Y Right vector from angle.");
 
-			Assert::AreEqual(hrzn::angle::LEFT().getRightVector().x, hrzn::vector2::UP().x, epsilon, L"Incorrect LEFT X Right vector from angle.");
-			Assert::AreEqual(hrzn::angle::LEFT().getRightVector().y, hrzn::vector2::UP().y, epsilon, L"Incorrect LEFT Y Right vector from angle.");
+			Assert::AreEqual(hrzn::angle::LEFT().get_right_vector().x, hrzn::vector2::UP().x, epsilon, L"Incorrect LEFT X Right vector from angle.");
+			Assert::AreEqual(hrzn::angle::LEFT().get_right_vector().y, hrzn::vector2::UP().y, epsilon, L"Incorrect LEFT Y Right vector from angle.");
 		}
 
 		TEST_METHOD(VectorsConversion) {
@@ -136,20 +136,20 @@ namespace hrznBasicTypesTest {
 			const hrzn::vector2 test_v = hrzn::vector2::UP();
 			const hrzn::angle a1(0.037_hf);
 
-			hrzn::vector2 v = a1.rotate(test_v);
-			Assert::AreEqual(a1.getForwardVector().x, v.x, epsilon, L"Incorrect x-axis during vector rotation.");
-			Assert::AreEqual(a1.getForwardVector().y, v.y, epsilon, L"Incorrect y-axis during vector rotation.");
+			hrzn::vector2 v = a1.rotate_vector(test_v);
+			Assert::AreEqual(a1.get_forward_vector().x, v.x, epsilon, L"Incorrect x-axis during vector rotation.");
+			Assert::AreEqual(a1.get_forward_vector().y, v.y, epsilon, L"Incorrect y-axis during vector rotation.");
 
 			const hrzn::angle a2(0.471_hf);
 
-			v = a2.rotate(v);
-			Assert::AreEqual((a1 + a2).getForwardVector().x, v.x, epsilon, L"Incorrect x-axis during second vector rotation.");
-			Assert::AreEqual((a1 + a2).getForwardVector().y, v.y, epsilon, L"Incorrect y-axis during second vector rotation.");
+			v = a2.rotate_vector(v);
+			Assert::AreEqual((a1 + a2).get_forward_vector().x, v.x, epsilon, L"Incorrect x-axis during second vector rotation.");
+			Assert::AreEqual((a1 + a2).get_forward_vector().y, v.y, epsilon, L"Incorrect y-axis during second vector rotation.");
 
 
 			const hrzn::angle a3(0.635f);
-			hrzn::vector2 v_b = a3.rotate(test_v);
-			v_b = a3.unrotate(v_b);
+			hrzn::vector2 v_b = a3.rotate_vector(test_v);
+			v_b = a3.unrotate_vector(v_b);
 			Assert::AreEqual(test_v.x, v_b.x, epsilon, L"Incorrect x-axis during vector inverse rotation.");
 			Assert::AreEqual(test_v.y, v_b.y, epsilon, L"Incorrect y-axis during vector inverse rotation.");
 		}

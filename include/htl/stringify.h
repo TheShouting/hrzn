@@ -31,26 +31,14 @@ SOFTWARE.
 
 namespace hrzn {
 
-	struct hStringTableStyle {
-		unsigned int padding = 2;
-		bool enumerate = false;
-		char filled = '#';
-		char empty = '.';
-		char top_line = '-';
-		char siding = '|';
-		char corner = '+';
-		char bottom_line = '-';
-		int precision = 2;
-	};
-
 	template <typename T>
-	inline std::ostream& operator<<(std::ostream& output, const tuple2<T>& tuple) {
+	inline std::ostream& operator<<(std::ostream& output, const i_tuple2<T>& tuple) {
 		output << tuple.x << tuple.y;
 		return output;
 	}
 
 	template <typename T>
-	inline std::istream& operator>>(std::istream& input, tuple2<T>& tuple) {
+	inline std::istream& operator>>(std::istream& input, i_tuple2<T>& tuple) {
 		input >> tuple.x >> tuple.y;
 		return input;
 	}
@@ -76,19 +64,19 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	inline std::string toString(const tuple2<T>& tuple) {
+	inline std::string to_string(const i_tuple2<T>& tuple) {
 		std::stringstream ss;
 		ss << "Tuple{" << tuple.x << ',' << tuple.y << '}';
 		return ss.str();
 	}
 
-	inline std::string toString(const angle& rot) {
+	inline std::string to_string(const angle& rot) {
 		std::stringstream ss;
 		ss << "Rotation{" << rot.tau << "*TAU}";
 		return ss.str();
 	}
 
-	inline std::string toString(const rectangle& rect) {
+	inline std::string to_string(const rectangle& rect) {
 		if (rect) {
 			std::stringstream ss;
 			ss << "Area{" << rect.x1 << ',' << rect.y1 << ',' << rect.x2 << ',' << rect.y2 << '}';
@@ -100,10 +88,10 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	inline std::string toString(const Map<T>& mat, bool output_contents = false, bool line_breaks=true) {
+	inline std::string to_string(const I_Map<T>& mat, bool output_contents = false, bool line_breaks=true) {
 		std::stringstream ss;
 		char br = line_breaks ? '\n' : ' ';
-		ss << "Map";
+		ss << "I_Map";
 		if (output_contents) {
 			ss << br;
 			for (int y = mat.first().y; y < mat.last().y; y++) {
@@ -120,7 +108,7 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	inline std::ostream& streamOutRow(std::ostream& output, const Map<T>& mat, int row) {
+	inline std::ostream& stream_out_row(std::ostream& output, const I_Map<T>& mat, int row) {
 		for (int x = mat.first().x; x < mat.last().x; x++) {
 			output << mat.at(x, row);
 		}
@@ -128,7 +116,7 @@ namespace hrzn {
 	}
 
 	template <typename T>
-	inline std::ostream& streamOutColumn(std::ostream& output, const Map<T>& mat, int col) {
+	inline std::ostream& stream_out_column(std::ostream& output, const I_Map<T>& mat, int col) {
 		for (int y = mat.first().y; y < mat.last().y; y++) {
 			output << mat.at(col, y);
 		}
@@ -144,7 +132,7 @@ namespace hrzn {
 	/// <param name="first">Character to first the line.</param>
 	/// <param name="last">Character to last the line with.</param>
 	/// <returns>A string of the formatted line.</returns>
-	inline std::string makeStringLine(int length, char symbol, char first, char last) {
+	inline std::string make_string_line(int length, char symbol, char first, char last) {
 		std::stringstream ss;
 		if (first) {
 			length--;
@@ -162,13 +150,30 @@ namespace hrzn {
 		return ss.str();
 	}
 
+
+	/// <summary>
+	/// Styling options for displaying string table.
+	/// </summary>
+	struct string_table_style {
+		unsigned int padding = 2;
+		bool enumerate = false;
+		char filled = '#';
+		char empty = '.';
+		char top_line = '-';
+		char siding = '|';
+		char corner = '+';
+		char bottom_line = '-';
+		int precision = 2;
+	}; // struct string_table_style
+
+
 	/// <summary>
 	/// Convert a Matrix of values to a formatted table in a string.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
 	/// <returns>A string containing the formatted table ready for printing or writing.</returns>
 	template <typename T>
-	inline std::string toStringTable(const Map<T>& mat, const hStringTableStyle & style = hStringTableStyle())
+	inline std::string to_string_table(const I_Map<T>& mat, const string_table_style & style = string_table_style())
 	{
 		std::stringstream ss;
 		ss.precision(style.precision);
@@ -178,7 +183,7 @@ namespace hrzn {
 
 		// Top table border
 		if (style.top_line)
-			ss << makeStringLine((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.top_line, style.corner, style.corner) << '\n';
+			ss << make_string_line((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.top_line, style.corner, style.corner) << '\n';
 
 		// Column numbering
 		if (style.enumerate) {
@@ -188,7 +193,7 @@ namespace hrzn {
 			ss << std::setw(style.padding) << style.siding << '\n';
 		}
 
-		// Map content
+		// I_Map content
 		for (int y = mat.y1; y < mat.y2; y++) {
 			ss << style.siding;
 			if (style.enumerate) {
@@ -201,7 +206,7 @@ namespace hrzn {
 
 		// Bottom table border
 		if (style.bottom_line)
-			ss << makeStringLine((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.bottom_line, style.corner, style.corner) << '\n';
+			ss << make_string_line((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.bottom_line, style.corner, style.corner) << '\n';
 
 		return ss.str();
 	}
@@ -211,7 +216,7 @@ namespace hrzn {
 	/// </summary>
 	/// <returns>A string containing the formatted table ready for printing or writing.</returns>
 	/// <returns></returns>
-	inline std::string toStringMask(const Map<bool>& mat, const hStringTableStyle & style = hStringTableStyle())
+	inline std::string to_string_mask(const I_Map<bool>& mat, const string_table_style & style = string_table_style())
 	{
 
 		std::stringstream ss;
@@ -220,7 +225,7 @@ namespace hrzn {
 
 
 		if (style.top_line)
-			ss << makeStringLine((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.top_line, style.corner, style.corner) << '\n';
+			ss << make_string_line((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.top_line, style.corner, style.corner) << '\n';
 
 		if (style.enumerate) {
 			ss << style.siding << std::setw(style.padding) << "";
@@ -240,7 +245,7 @@ namespace hrzn {
 		}
 
 		if (style.bottom_line)
-			ss << makeStringLine((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.bottom_line, style.corner, style.corner) << '\n';
+			ss << make_string_line((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.bottom_line, style.corner, style.corner) << '\n';
 
 		return ss.str();
 	}
