@@ -54,12 +54,12 @@ namespace hrzn {
 	}
 
 	inline std::ostream& operator<<(std::ostream& output, const rectangle& rect) {
-		output << rect.x1 << rect.y1 << rect.x2 << rect.y2;
+		output << rect.x << rect.y << rect.w << rect.h;
 		return output;
 	}
 
 	inline std::istream& operator>>(std::istream& input, rectangle& rect) {
-		input >> rect.x1 >> rect.y1 >> rect.x2 >> rect.y2;
+		input >> rect.x >> rect.y >> rect.w >> rect.h;
 		return input;
 	}
 
@@ -79,11 +79,11 @@ namespace hrzn {
 	inline std::string to_string(const rectangle& rect) {
 		if (rect) {
 			std::stringstream ss;
-			ss << "Area{" << rect.x1 << ',' << rect.y1 << ',' << rect.x2 << ',' << rect.y2 << '}';
+			ss << "i_rectangle{ x" << rect.x << ", y" << rect.y << ", w" << rect.w << ", h" << rect.h << "  }";
 			return ss.str();
 		}
 		else {
-			return "Area{empty}";
+			return "i_rectangle{empty}";
 		}
 	}
 
@@ -102,7 +102,7 @@ namespace hrzn {
 			}
 		}
 		else {
-			ss << '{' << mat.x1 << ',' << mat.y1 << ',' << mat.x2 << ',' << mat.y2 << '}';
+			ss << "{ first: " << mat.x1() << ", " << mat.y1() << " | last: " << mat.x2() << ", " << mat.y2() << " }";
 		}
 		return ss.str();
 	}
@@ -229,17 +229,17 @@ namespace hrzn {
 
 		if (style.enumerate) {
 			ss << style.siding << std::setw(style.padding) << "";
-			for (int x = mat.x1; x < mat.x2; x++)
+			for (int x = mat.x; x < mat.last().x; x++)
 				ss << std::setw(style.padding) << x;
 			ss << std::setw(style.padding) << style.siding << '\n';
 		}
 
-		for (int y = mat.y1; y < mat.y2; y++) {
+		for (int y = mat.y; y < mat.last().y; y++) {
 			ss << style.siding;
 			if (style.enumerate) {
 				ss << std::setw(style.padding) << y;
 			}
-			for (int x = mat.x1; x < mat.x2; x++)
+			for (int x = mat.x; x < mat.last().y; x++)
 				ss << std::setw(style.padding) << (mat.at(x, y) ? style.filled : style.empty);
 			ss << std::setw(style.padding) << style.siding << '\n';
 		}

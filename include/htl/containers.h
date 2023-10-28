@@ -82,9 +82,9 @@ namespace hrzn {
 		/// </summary>
 		/// <param name="obj">The value with which to fill the map.</param>
 		virtual void fill(const T& obj) {
-			for (h_int y = y1; y < y2; ++y)
-				for (h_int x = x1; x < x2; ++x)
-					set(x, y, obj);
+			for (h_int iy = this->y; iy < last().y; ++iy)
+				for (h_int ix = this->x; ix < last().x; ++ix)
+					set(ix, iy, obj);
 		}
 
 		/// <summary>
@@ -100,18 +100,18 @@ namespace hrzn {
 		/// Flip the map in place along the X axis.
 		/// </summary>
 		void flip_x() {
-			for (h_int x, y = y1; y < y2; ++y)
-				for (x = 0; x < std::floor(width() / 2); ++x)
-					this->swap({ this->x1 + x, y }, { this->x2 - x - 1, y });
+			for (h_int ix, iy = this->y; iy < this->last().y; ++iy)
+				for (ix = 0; ix < std::floor(this->w / 2); ++ix)
+					this->swap({ this->x + ix, iy}, {this->last().x - ix - 1, iy});
 		}
 
 		/// <summary>
 		/// Flip the map in place along the Y axis.
 		/// </summary>
 		void flip_y() {
-			for (h_int y, x = x1; x < x2; ++x)
-				for (y = 0; y < std::floor(height() / 2); ++y)
-					this->swap({ x, this->y1 + y }, { x, this->y2 - y - 1 });
+			for (h_int iy, ix = this->x; ix < this->last().x; ++ix)
+				for (iy = 0; iy < std::floor(height() / 2); ++iy)
+					this->swap({ ix, this->y + iy}, {ix, this->last().y - iy - 1});
 		}
 
 		/// <summary>
@@ -126,16 +126,16 @@ namespace hrzn {
 
 		// Abstract methods
 		virtual operator bool() const = 0;
-		virtual T& at(h_int x, h_int y) = 0;
-		virtual T at(h_int x, h_int y) const = 0;
-		virtual void set(h_int x, h_int y, const T& val) = 0;
+		virtual T& at(h_int px, h_int py) = 0;
+		virtual T at(h_int px, h_int py) const = 0;
+		virtual void set(h_int px, h_int py, const T& val) = 0;
 
 	protected:
-		std::size_t f_index(h_int x, h_int y) const {
+		std::size_t f_index(h_int px, h_int py) const {
 #ifndef HRZN_NOEXCEPTIONS
-			if (!contains(x, y)) throw std::out_of_range("Point not located in I_Map.");
+			if (!contains(px, py)) throw std::out_of_range("Point not located in I_Map.");
 #endif // !HRZN_NOEXCEPTIONS
-			return (x - x1) + (y - y1) * width();
+			return (px - this->x) + (py - this->y) * this->w;
 		}
 
 	public:
@@ -163,8 +163,8 @@ namespace hrzn {
 
 			// Prefix increment
 			Iterator& operator++() {
-				this->y = this->y + (this->x == (map.x2 - 1_hi));
-				this->x = (this->x - map.x1 + 1) % map.width() + map.x1;
+				this->y = this->y + (this->x == (map.x + map.w - 1_hi));
+				this->x = (this->x - map.x + 1) % map.w + map.x;
 				return *this;
 			}
 
@@ -177,8 +177,8 @@ namespace hrzn {
 
 			// Prefix decrement
 			Iterator& operator--() {
-				this->y = this->y - (this->x == (map.x1));
-				this->x = (this->x - map.x1 - 1 + map.width()) % map.width() + map.x1;
+				this->y = this->y - (this->x == map.x);
+				this->x = (this->x - map.x - 1 + map.w) % map.w + map.x;
 				return *this;
 			}
 
@@ -192,8 +192,8 @@ namespace hrzn {
 
 		}; // struct I_Map>T>::Iterator
 
-		Iterator begin() { return Iterator(*this, { x1, y1 }); }
-		Iterator end() { return Iterator(*this, { x1, y2 }); }
+		Iterator begin() { return Iterator(*this, { this->x, this->y }); }
+		Iterator end() { return Iterator(*this, { this->x, this->y + this->h }); }
 
 	}; // class I_Map<T>
 
@@ -217,11 +217,11 @@ namespace hrzn {
 
 		operator bool() const override { return m_source->operator bool(); }
 
-		T& at(h_int x, h_int y) override { return m_source->at(x, y); }
+		T& at(h_int _x, h_int _y) override { return m_source->at(_x, _y); }
 
-		T at(h_int x, h_int y) const override { return m_source->at(x, y); }
+		T at(h_int _x, h_int _y) const override { return m_source->at(_x, _y); }
 
-		void set(h_int x, h_int y, const T& val) override { m_source->set(x, y, val); }
+		void set(h_int _x, h_int _y, const T& val) override { m_source->set(_x, _y, val); }
 
 		base* source() { return m_source; }
 
@@ -263,11 +263,11 @@ namespace hrzn {
 
 		operator bool() const override { return m_reference->operator bool(); }
 
-		T& at(h_int x, h_int y) override { return m_reference->at(x, y).*m_member_ptr; }
+		T& at(h_int px, h_int py) override { return m_reference->at(px, py).*m_member_ptr; }
 
-		T at(h_int x, h_int y) const override { return m_reference->at(x, y).*m_member_ptr; }
+		T at(h_int px, h_int py) const override { return m_reference->at(px, py).*m_member_ptr; }
 
-		void set(h_int x, h_int y, const T& val) override { m_reference->at(x, y).*m_member_ptr = val; }
+		void set(h_int px, h_int py, const T& val) override { m_reference->at(px, py).*m_member_ptr = val; }
 
 	}; // class MapReader<T>
 
@@ -293,8 +293,8 @@ namespace hrzn {
 	public:
 
 		MapContainer() : base(rectangle()) {}
-		MapContainer(std::size_t w, std::size_t h) : base(rectangle(w, h)), m_contents(new T[w * h]) {}
-		MapContainer(std::size_t w, std::size_t h, const T& obj) : base(rectangle(w, h)), m_contents(new T[w * h]) { for (int i = 0; i < (w * h); ++i) m_contents[i] = obj; }
+		MapContainer(std::size_t _w, std::size_t _h) : base(rectangle(_w, _h)), m_contents(new T[_w * _h]) {}
+		MapContainer(std::size_t _w, std::size_t _h, const T& obj) : base(rectangle(_w, _h)), m_contents(new T[_w * _h]) { for (int i = 0; i < (_w * _h); ++i) m_contents[i] = obj; }
 		MapContainer(const rectangle& rect) : base(rect), m_contents(new T[rect.area()]) {}
 		MapContainer(const rectangle& rect, const T& obj) : base(rect), m_contents(new T[rect.area()]) { for (int i = 0; i < rect.area(); ++i) m_contents[i] = obj; }
 
@@ -304,8 +304,8 @@ namespace hrzn {
 
 		MapContainer(MapContainer<T>&& other) noexcept : base((rectangle)other), m_contents(other.m_contents) {
 			other.m_contents = nullptr;
-			other.x1 = other.x2;
-			other.y1 = other.y2;
+			other.w = 0;
+			other.h = 0;
 		}
 
 		~MapContainer() {
@@ -318,7 +318,11 @@ namespace hrzn {
 				delete[] m_contents;
 				m_contents = new T[other.area()];
 				std::copy(other.m_contents, other.m_contents + other.area(), m_contents);
-				rectangle::resize(other.x1, other.y1, other.x2, other.y2);
+				//rectangle::resize(other.x1, other.y1, other.x2, other.y2);
+				this->x = other.x;
+				this->y = other.y;
+				this->w = other.w;
+				this->h = other.h;
 			}
 			return *this;
 		}
@@ -329,16 +333,16 @@ namespace hrzn {
 
 		const T& operator[](std::size_t i) const { return m_contents[i]; }
 
-		T& at(h_int x, h_int y) override {
-			return m_contents[this->f_index(x, y)];
+		T& at(h_int px, h_int py) override {
+			return m_contents[this->f_index(px, py)];
 		}
 
-		T at(h_int x, h_int y) const override {
-			return m_contents[this->f_index(x, y)];
+		T at(h_int px, h_int py) const override {
+			return m_contents[this->f_index(px, py)];
 		}
 
-		void set(h_int x, h_int y, const T& val) override {
-			m_contents[this->f_index(x, y)] = val;
+		void set(h_int px, h_int py, const T& val) override {
+			m_contents[this->f_index(px, py)] = val;
 		}
 
 		bool valid() const {
@@ -369,15 +373,15 @@ namespace hrzn {
 
 		MapSingleton() : base(rectangle()) {}
 
-		T& at(h_int x, h_int y) override {
+		T& at(h_int px, h_int py) override {
 			return m_contents;
 		}
 
-		T at(h_int x, h_int y) const override {
+		T at(h_int px, h_int py) const override {
 			return m_contents;
 		}
 
-		void set(h_int x, h_int y, const T& val) override {
+		void set(h_int px, h_int py, const T& val) override {
 			m_contents = val;
 		}
 
@@ -387,8 +391,8 @@ namespace hrzn {
 	/// Bitwise AND operation between two boolean Matrices
 	inline MapContainer<bool> operator & (const I_Map<bool>& a, const I_Map<bool>& b) {
 		MapContainer<bool> result(intersect(a, b));
-		for (int y = result.y1; y < result.y2; ++y)
-			for (int x = result.x1; x < result.x2; ++x)
+		for (int y = result.y; y < result.last().y; ++y)
+			for (int x = result.x; x < result.last().x; ++x)
 				result.set(x, y, a.at(x, y) && b.at(x, y));
 		return result;
 	}
@@ -396,8 +400,8 @@ namespace hrzn {
 	/// Bitwise OR operation between two boolean Matrices
 	inline MapContainer<bool> operator | (const I_Map<bool>& a, const I_Map<bool>& b) {
 		MapContainer<bool> result(intersect(a, b));
-		for (int y = result.y1; y < result.y2; ++y)
-			for (int x = result.x1; x < result.x2; ++x)
+		for (int y = result.y; y < result.last().y; ++y)
+			for (int x = result.x; x < result.last().x; ++x)
 				result.set(x, y, a.at(x, y) || b.at(x, y));
 		return result;
 	}
@@ -405,8 +409,8 @@ namespace hrzn {
 	/// Bitwise XOR operation between two boolean Matrices
 	inline MapContainer<bool> operator ^ (const I_Map<bool>& a, const I_Map<bool>& b) {
 		MapContainer<bool> result(intersect(a, b));
-		for (int y = result.y1; y < result.y2; ++y)
-			for (int x = result.x1; x < result.x2; ++x)
+		for (int y = result.y; y < result.last().y; ++y)
+			for (int x = result.x; x < result.last().x; ++x)
 				result.set(x, y, a.at(x, y) && b.at(x, y));
 		return result;
 	}
@@ -414,8 +418,8 @@ namespace hrzn {
 	/// Bitwise Invert operation between on a boolean Matrix
 	inline MapContainer<bool> operator ~ (const I_Map<bool>& a) {
 		MapContainer<bool> result((rectangle)a);
-		for (int y = a.y1; y < a.y2; ++y)
-			for (int x = a.x1; x < a.x2; ++x)
+		for (int y = a.y; y < a.last().y; ++y)
+			for (int x = a.x; x < a.last().x; ++x)
 				result.set(x, y, !a.at(x, y));
 		return result;
 	}
@@ -426,8 +430,8 @@ namespace hrzn {
 	template <typename T>
 	MapContainer<T> copy(const I_Map<T>& map) {
 		MapContainer<T> result((rectangle)map);
-		for (h_int x, y = map.y1; y < map.y2; ++y)
-			for (x = map.x1; x < map.x2; ++x)
+		for (int x, y = map.y; y < map.last().y; ++y)
+			for (x = map.x; x < map.last().x; ++x)
 				result.set(x, y, map.at(x, y));
 		return result;
 	}
@@ -438,8 +442,8 @@ namespace hrzn {
 	template <typename T>
 	inline bool equal(const I_Map<T>& a, const I_Map<T>& b) {
 		rectangle area = hrzn::intersect(a, b);
-		for (h_int x, y = area.y1; y < area.y2; ++y)
-			for (x = area.x1; x < area.x2; ++x)
+		for (h_int x, y = area.y; y < area.last().y; ++y)
+			for (x = area.x; x < area.last().x; ++x)
 				if (a.at(x, y) != b.at(x, y))
 					return false;
 		return true;
@@ -454,8 +458,8 @@ namespace hrzn {
 	/// <param name="replace">The value with which to replace all found values.</param>
 	template <typename T>
 	inline void replace(I_Map<T>& map, const T& find, const T& replace) {
-		for (h_int x, y = map.y1; y < map.y2; ++y)
-			for (x = map.x1; x < map.x2; ++x)
+		for (h_int x, y = map.y; y < map.last().y; ++y)
+			for (x = map.x; x < map.last().x; ++x)
 				map.at(x, y) = replace;
 	}
 

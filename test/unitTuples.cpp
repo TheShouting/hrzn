@@ -28,8 +28,7 @@ SOFTWARE.
 
 namespace hrznBasicTypesTest
 {
-	TEST_CLASS(TupleTypes)
-	{
+	TEST_CLASS(TupleTypes) {
 	public:
 
 		TEST_METHOD(EpsilonTypeTest) {
@@ -105,59 +104,6 @@ namespace hrznBasicTypesTest
 
 			Assert::AreEqual(3, p[0], L"Index 0 failure on point.");
 			Assert::AreEqual(11, p[1], L"Index 1 failure on point.");
-
-		}
-
-#ifndef H_NOEXCEPT
-		TEST_METHOD(CornerIndexOutOfRange_point_area) {
-			auto f1 = [this] {
-				hrzn::rectangle a = { 0, 0, 1, 1 };
-				a.corner(4);
-			};
-			auto f2 = [this] {
-				hrzn::rectangle a = { 0, 0, 1, 1 };
-				a.corner(-1);
-			};
-
-			Assert::ExpectException<std::out_of_range>(f1, L"Did not catch upper out of range index.");
-			Assert::ExpectException<std::out_of_range>(f2, L"Did not catch lower out of range index.");
-
-		}
-#endif // !H_NOEXCEPT
-
-		TEST_METHOD(CornerTests) {
-			int x1 = -3;
-			int y1 = -3;
-			int x2 = 3;
-			int y2 = 3;
-			hrzn::rectangle area = { x1, y1, x2, y2 };
-			Assert::IsTrue(area.contains(area.center()), L"Center");
-			Assert::IsTrue(area.contains(area.corner(0)), L"Top left corner");
-			Assert::IsTrue(area.contains(area.corner(1)), L"Top right corner");
-			Assert::IsTrue(area.contains(area.corner(2)), L"Bottom left corner");
-			Assert::IsTrue(area.contains(area.corner(3)), L"Bottom right corner");
-		}
-
-		TEST_METHOD(OverlapChecking) {
-			Assert::IsTrue(hrzn::overlap({ -1, -1, 3, 3 }, { 0, 0, 2, 2 }), L"Fully contained failure.");
-			Assert::IsTrue(hrzn::overlap({ 0, 0, 10, 10 }, { 0, 0, 10, 10 }), L"Equality failure.");
-		}
-
-		TEST_METHOD(IntersectMethod) {
-			hrzn::point2 p1 = { -9, -8 };
-			hrzn::point2 p2 = { 2, 5 };
-			hrzn::point2 p3 = { -5, -4 };
-			hrzn::point2 p4 = { 8, 9 };
-
-			hrzn::rectangle area1(p1, p2);
-			hrzn::rectangle area2(p3, p4);
-
-			Assert::AreEqual(hrzn::rectangle(p3, p2), hrzn::intersect(area1, area2), L"Overlapping instersection does not match.");
-
-			hrzn::rectangle big_area = { 0, 0, 100, 100 };
-			hrzn::rectangle small_area = { 44, 7, 55, 60 };
-
-			Assert::AreEqual(small_area, hrzn::intersect(big_area, small_area), L"Contained intersection of does not match.");
 
 		}
 	};

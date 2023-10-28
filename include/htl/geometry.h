@@ -137,36 +137,36 @@ namespace hrzn {
 	}; // struct i_ngon<int>
 
 
-	struct hBox : public i_ngon<4> {
+	//struct hBox : public i_ngon<4> {
 
-		vector2 v1;
-		vector2 v2;
+	//	vector2 v1;
+	//	vector2 v2;
 
-		hBox() : v1(0._hf), v2(1._hf) {}
-		hBox(vector2 size) : v1(0._hf), v2(size) {}
-		hBox(vector2 v1, vector2 v2) : v1(v1), v2(v2) {}
-		hBox(h_float w, h_float h) : v1(0._hf), v2(w, h) {}
-		hBox(h_float ax, h_float ay, h_float bx, h_float by) : v1(ax, ay), v2(bx, by) {}
-		hBox(rectangle area) : v1(area.x1, area.y1), v2(area.x2, area.y2) {}
+	//	hBox() : v1(0._hf), v2(1._hf) {}
+	//	hBox(vector2 size) : v1(0._hf), v2(size) {}
+	//	hBox(vector2 v1, vector2 v2) : v1(v1), v2(v2) {}
+	//	hBox(h_float w, h_float h) : v1(0._hf), v2(w, h) {}
+	//	hBox(h_float ax, h_float ay, h_float bx, h_float by) : v1(ax, ay), v2(bx, by) {}
+	//	hBox(rectangle area) : v1(area.x, area.y), v2(area.x + area.w, area.y + area.h) {}
 
-		vector2 get(std::size_t index) const override {
-			return { (&v1)[h_corner[index].x].x, (&v1)[h_corner[index].y].y };
-		}
+	//	vector2 get(std::size_t index) const override {
+	//		return { (&v1)[h_corner[index].x].x, (&v1)[h_corner[index].y].y };
+	//	}
 
-	}; // struct hBox
+	//}; // struct hBox
 
 
-	struct quad : public transform, i_ngon<4> {
+	//struct quad : public transform, i_ngon<4> {
 
-		quad() : transform() {}
-		quad(h_float w, h_float h) : transform({ 0,0 }, 0.f, { w, h }) {}
-		quad(vector2 dim) : transform() {}
-		quad(transform tform) : transform(tform) {}
+	//	quad() : transform() {}
+	//	quad(h_float w, h_float h) : transform({ 0,0 }, 0.f, { w, h }) {}
+	//	quad(vector2 dim) : transform() {}
+	//	quad(transform tform) : transform(tform) {}
 
-		vector2 get(std::size_t index) const override {
-			return position + rotation.rotate_vector(scale * vector2(h_quad[index].x - 0.5_hf, h_quad[index].y - 0.5_hf));
-		}
+	//	vector2 get(std::size_t index) const override {
+	//		return position + rotation.rotate_vector(scale * vector2(h_quad[index].x - 0.5_hf, h_quad[index].y - 0.5_hf));
+	//	}
 
-	}; // struct quad
+	//}; // struct quad
 
 } // namespace hrzn

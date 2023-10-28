@@ -521,15 +521,15 @@ namespace hrzn {
 	/// </summary>
 	struct rectangle { // TODO make abstract
 
-		h_int x1, y1, x2, y2; // TODO refactor to use x, y, w, h
+		h_int x, y, w, h;
 
-		constexpr rectangle() : x1(INT_MAX), y1(INT_MAX), x2(INT_MIN), y2(INT_MIN) {}
+		constexpr rectangle() : x(0), y(0), w(-1), h(-1) {}
 
-		constexpr rectangle(h_unsigned w, h_unsigned h) : x1(0), y1(0), x2((h_int)w), y2((h_int)h) {}
+		constexpr rectangle(h_unsigned _w, h_unsigned _h) : x(0), y(0), w(_w), h(_h) {}
 
-		constexpr rectangle(h_int _x1, h_int _y1, h_int _x2, h_int _y2) : x1(_x1), y1(_y1), x2(_x2), y2(_y2) {}
+		constexpr rectangle(h_int _x, h_int _y, h_int _w, h_int _h) : x(_x), y(_y), w(_w), h(_h) {}
 
-		explicit constexpr rectangle(point2 p1, point2 p2) : x1(p1.x), y1(p1.y), x2(p2.x), y2(p2.y) {}
+		explicit constexpr rectangle(point2 pos, point2 size) : x(pos.x), y(pos.y), w(size.x), h(size.y) {}
 
 		rectangle& operator +=(point2 dist) {
 			move(dist.x, dist.y);
@@ -542,30 +542,40 @@ namespace hrzn {
 		}
 
 		operator bool() const {
-			return x1 < x2 && y1 < y2;
+			return w > 0 && h > 0;
 		}
 
+		//h_int x1() const { return x; }
+
+		//h_int x2() const { return x + w; }
+
+		//h_int y1() const { return y; }
+
+		//h_int y2() const { return y + h; }
+
+
 		bool valid() const {
-			return x1 < x2 && y1 < y2;
+			return w > 0 && h > 0;
 		}
 
 		void move(h_int move_x, h_int move_y) {
-			x1 += move_x;
-			y1 += move_y;
-			x2 += move_x;
-			y2 += move_y;
+			x += move_x;
+			y += move_y;
 		}
 
-		virtual void resize(h_int x_1, h_int y_1, h_int x_2, h_int y_2) {
-			x1 = std::min(x_1, x_2);
-			x2 = std::max(x_1, x_2);
-			y1 = std::min(y_1, y_2);
-			y2 = std::max(y_1, y_2);
+		virtual void resize_corners(h_int x_1, h_int y_1, h_int x_2, h_int y_2) {
+			x = std::min(x_1, x_2);
+			w = std::max(x_1, x_2 - x_1);
+			y = std::min(y_1, y_2);
+			h = std::max(y_1, y_2 - y_1);
 		}
 
 		void resize(point2 size) {
 			if (size) {
-				resize(std::min(x1, x1 + size.x), std::min(y1, y1 + size.y), std::max(x1, x1 + size.x), std::max(y1, y1 + size.y));
+				x = std::min(x, x + size.x);
+				y = std::min(y, y + size.y);
+				w = std::abs(size.x);
+				h = std::abs(size.y);
 			}
 		}
 
@@ -577,33 +587,36 @@ namespace hrzn {
 			resize_from_center(size, size);
 		}
 
-		void resize_from_center(h_unsigned w, h_unsigned h) {
+		void resize_from_center(h_unsigned _w, h_unsigned _h) {
 			if (valid()) {
 				point2 ctr = center();
-				resize(ctr.x - w / 2, ctr.y - h / 2, x1 + w, y1 + h);
+				x = ctr.x - _w / 2;
+				y = ctr.y - _h / 2;
+				w = _w;
+				h = _h;
 			}
 		}
 
 		rectangle normalized() const {
-			return rectangle(0, 0, x2 - x1, y2 - y1);
+			return rectangle(0, 0, std::abs(w), std::abs(h));
 		}
 
 		point2 clamp(point2 pt) const {
-			return { std::min(x2, std::max(x1, pt.x)), std::min(y2, std::max(y1, pt.y)) };
+			return { std::min(this->x + this->w, std::max(this->x, pt.x)), std::min(this->y + this->h, std::max(this->y, pt.y))};
 		}
 
 		point2 wrap(point2 pt) const {
-			h_int x = ((h_int)width() + ((pt.x - x1) % (h_int)width())) % (h_int)width() + x1;
-			h_int y = ((h_int)height() + ((pt.y - y1) % (h_int)height())) % (h_int)height() + y1;
+			h_int x = ((h_int)this->w + ((pt.x - this->x) % (h_int)this->w)) % (h_int)this->w + this->x;
+			h_int y = ((h_int)this->h + ((pt.y - this->y) % (h_int)this->h)) % (h_int)this->h + this->y;
 			return { x, y };
 		}
 
 		std::size_t width() const {
-			return std::abs(x2 - x1);
+			return std::abs(this->w);
 		}
 
 		std::size_t height() const {
-			return std::abs(y2 - y1);
+			return std::abs(this->h);
 		}
 
 		point2 dimensions() const {
@@ -611,87 +624,103 @@ namespace hrzn {
 		}
 
 		point2 first() const {
-			return { x1, x1 };
+			return { this->x, this->y };
 		}
 
-		point2 last() const {
-			return { x2, y2 };
-		}
+		point2 last() const { return { this->x + this->w, this->y + this->h }; }
 
 		std::size_t area() const {
-			return width() * height();
+			return this->w * this->h;
 		}
 
 		point2 corner(int i) const {
 #ifndef HRZN_NOEXCEPTIONS
 			if (i < 0 || i > 3) throw std::out_of_range("Index is not a valid corner.");
 #endif // !HRZN_NOEXCEPTIONS
-			return { x1 + h_corner[i].x * (width() - 1), y1 + h_corner[i].y * (height() - 1) };
+			return { this->x + h_corner[i].x * (this->w - 1), this->y + h_corner[i].y * (this->h - 1)};
 		}
 
 		point2 center() const {
-			return { (x2 - x1) / 2 + x1, (y2 - y1) / 2 + y1 };
+			return { this->w / 2 + this->x, this->h / 2 + this->y };
 		}
 
 		bool contains(point2 pt) const {
 			return this->contains(pt.x, pt.y);
 		}
 
-		bool contains(h_int x, h_int y) const {
-			return x >= x1 && x < x2 && y >= y1 && y < y2;
+		bool contains(h_int px, h_int py) const {
+			return px >= this->x && px < (this->x + this->w)  && py >= this->y && py < this->y + this->h;
 		}
 
 		bool contains(rectangle other) {
-			return false; // TODO implement bool contains(rect)
+			return
+				other.valid() &&
+				other.x >= this->x && 
+				other.x + other.w < this->x + this->w && 
+				other.y >= this->y && 
+				other.y + other.h < this->y + this->h;
+		}
+
+		static constexpr rectangle from_corners(point2 a, point2 b) {
+			auto x = std::min(a.x, b.x);
+			auto y = std::min(a.y, b.y);
+			auto w = std::max(a.x, b.x) - x;
+			auto h = std::max(a.x, b.x) - y;
+			return { x, y, w, h };
 		}
 
 	}; // struct rectangle
 
+
 	inline bool operator==(rectangle a, rectangle b) {
-		return a.x1 == b.x1 && a.y1 == b.y1 && a.x2 == b.x2 && a.y2 == b.y2;
+		return a.x == b.x && a.y == b.y && a.w == b.w && a.h == b.h;
 	}
 
 	inline rectangle operator+(rectangle a, point2 b) {
-		return rectangle(a.first() + b, a.last() + b);
+		return rectangle::from_corners(a.first() + b, a.last() + b);
 	}
 
 	inline rectangle operator-(rectangle a, point2 b) {
-		return rectangle(a.first() - b, a.last() - b);
+		return rectangle::from_corners(a.first() - b, a.last() - b);
 	}
 
 	/// <summary>
 	/// Create a new Area based on the overlap of two other Area objects.
 	/// </summary>
 	inline rectangle intersect(rectangle a, rectangle b) {
-		return rectangle(std::max(a.x1, b.x1), std::max(a.y1, b.y1), std::min(a.x2, b.x2), std::min(a.y2, b.y2));
+		auto x = std::max(a.x, b.x);
+		auto y = std::max(a.y, b.y);
+		auto w = std::min(a.x + a.w, b.x + b.w) - x;
+		auto h = std::min(a.y + a.h, b.y + b.h) - y;
+		return { x, y, w, h };
 	}
 
 	/// <summary>
 	/// Return true if both <type>rectangle</type> objects overlap.
 	/// </summary>
 	inline bool overlap(rectangle a, rectangle b) {
-		return !(a.x1 > b.x2 || a.y1 > b.y2 || b.x1 > a.x2 || b.y1 > a.y2);
+		return !(a.x > b.x + b.w || a.y > b.y + b.h || b.x > a.x + a.w || b.y > a.y + a.h);
 	}
 
 	/// <summary>
 	/// Is true if <type>rectangle</type> b is completely contained within <type>rectangle</type> a.
 	/// </summary>
 	inline bool contains(rectangle a, rectangle b) {
-		return b.x1 >= a.x1 && b.y1 >= a.y1 && b.x2 <= a.x2 && b.y2 <= a.x2;
+		return b.x >= a.x && b.y >= a.y && b.last().x <= a.last().x && b.last().y <= a.last().y;
 	}
 
 	/// <summary>
 	/// Is true if <type>poin2</type> b is completely contained within <type>rectangle</type> a.
 	/// </summary>
 	inline bool contains(rectangle a, point2 b) {
-		return b.x >= a.x1 && b.y >= a.y1 && b.x < a.x2 && b.y < a.x2;
+		return b.x >= a.x && b.y >= a.y && b.x < a.last().x  && b.y < a.last().y;
 	}
 
 	/// <summary>
 	/// Is true if <type>point2</type> is equal to any edge position of <type>rectangle</type>.
 	/// </summary>
 	inline bool is_edge(rectangle area, point2 pos) {
-		return pos.x == area.x1 || pos.x == area.x2 - 1_hi || pos.y == area.y1 || pos.y == area.y2 - 1_hi;
+		return pos.x == area.x || pos.x == area.last().x - 1_hi || pos.y == area.y || pos.y == area.last() - 1_hi;
 	}
 
 	/// <summary>
@@ -706,15 +735,15 @@ namespace hrzn {
 	/// Swap width and height values (same as rotating 90 deg)
 	/// </summary>
 	inline rectangle swizzle(const rectangle& a) {
-		return rectangle(a.y1, a.x1, a.y2, a.x2);
+		return rectangle(a.y, a.x, a.h, a.w);
 	}
 
 	/// <summary>
 	/// Snaps a point to an area edge if it is out of bounds.
 	/// </summary>
 	inline point2 clamp_point(const point2& p, const rectangle& area) {
-		h_int x = std::min(std::max(p.x, area.x1), area.x2 - 1_hi);
-		h_int y = std::min(std::max(p.y, area.y1), area.y2 - 1_hi);
+		h_int x = std::min(std::max(p.x, area.x), area.x + area.w);
+		h_int y = std::min(std::max(p.y, area.y), area.y + area.h);
 		return { x, y };
 	}
 
@@ -722,8 +751,8 @@ namespace hrzn {
 	/// Wraps a point to the oppposite edge of an area if it is out of bounds.
 	/// </summary>
 	inline point2 wrap_point(const point2& p, const rectangle& area) {
-		h_int x = (p.x % area.width() + area.width()) % area.width();
-		h_int y = (p.y % area.height() + area.height()) % area.height();
+		h_int x = ((p.x - area.x) % area.w + area.w) % area.w + area.x;
+		h_int y = ((p.y - area.y) % area.h + area.h) % area.h + area.y;
 		return { x, y };
 	}
 
@@ -736,10 +765,10 @@ namespace hrzn {
 	/// <returns></returns>
 	inline constexpr std::array<rectangle, 4> quad_split(rectangle area, point2 center) {
 		return std::array<rectangle, 4> {
-			rectangle{ area.x1, area.y1, center.x, center.y },
-			rectangle{ center.x, area.y1, area.x2, center.y },
-			rectangle{ area.x1, center.y, center.x, area.y2 },
-			rectangle{ center.x, center.y, area.x2, area.y2 }
+			rectangle{ area.x, area.y,		center.x - area.x,			center.y - area.y			},
+			rectangle{ center.x, area.y,	area.x + area.w - center.x,	center.y - area.y			},
+			rectangle{ area.x, center.y,	center.x - area.x,			area.y + area.h - center.y	},
+			rectangle{ center.x, center.y,	area.x + area.w - center.x,	area.y + area.h - center.y	}
 		};
 	}
 
@@ -754,11 +783,13 @@ namespace hrzn {
 		rectangle a2 = area;
 		point2 cp = area.center();
 		if (area.height() > 1 && area.height() > area.width()) {
-			a1.y2 = cp.y;
-			a2.y1 = cp.y;
+			a1.h = cp.y - area.h;
+			a2.y = cp.y;
+			a2.h = area.y + area.h - cp.y;
 		} else if (area.width() > 1) {
-			a1.x2 = cp.x;
-			a2.x1 = cp.x;
+			a1.w = cp.x - area.w;
+			a2.x = cp.x;
+			a2.w = area.x + area.w - cp.x;
 		}
 		return { a1, a2 };
 	}

@@ -28,7 +28,7 @@ SOFTWARE.
 #include "containers.h"
 
 
-#define HRZN_FOREACH_POINT(A, X, Y) for (h_int X, Y = A.y1; Y < A.y2; ++Y) for (X = A.x1; X < A.x2; ++X) 
+#define HRZN_FOREACH_POINT(A, X, Y) for (h_int X, Y = A.y; Y < A.y + A.h; ++Y) for (X = A.x; X < A.x + A.w; ++X) 
 
 namespace hrzn {
 
@@ -74,10 +74,10 @@ namespace hrzn {
 	inline rectangle make_boundary(const std::initializer_list<rectangle>& areas) {
 		rectangle area = *areas.begin();
 		for (auto a = areas.begin() + 1; a != areas.end(); ++a) {
-			area.x1 = std::min(area.x1, a->x1);
-			area.y1 = std::min(area.y1, a->y1);
-			area.x2 = std::max(area.x2, a->x2);
-			area.y2 = std::max(area.y2, a->y2);
+			area.x = std::min(area.x, a->x);
+			area.y = std::min(area.y, a->y);
+			area.w = std::max(area.x + area.w, a->x + a->w) - area.x;
+			area.h = std::max(area.y + area.h, a->y + a->h) - area.y;
 		}
 		return area;
 	}
@@ -87,10 +87,10 @@ namespace hrzn {
 	inline rectangle make_boundary(const std::initializer_list<point2> & pts) {
 		rectangle r (pts.begin()->x, pts.begin()->y);
 		for (auto p = pts.begin() + 1; p != pts.end(); ++p) {
-			r.x1 = std::min(r.x1, p->x);
-			r.y1 = std::min(r.y1, p->y);
-			r.x2 = std::max(r.x2, p->x);
-			r.y2 = std::max(r.y2, p->y);
+			r.x = std::min(r.x, p->x);
+			r.y = std::min(r.y, p->y);
+			r.w = std::max(r.x + r.w, p->x) - r.x;
+			r.h = std::max(r.y + r.h, p->y) - r.y;
 		}
 		return r;
 	}
@@ -329,8 +329,8 @@ namespace hrzn {
 
 	inline void cellular_automata(I_Map<bool>* mask, int birth_rate, bool wrap_position) {
 		MapContainer<int> neighbor_counts((rectangle)(*mask), 0);
-		for (h_int y = mask->y1; y < mask->y2; ++y)
-			for (h_int x = mask->x1; x < mask->x2; ++x) {
+		for (h_int y = mask->y; y < mask->last().y; ++y)
+			for (h_int x = mask->x; x < mask->last().x; ++x) {
 				point2 cell = { x, y };
 				int n_count = 0;
 				for (const auto& dir : h_neighborhood8) {
@@ -345,8 +345,8 @@ namespace hrzn {
 				}
 				neighbor_counts.set((point2)cell, n_count);
 			}
-		for (h_int y = mask->y1; y < mask->y2; ++y)
-			for (h_int x = mask->x1; x < mask->x2; ++x)
+		for (h_int y = mask->y; y < mask->y + mask->h; ++y)
+			for (h_int x = mask->x; x < mask->x + mask->w; ++x)
 				mask->set(x, y, neighbor_counts.at(x, y) >= birth_rate);
 	}
 
@@ -357,7 +357,7 @@ namespace hrzn {
 	******************************************************************************************************************/
 
 
-	inline hBox bounding_box(const i_polygon& polygon) {
+	/*inline hBox bounding_box(const i_polygon& polygon) {
 		vector2 min = polygon.get(0);
 		vector2 max = polygon.get(0);
 
@@ -369,7 +369,7 @@ namespace hrzn {
 		}
 
 		return { min, max };
-	}
+	}*/
 
 
 	/******************************************************************************************************************

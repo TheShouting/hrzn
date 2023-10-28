@@ -52,8 +52,8 @@ public:
 		std::fill(map.begin(), map.end(), fill_val);
 
 		int deviations = 0;
-		for (int x, y = map.y1; y < map.y2; ++y)
-			for (x = map.x1; x < map.x2; ++x)
+		for (int x, y = map.y; y < map.last().y; ++y)
+			for (x = map.x; x < map.last().x; ++x)
 				if (map.at(x, y) != fill_val) deviations++;
 		Assert::AreEqual(0, deviations, L"Iterator did not work properly with std::fill.");
 	}
@@ -133,25 +133,34 @@ public:
 	}
 
 	TEST_METHOD(MapContainer_Iterator) {
-		hrzn::MapContainer<int> map({ 7, 13, 111, 97 }, -1);
 
-		int i1 = 0;
-		for (auto& cell : map) {
-			cell = i1;
-			i1++;
+		hrzn::rectangle rect = { 7, 13, 111, 97 };
+
+		hrzn::MapContainer<int> map(rect, -1);
+
+		try {
+			int i1 = 0;
+			for (auto& cell : map) {
+				cell = i1;
+				i1++;
+			}
+		} catch (std::exception e) {
+			std::string str = e.what();
+			std::wstring w(str.begin(), str.end());
+			Assert::Fail(w.c_str());
 		}
 
 		int i2 = 0;
 		int deviations = 0;
-		for (int x, y = map.y1; y < map.y2; ++y)
-			for (x = map.x1; x < map.x2; ++x) {
+		for (int x, y = map.y; y < map.last().y; ++y)
+			for (x = map.x; x < map.last().x; ++x) {
 				if (i2 != map.at(x, y)) deviations++;
 				i2++;
 			}
 
 		Assert::AreEqual(0, deviations, L"Iterator assignment failure.");
 	}
-
+	
 	TEST_METHOD(MapContainer_IteratorMacro) {
 		hrzn::MapContainer<int> map(100, 100, -1);
 
@@ -163,8 +172,8 @@ public:
 
 		int i2 = 0;
 		int deviations = 0;
-		for (int x, y = map.y1; y < map.y2; ++y)
-			for (x = map.x1; x < map.x2; ++x) {
+		for (int x, y = map.y; y < map.last().y; ++y)
+			for (x = map.x; x < map.last().x; ++x) {
 				if (i2 != map.at(x, y)) deviations++;
 				i2++;
 			}

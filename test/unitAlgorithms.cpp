@@ -94,8 +94,8 @@ namespace hrznAlgorithmTests {
 			Assert::AreEqual(map_int.area(), count, L"Incomplete copy or cast failure.");
 
 			int error = 0;
-			for (int x, y = map_int.y1; y < map_int.y2; ++y)
-				for (x = map_int.x1; x < map_int.x2; ++x)
+			for (int x, y = map_int.y; y < map_int.last().y; ++y)
+				for (x = map_int.x; x < map_int.last().x; ++x)
 					if (!map_bool.at(x, y)) error++;
 			Assert::AreEqual(0, error, L"Malformed copy.");
 
