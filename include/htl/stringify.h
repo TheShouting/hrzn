@@ -188,18 +188,18 @@ namespace hrzn {
 		// Column numbering
 		if (style.enumerate) {
 			ss << style.siding << std::setw(style.padding) << "";
-			for (int x = mat.x1; x < mat.x2; x++)
+			for (int x = mat.x; x < mat.x + mat.w; x++)
 				ss << std::setw(style.padding) << x;
 			ss << std::setw(style.padding) << style.siding << '\n';
 		}
 
 		// I_Map content
-		for (int y = mat.y1; y < mat.y2; y++) {
+		for (int y = mat.y; y < mat.y + mat.h; y++) {
 			ss << style.siding;
 			if (style.enumerate) {
 				ss << std::setw(style.padding) << y;
 			}
-			for (int x = mat.x1; x < mat.x2; x++)
+			for (int x = mat.x; x < mat.x + mat.w; x++)
 				ss << std::setw(style.padding) << mat.at(x, y);
 			ss << std::setw(style.padding) << style.siding << '\n';
 		}
@@ -225,27 +225,27 @@ namespace hrzn {
 
 
 		if (style.top_line)
-			ss << make_string_line((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.top_line, style.corner, style.corner) << '\n';
+			ss << make_string_line((mat.w + style.enumerate + 1) * style.padding + rail_pad, style.top_line, style.corner, style.corner) << '\n';
 
 		if (style.enumerate) {
 			ss << style.siding << std::setw(style.padding) << "";
-			for (int x = mat.x; x < mat.last().x; x++)
+			for (int x = mat.x; x < mat.x + mat.w; x++)
 				ss << std::setw(style.padding) << x;
 			ss << std::setw(style.padding) << style.siding << '\n';
 		}
 
-		for (int y = mat.y; y < mat.last().y; y++) {
+		for (int y = mat.y; y < mat.y + mat.h; y++) {
 			ss << style.siding;
 			if (style.enumerate) {
 				ss << std::setw(style.padding) << y;
 			}
-			for (int x = mat.x; x < mat.last().y; x++)
+			for (int x = mat.x; x < mat.x + mat.w; x++)
 				ss << std::setw(style.padding) << (mat.at(x, y) ? style.filled : style.empty);
 			ss << std::setw(style.padding) << style.siding << '\n';
 		}
 
 		if (style.bottom_line)
-			ss << make_string_line((mat.width() + style.enumerate + 1) * style.padding + rail_pad, style.bottom_line, style.corner, style.corner) << '\n';
+			ss << make_string_line((mat.w + style.enumerate + 1) * style.padding + rail_pad, style.bottom_line, style.corner, style.corner) << '\n';
 
 		return ss.str();
 	}
