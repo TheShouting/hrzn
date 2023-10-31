@@ -38,7 +38,7 @@ namespace Microsoft {
 		namespace CppUnitTestFramework {
 			template<> inline std::wstring ToString<hrzn::vector2>(const hrzn::vector2& t) { RETURN_WIDE_STRING("vector2{ x:" << t.x << " y:" << t.y << " }"); }
 			template<> inline std::wstring ToString<hrzn::point2>(const hrzn::point2& t) { RETURN_WIDE_STRING("point2{ x:" << t.x << " y:" << t.y << " }"); }
-			template<> inline std::wstring ToString<hrzn::rectangle>(const hrzn::rectangle& a) { RETURN_WIDE_STRING("rectangle{ x:" << a.x << " y:" << a.y << " w:" << a.w << " h:" << a.h << " }"); }
+			template<> inline std::wstring ToString<hrzn::rect_i>(const hrzn::rect_i& a) { RETURN_WIDE_STRING("rect_i{ x:" << a.x << " y:" << a.y << " w:" << a.w << " h:" << a.h << " }"); }
 			template<> inline std::wstring ToString<hrzn::angle>(const hrzn::angle& a) { RETURN_WIDE_STRING("angle{ tau:" << a.tau<< " (" << a.deg() << "deg) }"); }
 		}
 	}

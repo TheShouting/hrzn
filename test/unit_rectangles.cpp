@@ -34,11 +34,11 @@ public:
 #ifndef HRZN_NOEXCEPTIONS
 	TEST_METHOD(CornerIndexOutOfRange_point_area) {
 		auto f1 = [this] {
-			hrzn::rectangle a = { 0, 0, 1, 1 };
+			hrzn::rect_i a = { 0, 0, 1, 1 };
 			a.corner(4);
 		};
 		auto f2 = [this] {
-			hrzn::rectangle a = { 0, 0, 1, 1 };
+			hrzn::rect_i a = { 0, 0, 1, 1 };
 			a.corner(-1);
 		};
 
@@ -49,35 +49,53 @@ public:
 #endif // !H_NOEXCEPT
 
 	TEST_METHOD(contains_point_method) {
-		hrzn::rectangle rect(-10, -10, 20, 20);	
-		Assert::IsTrue(rect.contains(0, 0), L"Failed check for point inside rectangle.");
-		Assert::IsFalse(rect.contains(0, 35), L"Failed check for point outside rectangle.");
+		hrzn::rect_i rect(-10, -10, 20, 20);	
+		Assert::IsTrue(rect.contains(0, 0), L"Failed check for point inside rect_i.");
+		Assert::IsFalse(rect.contains(0, 35), L"Failed check for point outside rect_i.");
 	}
 
 	TEST_METHOD(contains_rectangle_method) {
-		hrzn::rectangle rect(-10, -10, 20, 20);
-		Assert::IsTrue(rect.contains(hrzn::rectangle(0, 0, 5, 5)), L"Failed check for rectangle inside rectangle.");
-		Assert::IsFalse(rect.contains(hrzn::rectangle(0, 0, 25, 25)), L"Failed check for rectangle partially in rectangle.");
-		Assert::IsFalse(rect.contains(hrzn::rectangle(20, 20, 5, 5)), L"Failed check for rectangle outside rectangle.");
-		Assert::IsFalse(rect.contains(hrzn::rectangle(0, 0, -1, -1)), L"Failed check for invalid rectangle.");
+		hrzn::rect_i rect(-10, -10, 20, 20);
+		Assert::IsTrue(rect.contains(hrzn::rect_i(0, 0, 5, 5)), L"Failed check for rect_i inside rect_i.");
+		Assert::IsFalse(rect.contains(hrzn::rect_i(0, 0, 25, 25)), L"Failed check for rect_i partially in rect_i.");
+		Assert::IsFalse(rect.contains(hrzn::rect_i(20, 20, 5, 5)), L"Failed check for rect_i outside rect_i.");
+		Assert::IsFalse(rect.contains(hrzn::rect_i(0, 0, -1, -1)), L"Failed check for invalid rect_i.");
 	}
 
-	TEST_METHOD(corner_method) {
-		int x1 = -3;
-		int y1 = -3;
-		int x2 = 3;
-		int y2 = 3;
-		hrzn::rectangle area = { x1, y1, x2, y2 };
+	TEST_METHOD(corner_method_i) {
+		h_int x = -3;
+		h_int y = -3;
+		h_int w = 6;
+		h_int h = 6;
+		hrzn::rect_i area = { x, y, w, h };
 		Assert::IsTrue(area.contains(area.center()), L"Center");
 		Assert::IsTrue(area.contains(area.corner(0)), L"Top left corner");
 		Assert::IsTrue(area.contains(area.corner(1)), L"Top right corner");
 		Assert::IsTrue(area.contains(area.corner(2)), L"Bottom left corner");
 		Assert::IsTrue(area.contains(area.corner(3)), L"Bottom right corner");
+		Assert::AreEqual(hrzn::point2{ w + x - 1, h + y - 1 }, area.corner(3), L"Far corner value is not expected value.");
+	}
+
+	TEST_METHOD(corner_method_f) {
+		h_float x = -3.141592f;
+		h_float y = -7.13f;
+		h_float w = 7.5f;
+		h_float h = 11.1f;
+		hrzn::rect_f area = { x, y, w, h };
+		Assert::IsTrue(area.contains(area.center()), L"Center");
+		Assert::IsTrue(area.contains(area.corner(0)), L"Top left corner");
+		Assert::IsTrue(area.contains(area.corner(1)), L"Top right corner");
+		Assert::IsTrue(area.contains(area.corner(2)), L"Bottom left corner");
+		Assert::IsTrue(area.contains(area.corner(3)), L"Bottom right corner");
+
+		Assert::AreEqual(x + w, area.corner(3).x, hrzn::_lib::vEpsilon<h_float>::value, L"Far corner value is not within tolerances.");
+		Assert::AreEqual(y + h, area.corner(3).y, hrzn::_lib::vEpsilon<h_float>::value, L"Far corner value is not within tolerances.");
 	}
 
 	TEST_METHOD(overlap_method) {
-		Assert::IsTrue(hrzn::overlap({ -1, -1, 3, 3 }, { 0, 0, 2, 2 }), L"Fully contained failure.");
-		Assert::IsTrue(hrzn::overlap({ 0, 0, 10, 10 }, { 0, 0, 10, 10 }), L"Equality failure.");
+		Assert::IsTrue(hrzn::overlap(hrzn::rect_i{ -1, -1, 4, 4 }, hrzn::rect_i{ 0, 0, 2, 2 }), L"Fully contained failure.");
+		Assert::IsTrue(hrzn::overlap(hrzn::rect_i{ -1, -1, 3, 3 }, hrzn::rect_i{ 0, 0, 5, 5 }), L"Partially contained failure.");
+		Assert::IsTrue(hrzn::overlap(hrzn::rect_i{ 0, 0, 10, 10 }, hrzn::rect_i{ 0, 0, 10, 10 }), L"Equality failure.");
 	}
 
 	TEST_METHOD(intersect_method_overlap) {
@@ -86,22 +104,22 @@ public:
 		hrzn::point2 p3 = { -5, -4 };
 		hrzn::point2 p4 = { 8, 9 };
 
-		auto area1 = hrzn::rectangle::from_corners(p1, p2);
-		auto area2 = hrzn::rectangle::from_corners(p3, p4);
+		auto area1 = hrzn::rect_i::from_corners(p1, p2);
+		auto area2 = hrzn::rect_i::from_corners(p3, p4);
 
-		Assert::AreEqual(hrzn::rectangle::from_corners(p3, p2), hrzn::intersect(area1, area2), L"Overlapping instersection does not match.");
+		Assert::AreEqual(hrzn::rect_i::from_corners(p3, p2), hrzn::intersect(area1, area2), L"Overlapping instersection does not match.");
 	}
 
 	TEST_METHOD(intersect_method_contained) {
-		hrzn::rectangle big_area = { 0, 0, 100, 100 };
-		hrzn::rectangle small_area = { 21, 7, 55, 60 };
+		hrzn::rect_i big_area = { 0, 0, 100, 100 };
+		hrzn::rect_i small_area = { 21, 7, 55, 60 };
 		Assert::AreEqual(small_area, hrzn::intersect(big_area, small_area), L"Contained intersection of does not match.");
 	}
 
 	TEST_METHOD(wrap_point_method) {
-		hrzn::rectangle rect = { 3, 5, 100, 100 };
+		hrzn::rect_i rect = { 3, 5, 100, 100 };
 		hrzn::point2 pt = rect.wrap({ -25, -30 });
-		Assert::IsTrue(rect.contains(pt), L"Point is not located within the rectangle.");
+		Assert::IsTrue(rect.contains(pt), L"Point is not located within the rect_i.");
 	}
 
 	};

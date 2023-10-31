@@ -28,8 +28,6 @@ SOFTWARE.
 #include "containers.h"
 
 
-#define HRZN_FOREACH_POINT(A, X, Y) for (h_int X, Y = A.y; Y < A.y + A.h; ++Y) for (X = A.x; X < A.x + A.w; ++X) 
-
 namespace hrzn {
 
 	/******************************************************************************************************************
@@ -69,11 +67,11 @@ namespace hrzn {
 		return point2(std::round(vec.x), std::round(vec.y));
 	}
 
-
-	/// Create a contiguous rectangle based on the extreme corners of a rectangle list.
-	inline rectangle make_boundary(std::initializer_list<rectangle> areas) {
-		rectangle area = *areas.begin();
-		for (auto a = areas.begin() + 1; a != areas.end(); ++a) {
+	/// Create a contiguous rect_i based on the extreme corners of a rect_i list.
+	template <typename T>
+	inline i_rectangle<T> make_boundary(std::initializer_list<i_rectangle<T>> rects) {
+		i_rectangle<T> area = *rects.begin();
+		for (auto a = rects.begin() + 1; a != rects.end(); ++a) {
 			area.x = std::min(area.x, a->x);
 			area.y = std::min(area.y, a->y);
 			area.w = std::max(area.x + area.w, a->x + a->w) - area.x;
@@ -82,10 +80,10 @@ namespace hrzn {
 		return area;
 	}
 
-
-	/// Create an rectangle object which contains all points in a list.
-	inline rectangle make_boundary(std::initializer_list<point2> pts) {
-		rectangle r (pts.begin()->x, pts.begin()->y);
+	/// Create an rect_i object which contains all points in a list.
+	template <typename T>
+	inline i_rectangle<T> make_boundary(std::initializer_list<i_tuple2<T>> pts) {
+		i_rectangle<T> r (pts.begin()->x, pts.begin()->y);
 		for (auto p = pts.begin() + 1; p != pts.end(); ++p) {
 			r.x = std::min(r.x, p->x);
 			r.y = std::min(r.y, p->y);
@@ -95,23 +93,24 @@ namespace hrzn {
 		return r;
 	}
 
-	/// Create an rectangle object using a position and radius.
-	inline rectangle area_from_radius(point2 pos, h_int radius) {
-		return rectangle(pos.x - radius, pos.y - radius, pos.x + radius, pos.y + radius);
+	/// Create an rect_i object using a position and radius.
+	template <typename T>
+	inline i_rectangle<T> rect_from_radius(i_tuple2<T> pos, T radius) { // TODO Create unit test
+		return i_rectangle<T>{ pos.x - radius, pos.y - radius, radius * 2, radius * 2 };
 	}
+
 
 	/******************************************************************************************************************
 		I_Map Operations
 	******************************************************************************************************************/
-
 
 	/// <summary>
 	/// Copy all cells from the intersection area of one map into another. Can optionally specify a conversion function (defaults to static cast).
 	/// </summary>
 	template <typename Ta, typename Tb>
 	inline void copy_into(const I_Map<Ta>& from, I_Map<Tb>& to, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
-		rectangle area = hrzn::intersect(from, to);
-		HRZN_FOREACH_POINT(area, x, y) {
+		rect_i area = hrzn::intersect(from, to);
+		H_FOREACH_POINT(area, x, y) {
 			to.set(x, y, cast(from.at(x, y)));
 		}
 	}
@@ -121,8 +120,8 @@ namespace hrzn {
 	/// </summary>
 	template <typename Ta, typename Tb>
 	inline MapContainer<Ta> copy_each(const I_Map<Tb>& map, Ta(*cast)(Tb) = [](Tb val)->Ta {return static_cast<Ta>(val); }) {
-		MapContainer<Ta> dup((rectangle)map);
-		HRZN_FOREACH_POINT(map, x, y) {
+		MapContainer<Ta> dup((rect_i)map);
+		H_FOREACH_POINT(map, x, y) {
 			dup.set(x, y, cast(map.at(x, y)));
 		}
 		return dup;
@@ -136,7 +135,7 @@ namespace hrzn {
 	/// <param name="fill_obj">The value with which to fill the map.</param>
 	template <typename T>
 	inline void fill(I_Map<T>& map, const T& fill_obj) {
-		HRZN_FOREACH_POINT(map, x, y) {
+		H_FOREACH_POINT(map, x, y) {
 			map.set(x, y, fill_obj);
 		}
 	}
@@ -149,9 +148,9 @@ namespace hrzn {
 	/// <param name="area">The area within which the operation is performed.</param>
 	/// <param name="fill_obj">The value with which to fill the map.</param>
 	template <typename T>
-	inline void fill(I_Map<T>& map, rectangle area, const T& fill_obj) {
-		rectangle fill_area = hrzn::intersect(map, area);
-		HRZN_FOREACH_POINT(fill_area, x, y) {
+	inline void fill(I_Map<T>& map, rect_i area, const T& fill_obj) {
+		rect_i fill_area = hrzn::intersect(map, area);
+		H_FOREACH_POINT(fill_area, x, y) {
 			map.set(x, y, fill_obj);
 		}
 	}
@@ -165,7 +164,7 @@ namespace hrzn {
 	/// <param name="fill_func"></param>
 	template <typename T, typename Tf>
 	inline void fill_each(I_Map<T>& map, Tf& fill_func) { // TODO fill function should be in the format of [T (*)(h_int, h_int)]
-		HRZN_FOREACH_POINT(map, x, y) {
+		H_FOREACH_POINT(map, x, y) {
 			map.set(x, y, fill_func());
 		}
 	}
@@ -179,8 +178,8 @@ namespace hrzn {
 	/// <param name="mask">A boolean map to be used as a mask.</param>
 	template <typename T>
 	inline void fill_mask(I_Map<T>& map, const T& fill_obj, const I_Map<bool>& mask) {
-		rectangle fill_area = hrzn::intersect(map, mask);
-		HRZN_FOREACH_POINT(fill_area, x, y) {
+		rect_i fill_area = hrzn::intersect(map, mask);
+		H_FOREACH_POINT(fill_area, x, y) {
 			if (mask.at(x, y))
 				map.set(x, y, fill_obj);
 		}
@@ -193,8 +192,8 @@ namespace hrzn {
 	/// <param name="i">The value with which to equal each cell in the map.</param>
 	template <typename T>
 	inline MapContainer<bool> select(const I_Map<T>& map, const T& i) {
-		MapContainer<bool> mask((rectangle)map);
-		HRZN_FOREACH_POINT(map, x, y) {
+		MapContainer<bool> mask((rect_i)map);
+		H_FOREACH_POINT(map, x, y) {
 			mask.set(x, y, map.at(x, y) == i);
 		}
 		return mask;
@@ -238,7 +237,7 @@ namespace hrzn {
 	/// Create a map of the specified area and fill it from a list.
 	/// </summary>
 	template <typename T, typename TForwardIterator>
-	inline MapContainer<T> transpose_list_to_map(rectangle area, TForwardIterator first, TForwardIterator last) {
+	inline MapContainer<T> transpose_list_to_map(rect_i area, TForwardIterator first, TForwardIterator last) {
 		MapContainer<T> map(area);
 		auto itr_map = map.begin();
 
@@ -256,7 +255,7 @@ namespace hrzn {
 	/// </summary>
 	template <typename T, typename TForwardIterator>
 	inline MapContainer<T> transpose_list_to_map(h_unsigned width, h_unsigned height, TForwardIterator first, TForwardIterator last) {
-		return transpose_list_to_map<T, TForwardIterator>(rectangle(width, height), first, last);
+		return transpose_list_to_map<T, TForwardIterator>(rect_i(width, height), first, last);
 	}
 
 	/// <summary>
@@ -265,9 +264,9 @@ namespace hrzn {
 	/// <returns>A transformed copy of the map parameter.</returns>
 	template<typename T>
 	MapContainer<T> swizzle_map(const I_Map<T>& map) {
-		MapContainer<T> rotated(hrzn::swizzle((rectangle)map));
+		MapContainer<T> rotated(hrzn::swizzle((rect_i)map));
 
-		HRZN_FOREACH_POINT(map, x, y) {
+		H_FOREACH_POINT(map, x, y) {
 			rotated.set(y, x, map.at(x, y));
 		}
 
@@ -304,7 +303,7 @@ namespace hrzn {
 
 	template <typename T>
 	inline void scatter(I_Map<T>& map, T val, double threshold) {
-		HRZN_FOREACH_POINT(map, x, y) {
+		H_FOREACH_POINT(map, x, y) {
 			if (((double)std::rand() / (double)RAND_MAX) > threshold)
 				map.set(x, y, val);
 		}
@@ -312,7 +311,7 @@ namespace hrzn {
 
 	template <typename T>
 	inline void flood_fill(point2 first, I_Map<T>& region, I_Map<bool>& result, bool edge = false, bool use8 = false) {
-		rectangle area = hrzn::intersect(region, result);
+		rect_i area = hrzn::intersect(region, result);
 		result.set(first, true);
 
 		for (int i = 0; i < (use8 ? 8 : 4); ++i) {
@@ -328,7 +327,7 @@ namespace hrzn {
 	}
 
 	inline void cellular_automata(I_Map<bool>* mask, int birth_rate, bool wrap_position) {
-		MapContainer<int> neighbor_counts((rectangle)(*mask), 0);
+		MapContainer<int> neighbor_counts((rect_i)(*mask), 0);
 		for (h_int y = mask->y; y < mask->last().y; ++y)
 			for (h_int x = mask->x; x < mask->last().x; ++x) {
 				point2 cell = { x, y };

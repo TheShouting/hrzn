@@ -112,7 +112,7 @@ public:
 	}
 
 	TEST_METHOD(MapContainer_Retrieval) {
-		const hrzn::rectangle area = { 20, 20, 100, 100 };
+		const hrzn::rect_i area = { 20, 20, 100, 100 };
 		const hrzn::point2 location = { 25, 30 };
 		const char value = 'X';
 		const char fill = '-';
@@ -134,7 +134,7 @@ public:
 
 	TEST_METHOD(MapContainer_Iterator) {
 
-		hrzn::rectangle rect = { 7, 13, 111, 97 };
+		hrzn::rect_i rect = { 7, 13, 111, 97 };
 
 		hrzn::MapContainer<int> map(rect, -1);
 
@@ -165,7 +165,7 @@ public:
 		hrzn::MapContainer<int> map(100, 100, -1);
 
 		int i1 = 0;
-		HRZN_FOREACH_POINT(map, x, y) {
+		H_FOREACH_POINT(map, x, y) {
 			map.set(x, y, i1);
 			i1++;
 		}
@@ -183,14 +183,14 @@ public:
 	}
 
 	TEST_METHOD(MapReference_AccessTest) {
-		hrzn::rectangle area = { -10, -10, 110, 110 };
+		hrzn::rect_i area = { -10, -10, 110, 110 };
 		hrzn::MapContainer<char> map(100, 100, '.');
 
 		auto ref1 = hrzn::GetReferenceArea(area, map);
 
 		std::fill(ref1.begin(), ref1.end(), '#');
 
-		std::size_t c1 = 0;
+		h_int c1 = 0;
 		for (auto cell : map) {
 			if (cell == '#')
 				c1++;

@@ -56,7 +56,7 @@ namespace hrznAlgorithmTests {
 		}
 
 		TEST_METHOD(rectangle_IsEdgePoint) {
-			hrzn::rectangle area = { 1, 2, 12, 13 };
+			hrzn::rect_i area = { 1, 2, 12, 13 };
 			int error = 0;
 			for (int i = 0; i < 4; ++i) {
 				if (!hrzn::is_edge(area, area.corner(i)))
@@ -67,9 +67,9 @@ namespace hrznAlgorithmTests {
 		}
 
 		TEST_METHOD(rectangle_OverlapAndContain) {
-			hrzn::rectangle area1 = { -10, -10, 50, 50 };
-			hrzn::rectangle area2 = { 20, 25, 100, 100 };
-			hrzn::rectangle area3 = { -3, -1, 10, 10 };
+			hrzn::rect_i area1 = { -10, -10, 50, 50 };
+			hrzn::rect_i area2 = { 20, 25, 100, 100 };
+			hrzn::rect_i area3 = { -3, -1, 10, 10 };
 			Assert::IsTrue(hrzn::overlap(area1, area2), L"Failed overlap test.");
 			Assert::IsFalse(hrzn::overlap(area3, area2), L"False positive overlap test.");
 			Assert::IsTrue(hrzn::overlap(area1, area3), L"Failed contained overlap test.");
@@ -87,7 +87,7 @@ namespace hrznAlgorithmTests {
 
 			hrzn::copy_into(map_int, map_bool);
 
-			std::size_t count = 0;
+			h_int count = 0;
 			for (auto b : map_bool) {
 				if (b) count++;
 			}
@@ -105,14 +105,14 @@ namespace hrznAlgorithmTests {
 
 			const int size = 67;
 			const int value = 42;
-			hrzn::rectangle area(8, 3, 97, 53);
+			hrzn::rect_i area(8, 3, 97, 53);
 
 			std::vector<int> list;
 			for (int i = 0; i < size; ++i)
 				list.emplace_back(value);
 
 			auto map = hrzn::transpose_list_to_map<int>(area, list.begin(), list.end());
-			Assert::IsTrue(area == (hrzn::rectangle)map, L"I_Map incorrectly created.");
+			Assert::IsTrue(area == (hrzn::rect_i)map, L"I_Map incorrectly created.");
 
 			int count = 0;
 			for (const auto& cell : map)
@@ -124,7 +124,7 @@ namespace hrznAlgorithmTests {
 		TEST_METHOD(method_transpose_list_to_map_test_oversized) {
 
 			const int value = 42;
-			hrzn::rectangle area(8, 3, 97, 53);
+			hrzn::rect_i area(8, 3, 97, 53);
 			const int size = (area.width() * area.height() + 13);
 
 			std::vector<int> list;
@@ -132,7 +132,7 @@ namespace hrznAlgorithmTests {
 				list.emplace_back(value);
 
 			auto map = hrzn::transpose_list_to_map<int>(area, list.begin(), list.end());
-			Assert::IsTrue(area == (hrzn::rectangle)map, L"I_Map incorrectly created.");
+			Assert::IsTrue(area == (hrzn::rect_i)map, L"I_Map incorrectly created.");
 
 			int count = 0;
 			for (const auto& cell : map)

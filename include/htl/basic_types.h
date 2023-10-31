@@ -365,146 +365,99 @@ namespace hrzn {
 
 
 	/******************************************************************************************************************
-		rectangle data types
+		rect_i data types
 	******************************************************************************************************************/
 
 	/// <summary>
 	/// A class for managing coordinates of a 2D area.
 	/// </summary>
-	struct rectangle { // TODO make abstract
+	template <typename T>
+	struct i_rectangle {
 
-		h_int x, y, w, h;
+		T x, y, w, h;
 
-		constexpr rectangle() : x(0), y(0), w(-1), h(-1) {}
+		constexpr i_rectangle() : x(0), y(0), w(0), h(0) {}
 
-		constexpr rectangle(h_unsigned _w, h_unsigned _h) : x(0), y(0), w(_w), h(_h) {}
+		constexpr i_rectangle(T _w, T _h) : x(0), y(0), w(_w), h(_h) {}
 
-		constexpr rectangle(h_int _x, h_int _y, h_int _w, h_int _h) : x(_x), y(_y), w(_w), h(_h) {}
+		constexpr i_rectangle(T _x, T _y, T _w, T _h) : x(_x), y(_y), w(_w), h(_h) {}
 
-		explicit constexpr rectangle(point2 pos, point2 size) : x(pos.x), y(pos.y), w(size.x), h(size.y) {}
+		explicit constexpr i_rectangle(i_tuple2<T> pos, i_tuple2<T> size) : x(pos.x), y(pos.y), w(size.x), h(size.y) {}
 
-		rectangle& operator +=(point2 dist) {
-			move(dist.x, dist.y);
-			return *this;
-		}
+		constexpr i_rectangle(const i_rectangle<T>& r) = default;
 
-		rectangle& operator -=(point2 dist) {
-			move(-dist.x, -dist.y);
-			return *this;
-		}
+		template <typename TCast>
+		explicit constexpr i_rectangle(const i_rectangle<TCast> & r) : x(static_cast<T>(r.x)), y(static_cast<T>(r.y)), w(static_cast<T>(r.w)), h(static_cast<T>(r.h)) {}
 
 		operator bool() const {
-			return w > 0 && h > 0;
+			return valid();
 		}
-
-		//h_int x1() const { return x; }
-
-		//h_int x2() const { return x + w; }
-
-		//h_int y1() const { return y; }
-
-		//h_int y2() const { return y + h; }
-
 
 		bool valid() const {
-			return w > 0 && h > 0;
+			return this->w > 0 && this->h > 0;
 		}
 
-		void move(h_int move_x, h_int move_y) {
-			x += move_x;
-			y += move_y;
+		i_rectangle<T> normalized() const {
+			return i_rectangle<T>{ 0, 0, std::abs(this->w), std::abs(this->h) };
 		}
 
-		virtual void resize_corners(h_int x_1, h_int y_1, h_int x_2, h_int y_2) {
-			x = std::min(x_1, x_2);
-			w = std::max(x_1, x_2 - x_1);
-			y = std::min(y_1, y_2);
-			h = std::max(y_1, y_2 - y_1);
-		}
-
-		void resize(point2 size) {
-			if (size) {
-				x = std::min(x, x + size.x);
-				y = std::min(y, y + size.y);
-				w = std::abs(size.x);
-				h = std::abs(size.y);
-			}
-		}
-
-		void resize_from_center(point2 size) {
-			resize_from_center(size.x, size.y);
-		}
-
-		void resize_from_center(h_unsigned size) {
-			resize_from_center(size, size);
-		}
-
-		void resize_from_center(h_unsigned _w, h_unsigned _h) {
-			if (valid()) {
-				point2 ctr = center();
-				x = ctr.x - _w / 2;
-				y = ctr.y - _h / 2;
-				w = _w;
-				h = _h;
-			}
-		}
-
-		rectangle normalized() const {
-			return rectangle(0, 0, std::abs(w), std::abs(h));
-		}
-
-		point2 clamp(point2 pt) const {
+		i_tuple2<T> clamp(i_tuple2<T> pt) const {
 			return { std::min(this->x + this->w, std::max(this->x, pt.x)), std::min(this->y + this->h, std::max(this->y, pt.y))};
 		}
 
-		point2 wrap(point2 pt) const {
-			h_int x = ((h_int)this->w + ((pt.x - this->x) % (h_int)this->w)) % (h_int)this->w + this->x;
-			h_int y = ((h_int)this->h + ((pt.y - this->y) % (h_int)this->h)) % (h_int)this->h + this->y;
+		i_tuple2<T> wrap(i_tuple2<T> pt) const {
+			T x = ((T)this->w + ((pt.x - this->x) % (T)this->w)) % (T)this->w + this->x;
+			T y = ((T)this->h + ((pt.y - this->y) % (T)this->h)) % (T)this->h + this->y;
 			return { x, y };
 		}
 
-		std::size_t width() const {
+		T width() const {
 			return std::abs(this->w);
 		}
 
-		std::size_t height() const {
+		T height() const {
 			return std::abs(this->h);
 		}
 
-		point2 dimensions() const {
-			return { width(), height() };
-		}
-
-		point2 first() const {
+		i_tuple2<T> position() const {
 			return { this->x, this->y };
 		}
 
-		point2 last() const { return { this->x + this->w, this->y + this->h }; }
+		i_tuple2<T> size() const {
+			return { this->w, this->h };
+		}
 
-		std::size_t area() const {
+		i_tuple2<T> first() const {
+			return { this->x, this->y };
+		}
+
+		i_tuple2<T> last() const { return { this->x + this->w, this->y + this->h }; }
+
+		T area() const {
 			return this->w * this->h;
 		}
 
-		point2 corner(int i) const {
+		i_tuple2<T> corner(std::size_t i) const {
 #ifndef HRZN_NOEXCEPTIONS
 			if (i < 0 || i > 3) throw std::out_of_range("Index is not a valid corner.");
 #endif // !HRZN_NOEXCEPTIONS
-			return { this->x + h_corner[i].x * (this->w - 1), this->y + h_corner[i].y * (this->h - 1)};
+			//return { this->x + h_corner[i].x * (this->w - 1), this->y + h_corner[i].y * (this->h - 1)};
+			return { x + ((w  - _lib::vEpsilon<T>::value) * T(i % 2)), y + ((h - _lib::vEpsilon<T>::value) * T(i / 2) ) };
 		}
 
-		point2 center() const {
+		i_tuple2<T> center() const {
 			return { this->w / 2 + this->x, this->h / 2 + this->y };
 		}
 
-		bool contains(point2 pt) const {
-			return this->contains(pt.x, pt.y);
-		}
-
-		bool contains(h_int px, h_int py) const {
+		bool contains(T px, T py) const {
 			return px >= this->x && px < (this->x + this->w)  && py >= this->y && py < this->y + this->h;
 		}
 
-		bool contains(rectangle other) {
+		bool contains(i_tuple2<T> pt) const {
+			return this->contains(pt.x, pt.y);
+		}
+
+		bool contains(i_rectangle<T> other) const {
 			return
 				other.valid() &&
 				other.x >= this->x && 
@@ -513,33 +466,44 @@ namespace hrzn {
 				other.y + other.h < this->y + this->h;
 		}
 
-		static constexpr rectangle from_corners(point2 a, point2 b) {
-			auto x = std::min(a.x, b.x);
-			auto y = std::min(a.y, b.y);
-			auto w = std::max(a.x, b.x) - x;
-			auto h = std::max(a.x, b.x) - y;
-			return { x, y, w, h };
+		static constexpr i_rectangle<T> from_corners(i_tuple2<T> a, i_tuple2<T> b) {
+			T x = std::min(a.x, b.x);
+			T y = std::min(a.y, b.y);
+			T w = std::max(a.x, b.x) - x;
+			T h = std::max(a.x, b.x) - y;
+			return i_rectangle<T>{x, y, w, h};
 		}
 
-	}; // struct rectangle
+	}; // struct rect_i
 
 
-	inline bool operator==(rectangle a, rectangle b) {
+	template <typename T>
+	inline bool operator==(i_rectangle<T> a, i_rectangle<T> b) {
 		return a.x == b.x && a.y == b.y && a.w == b.w && a.h == b.h;
 	}
 
-	inline rectangle operator+(rectangle a, point2 b) {
-		return rectangle::from_corners(a.first() + b, a.last() + b);
+	template <typename T>
+	inline i_rectangle<T> operator+(i_rectangle<T> a, i_tuple2<T> b) {
+		return i_rectangle<T>{ a.x + b.x, a.y + b.y, a.w, a.h };
 	}
 
-	inline rectangle operator-(rectangle a, point2 b) {
-		return rectangle::from_corners(a.first() - b, a.last() - b);
+	template <typename T>
+	inline i_rectangle<T> operator-(i_rectangle<T> a, i_tuple2<T> b) {
+		return i_rectangle<T>{ a.x - b.x, a.y - b.y, a.w, a.h };
 	}
+
+
+#define H_FOREACH_POINT(A, X, Y) for (h_int X, Y = A.y; Y < (A.y + A.h); ++Y) for (X = A.x; X < (A.x + A.w); ++X) 
+
+	using rect_i = i_rectangle<h_int>;
+	using rect_f = i_rectangle<h_float>;
+
 
 	/// <summary>
 	/// Create a new Area based on the overlap of two other Area objects.
 	/// </summary>
-	inline rectangle intersect(rectangle a, rectangle b) {
+	template <typename T>
+	inline i_rectangle<T> intersect(i_rectangle<T> a, i_rectangle<T> b) {
 		auto x = std::max(a.x, b.x);
 		auto y = std::max(a.y, b.y);
 		auto w = std::min(a.x + a.w, b.x + b.w) - x;
@@ -548,30 +512,34 @@ namespace hrzn {
 	}
 
 	/// <summary>
-	/// Return true if both <type>rectangle</type> objects overlap.
+	/// Return true if both <type>rect_i</type> objects overlap.
 	/// </summary>
-	inline bool overlap(rectangle a, rectangle b) {
+	template <typename T>
+	inline bool overlap(i_rectangle<T> a, i_rectangle<T> b) {
 		return !(a.x > b.x + b.w || a.y > b.y + b.h || b.x > a.x + a.w || b.y > a.y + a.h);
 	}
 
 	/// <summary>
-	/// Is true if <type>rectangle</type> b is completely contained within <type>rectangle</type> a.
+	/// Is true if <type>rect_i</type> b is completely contained within <type>rect_i</type> a.
 	/// </summary>
-	inline bool contains(rectangle a, rectangle b) {
+	template <typename T>
+	inline bool contains(i_rectangle<T> a, i_rectangle<T> b) {
 		return b.x >= a.x && b.y >= a.y && b.last().x <= a.last().x && b.last().y <= a.last().y;
 	}
 
 	/// <summary>
-	/// Is true if <type>poin2</type> b is completely contained within <type>rectangle</type> a.
+	/// Is true if <type>poin2</type> b is completely contained within <type>rect_i</type> a.
 	/// </summary>
-	inline bool contains(rectangle a, point2 b) {
+	template <typename T>
+	inline bool contains(i_rectangle<T> a, point2 b) {
 		return b.x >= a.x && b.y >= a.y && b.x < a.last().x  && b.y < a.last().y;
 	}
 
 	/// <summary>
-	/// Is true if <type>point2</type> is equal to any edge position of <type>rectangle</type>.
+	/// Is true if <type>point2</type> is equal to any edge position of <type>rect_i</type>.
 	/// </summary>
-	inline bool is_edge(rectangle area, point2 pos) {
+	template <typename T>
+	inline bool is_edge(i_rectangle<T> area, point2 pos) {
 		return pos.x == area.x || pos.x == area.last().x - 1_hi || pos.y == area.y || pos.y == area.last() - 1_hi;
 	}
 
@@ -580,79 +548,103 @@ namespace hrzn {
 	/// </summary>
 	template<typename T>
 	inline i_tuple2<T> swizzle(i_tuple2<T> t) {
-		return { t.y, t.x };
+		return i_tuple2<T>{ t.y, t.x };
 	}
 
 	/// <summary>
 	/// Swap width and height values (same as rotating 90 deg)
 	/// </summary>
-	inline rectangle swizzle(rectangle a) {
-		return rectangle(a.y, a.x, a.h, a.w);
+	template <typename T>
+	inline i_rectangle<T> swizzle(i_rectangle<T> a) {
+		return i_rectangle<T> { a.y, a.x, a.h, a.w };
 	}
 
 	/// <summary>
-	/// Snaps a point to an area edge if it is out of bounds.
+	/// Snaps a point to a recrangle edge if it is out of bounds.
 	/// </summary>
-	inline point2 clamp_point(point2 p, rectangle area) {
-		h_int x = std::min(std::max(p.x, area.x), area.x + area.w);
-		h_int y = std::min(std::max(p.y, area.y), area.y + area.h);
-		return { x, y };
+	template <typename T>
+	inline i_tuple2<T> clamp_point(i_tuple2<T> p, i_rectangle<T> area) {
+		return i_tuple2<T>{
+			std::min(std::max(p.x, area.x), area.x + area.w - _lib::vEpsilon<T>::value),
+			std::min(std::max(p.y, area.y), area.y + area.h - _lib::vEpsilon<T>::value)
+		 };
 	}
 
 	/// <summary>
 	/// Wraps a point to the oppposite edge of an area if it is out of bounds.
 	/// </summary>
-	inline point2 wrap_point(point2 p, rectangle area) {
-		h_int x = ((p.x - area.x) % area.w + area.w) % area.w + area.x;
-		h_int y = ((p.y - area.y) % area.h + area.h) % area.h + area.y;
-		return { x, y };
+	template <typename T>
+	inline i_tuple2<T> wrap_point(i_tuple2<T> p, i_rectangle<T> area) {
+		return i_tuple2<T>{
+			((p.x - area.x) % area.w + area.w) % area.w + area.x,
+			((p.y - area.y) % area.h + area.h) % area.h + area.y
+		};
 	}
 
 	/// <summary>
 	/// If a dimension is an odd number, add 1 to make it even.
 	/// </summary>
 	/// <returns></returns>
-	inline rectangle make_even(rectangle r) { // TODO test make_even method for rect
-		return { r.x, r.y, r.w + (r.w % 2), r.h + (r.h % 2) };
+	template <typename T>
+	inline rect_i make_even(rect_i r) { // TODO test make_even method for rect
+		return rect_i{ r.x, r.y, r.w + (r.w % 2_hi), r.h + (r.h % 2_hi) };
 	}
 
-
-
 	/// <summary>
-	/// Split a rectangle into 4 seperate reperate rectangles based on the defined center point.
+	/// Split a rect_i into 4 seperate reperate rectangles based on the defined center point.
 	/// </summary>
-	/// <param name="area">The <type>rectangle</type> to be split.</param>
+	/// <param name="area">The <type>rect_i</type> to be split.</param>
 	/// <param name="center">The center point were the split occurs.</param>
 	/// <returns></returns>
-	inline constexpr std::array<rectangle, 4> quad_split(rectangle area, point2 center) {
-		return std::array<rectangle, 4> {
-			rectangle{ area.x, area.y,		center.x - area.x,			center.y - area.y			},
-			rectangle{ center.x, area.y,	area.x + area.w - center.x,	center.y - area.y			},
-			rectangle{ area.x, center.y,	center.x - area.x,			area.y + area.h - center.y	},
-			rectangle{ center.x, center.y,	area.x + area.w - center.x,	area.y + area.h - center.y	}
+	template <typename T>
+	inline constexpr std::array<i_rectangle<T>, 4> quad_split(i_rectangle<T> area, point2 center) {
+		return std::array<i_rectangle<T>, 4> {
+			i_rectangle<T>{ area.x, area.y,		center.x - area.x,			center.y - area.y			},
+			i_rectangle<T>{ center.x, area.y,	area.x + area.w - center.x,	center.y - area.y			},
+			i_rectangle<T>{ area.x, center.y,	center.x - area.x,			area.y + area.h - center.y	},
+			i_rectangle<T>{ center.x, center.y,	area.x + area.w - center.x,	area.y + area.h - center.y	}
 		};
 	}
 
-
 	/// <summary>
-	/// Split the area of a <type>rectangle</type> along its longest axis into two smaller ones.
+	/// Split the area of a <type>rect_i</type> along its longest axis into two smaller ones.
 	/// </summary>
-	/// <param name="area">The <type>rectangle</type> to be split</param>
+	/// <param name="area">The <type>rect_i</type> to be split</param>
 	/// <returns>A container with the new URect objects. If <paramref name="rec"/> is only a single cell (width and height are equal to 1), then both are simply a copy of the orignal parameter. </returns>
-	inline std::array<rectangle, 2> split(rectangle area) {
-		rectangle a1 = area;
-		rectangle a2 = area;
+	template <typename T>
+	inline std::array<i_rectangle<T>, 2> split(i_rectangle<T> area) {
+		i_rectangle<T> a1 = area;
+		i_rectangle<T> a2 = area;
 		point2 cp = area.center();
-		if (area.height() > 1 && area.height() > area.width()) {
+		if (area.h > area.w) {
 			a1.h = cp.y - area.h;
 			a2.y = cp.y;
 			a2.h = area.y + area.h - cp.y;
-		} else if (area.width() > 1) {
+		} else if (area.valid()) {
 			a1.w = cp.x - area.w;
 			a2.x = cp.x;
 			a2.w = area.x + area.w - cp.x;
 		}
 		return { a1, a2 };
+	}
+
+	template <typename T>
+	i_rectangle<T> resize_from_center(i_rectangle<T> r, T _w, T _h) {
+		if (r.valid()) {
+			point2 ctr = r.center();
+			return i_rectangle<T>{
+				r.x = ctr.x - _w / 2,
+				r.y = ctr.y - _h / 2,
+				r.w = _w,
+				r.h = _h
+			};
+		}
+		return r;
+	}
+
+	template <typename T>
+	i_rectangle<T> resize_from_center(i_rectangle<T> r, point2 size) {
+		return resize_from_center<T>(r, size.x, size.y);
 	}
 
 

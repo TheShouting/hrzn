@@ -53,12 +53,12 @@ namespace hrzn {
 		return input;
 	}
 
-	inline std::ostream& operator<<(std::ostream& output, const rectangle& rect) {
+	inline std::ostream& operator<<(std::ostream& output, const rect_i& rect) {
 		output << rect.x << rect.y << rect.w << rect.h;
 		return output;
 	}
 
-	inline std::istream& operator>>(std::istream& input, rectangle& rect) {
+	inline std::istream& operator>>(std::istream& input, rect_i& rect) {
 		input >> rect.x >> rect.y >> rect.w >> rect.h;
 		return input;
 	}
@@ -76,7 +76,7 @@ namespace hrzn {
 		return ss.str();
 	}
 
-	inline std::string to_string(const rectangle& rect) {
+	inline std::string to_string(const rect_i& rect) {
 		if (rect) {
 			std::stringstream ss;
 			ss << "i_rectangle{ x" << rect.x << ", y" << rect.y << ", w" << rect.w << ", h" << rect.h << "  }";
