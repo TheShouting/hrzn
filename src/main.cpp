@@ -26,7 +26,7 @@ SOFTWARE.
 *	as an example of library usage. This is a header only library. Place the folder [hrzn/] in your include
 *	directory to use.
 */
-#include "htl/hrzn.h"
+#include "htl/basic_types.h"
 #include "htl/containers.h"
 #include "htl/stringify.h"
 #include "htl/utility.h"
@@ -40,6 +40,6 @@ int main() {
 	hrzn::scatter(map, ':', 0.9);
 	map.at(3, 3) = 'X';
 
-	std::cout << hrzn::toStringTable(map) << "\n";
+	std::cout << hrzn::to_string_table(map) << "\n";
 
 }
