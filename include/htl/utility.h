@@ -36,23 +36,23 @@ namespace hrzn {
 		Basic Type Operations
 	******************************************************************************************************************/
 
-	inline h_float dot_product(const vector2& a, const vector2& b) {
+	inline h_float dot_product(vector2 a, vector2 b) {
 		return a.x * b.x + a.y * b.y;
 	}
 
-	inline h_float distance(const vector2& a, const vector2& b) {
+	inline h_float distance(vector2 a, vector2 b) {
 		return std::sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 	}
 
-	inline h_float distance_sqr(const vector2& a, const vector2& b) {
+	inline h_float distance_sqr(vector2 a, vector2 b) {
 		return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
 	}
 
-	inline h_float distance_manhattan(const vector2& a, const vector2& b) {
+	inline h_float distance_manhattan(vector2 a, vector2 b) {
 		return std::abs(a.x - b.x) + std::abs(a.y - b.y);
 	}
 
-	inline vector2 get_normalized(vector2 const& vec) {
+	inline vector2 get_normalized(vector2 vec) {
 		double l = vec.length();
 		if (l < EPSILON) {
 			return vector2();
@@ -65,13 +65,13 @@ namespace hrzn {
 		return angle::from_radians(std::atan2(v.y, v.x));
 	}
 
-	inline point2 round_to_point(const vector2& vec) {
+	inline point2 round_to_point(vector2 vec) {
 		return point2(std::round(vec.x), std::round(vec.y));
 	}
 
 
 	/// Create a contiguous rectangle based on the extreme corners of a rectangle list.
-	inline rectangle make_boundary(const std::initializer_list<rectangle>& areas) {
+	inline rectangle make_boundary(std::initializer_list<rectangle> areas) {
 		rectangle area = *areas.begin();
 		for (auto a = areas.begin() + 1; a != areas.end(); ++a) {
 			area.x = std::min(area.x, a->x);
@@ -84,7 +84,7 @@ namespace hrzn {
 
 
 	/// Create an rectangle object which contains all points in a list.
-	inline rectangle make_boundary(const std::initializer_list<point2> & pts) {
+	inline rectangle make_boundary(std::initializer_list<point2> pts) {
 		rectangle r (pts.begin()->x, pts.begin()->y);
 		for (auto p = pts.begin() + 1; p != pts.end(); ++p) {
 			r.x = std::min(r.x, p->x);
@@ -96,7 +96,7 @@ namespace hrzn {
 	}
 
 	/// Create an rectangle object using a position and radius.
-	inline rectangle area_from_radius(const point2 pos, const h_int radius) {
+	inline rectangle area_from_radius(point2 pos, h_int radius) {
 		return rectangle(pos.x - radius, pos.y - radius, pos.x + radius, pos.y + radius);
 	}
 
@@ -149,7 +149,7 @@ namespace hrzn {
 	/// <param name="area">The area within which the operation is performed.</param>
 	/// <param name="fill_obj">The value with which to fill the map.</param>
 	template <typename T>
-	inline void fill(I_Map<T>& map, const rectangle area, const T& fill_obj) {
+	inline void fill(I_Map<T>& map, rectangle area, const T& fill_obj) {
 		rectangle fill_area = hrzn::intersect(map, area);
 		HRZN_FOREACH_POINT(fill_area, x, y) {
 			map.set(x, y, fill_obj);
@@ -377,15 +377,15 @@ namespace hrzn {
 	******************************************************************************************************************/
 
 	namespace lerp {
-		inline h_float lerp(const h_float& a, const h_float& b, const h_float& f) {
+		inline h_float lerp(h_float a, h_float b, h_float f) {
 			return (a * (1._hf - f)) + (b * f);
 		}
 
-		inline vector2 lerp(const vector2& a, const vector2& b, const h_float& f) {
+		inline vector2 lerp(vector2 a, vector2 b, h_float f) {
 			return { lerp(a.x, b.x, f), lerp(a.y, b.y, f) };
 		}
 
-		inline angle lerp(const angle& a, const angle& b, const h_float& f) {
+		inline angle lerp(angle a, angle b, h_float f) {
 			h_float t_a = a.tau;
 			h_float t_b = b.tau;
 			if (std::abs(t_a - t_b) >= 1._hf) {
@@ -397,7 +397,7 @@ namespace hrzn {
 			return {lerp(t_a, t_b, f)};
 		}
 
-		inline transform lerp(const transform& a, const transform& b, const h_float& f) {
+		inline transform lerp(transform a, transform b, h_float f) {
 			return { lerp(a.position, b.position, f), lerp(a.rotation, b.rotation, f), lerp(a.scale, b.scale, f) };
 		}
 

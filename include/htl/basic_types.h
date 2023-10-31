@@ -104,7 +104,7 @@ namespace hrzn {
 		};
 
 
-		inline constexpr h_float normalizef(const h_float f) {
+		inline constexpr h_float wrap_f(const h_float f) {
 			//return std::fmod(std::fmod(f, 1._hf) + 1._hf, 1._hf);
 			h_float a = f - (h_int)f + 1._hf;
 			return a - (h_int)a;
@@ -363,154 +363,6 @@ namespace hrzn {
 		point2{ 0_hi,  0_hi}
 	};
 
-	/// <summary>
-	/// Normalized angles.
-	/// </summary>
-	struct angle {
-
-		h_float tau;
-
-		constexpr angle() : tau(0._hf) {}
-
-		constexpr angle(h_float _tau) : tau(_lib::normalizef(_tau)) {}
-
-		constexpr angle(const angle & a) = default;
-
-		inline auto deg() const { return tau * DEG; }
-
-		inline auto rad() const { return tau * RAD; }
-
-		auto rotate_deg(h_float deg) {
-			tau = _lib::normalizef(deg / DEG + tau);
-			return tau * DEG;
-		}
-
-		auto rotate_rad(h_float rad) {
-			tau = _lib::normalizef(rad / RAD + tau);
-			return tau * RAD;
-		}
-
-		void set(h_float t) {
-			tau = _lib::normalizef(t);
-		}
-
-		void set_deg(h_float deg) {
-			tau = _lib::normalizef(deg / DEG);
-		}
-
-		void set_rad(h_float rad) {
-			tau = _lib::normalizef(rad / RAD);
-		}
-
-		void spin(h_float rotations) {
-			tau = _lib::normalizef(tau + rotations);
-		}
-
-		angle flip() const {
-			return angle(tau + 0.5_hf);
-		}
-
-		angle invert() const {
-			angle a;
-			a.tau = 1._hf - tau;
-			return a;
-		}
-
-		vector2 get_forward_vector(h_float length = 1._hf) const {
-			return vector2(std::sin(rad()) * length, std::cos(rad()) * length);
-		}
-
-		vector2 get_right_vector(h_float length = 1._hf) const {
-			return vector2(std::sin(rad() + PI * 0.5_hf) * length, std::cos(rad() + PI * 0.5_hf) * length);
-		}
-
-		vector2 rotate_vector(vector2 const& vec) const {
-			h_float a = rad();
-			h_float cs = std::cos(a);
-			h_float sn = std::sin(a);
-			return { cs * vec.x + sn * vec.y, sn * -vec.x + cs * vec.y };
-		}
-
-		vector2 unrotate_vector(vector2 const& vec) const {
-			h_float a = -rad();
-			h_float cs = std::cos(a);
-			h_float sn = std::sin(a);
-			return { cs * vec.x + sn * vec.y, sn * -vec.x + cs * vec.y };
-		}
-
-		static constexpr angle from_degrees(h_float deg) { return angle(deg / DEG); }
-
-		static constexpr angle from_radians(h_float rad) { return angle(rad / RAD); }
-
-		template <typename T>
-		static constexpr angle from_vector(i_tuple2<T> vec) {
-			h_float tau = std::atan2(vec.y, vec.x) / RAD + 0.75_hf;
-			return angle(-tau);
-		}
-
-		static constexpr angle HALF() { return angle(0.5_hf); }
-		
-		static constexpr angle UP() { return angle(0._hf); }
-
-		static constexpr angle DOWN() { return angle(0.5_hf); }
-
-		static constexpr angle RIGHT() { return angle(0.25_hf); }
-
-		static constexpr angle LEFT() { return angle(0.75_hf); }
-
-	}; // struct angle
-
-
-	/// <summary>
-	/// Get the smallest rotation between two angles.
-	/// </summary>
-	inline angle difference(angle a, angle b) {
-		/*h_float phi = std::fmod(std::abs(a.tau - b.tau), 1._hf);
-		a.tau = phi > 0.5_hf ? 1._hf - phi : phi;
-		return a;*/
-		h_float phi = a.tau - b.tau + 0.5_hf;
-		return { std::abs(phi - std::floor(phi) - 0.5_hf) };
-	}
-
-	/// <summary>
-	/// Returns true if the shortest angle for A to reach B is clockwise (positive angle).
-	/// </summary>
-	inline bool direction(angle from, angle to) {
-		return std::fmod(to.tau - from.tau + 1.5_hf, 1._hf) > 0.5_hf;
-	}
-
-	/// <summary>
-	/// Compare equality of two angles using the library defined epsilon value.
-	/// </summary>
-	inline bool compare(angle a, angle b) {
-		return difference(a, b).tau < EPSILON;
-	}
-
-	/// <summary>
-	/// Compare equality of two angles using a user defined epsilon value.
-	/// </summary>
-	inline bool compare(angle a, angle b, h_float epsilon) {
-		return difference(a, b).tau < epsilon;
-	}
-	
-	inline bool operator == (const angle& a, const angle& b) { return a.tau == b.tau; }
-	inline bool operator < (const angle& a, const angle& b) { return a.tau < b.tau; }
-
-	inline angle operator ~ (const angle & a) { return a.invert(); }
-	inline angle operator - (const angle & a) { return a.flip(); }
-
-	inline angle operator + (const angle & a, const angle & b) { return { a.tau + b.tau }; }
-	inline angle operator + (const angle & a, const h_float & val) { return { a.tau + val }; }
-
-	inline angle operator - (const angle& a, const angle& b) { return { a.tau - b.tau }; }
-	inline angle operator - (const angle& a, const h_float& val) { return { a.tau - val }; }
-	
-	inline angle operator * (const angle& a, const angle& b) { return { a.tau * b.tau }; }
-	inline angle operator * (const angle& a, const h_float& val) { return { a.tau * val }; }
-	
-	inline angle operator / (const angle& a, const angle& b) { return { a.tau / b.tau }; }
-	inline angle operator / (const angle& a, const h_float& val) { return { a.tau / val }; }
-
 
 	/******************************************************************************************************************
 		rectangle data types
@@ -727,21 +579,21 @@ namespace hrzn {
 	/// Swap x and y values.
 	/// </summary>
 	template<typename T>
-	inline i_tuple2<T> swizzle(const i_tuple2<T>& t) {
+	inline i_tuple2<T> swizzle(i_tuple2<T> t) {
 		return { t.y, t.x };
 	}
 
 	/// <summary>
 	/// Swap width and height values (same as rotating 90 deg)
 	/// </summary>
-	inline rectangle swizzle(const rectangle& a) {
+	inline rectangle swizzle(rectangle a) {
 		return rectangle(a.y, a.x, a.h, a.w);
 	}
 
 	/// <summary>
 	/// Snaps a point to an area edge if it is out of bounds.
 	/// </summary>
-	inline point2 clamp_point(const point2& p, const rectangle& area) {
+	inline point2 clamp_point(point2 p, rectangle area) {
 		h_int x = std::min(std::max(p.x, area.x), area.x + area.w);
 		h_int y = std::min(std::max(p.y, area.y), area.y + area.h);
 		return { x, y };
@@ -750,11 +602,20 @@ namespace hrzn {
 	/// <summary>
 	/// Wraps a point to the oppposite edge of an area if it is out of bounds.
 	/// </summary>
-	inline point2 wrap_point(const point2& p, const rectangle& area) {
+	inline point2 wrap_point(point2 p, rectangle area) {
 		h_int x = ((p.x - area.x) % area.w + area.w) % area.w + area.x;
 		h_int y = ((p.y - area.y) % area.h + area.h) % area.h + area.y;
 		return { x, y };
 	}
+
+	/// <summary>
+	/// If a dimension is an odd number, add 1 to make it even.
+	/// </summary>
+	/// <returns></returns>
+	inline rectangle make_even(rectangle r) { // TODO test make_even method for rect
+		return { r.x, r.y, r.w + (r.w % 2), r.h + (r.h % 2) };
+	}
+
 
 
 	/// <summary>
@@ -793,6 +654,160 @@ namespace hrzn {
 		}
 		return { a1, a2 };
 	}
+
+
+	/******************************************************************************************************************
+		angle data types
+	******************************************************************************************************************/
+
+	/// <summary>
+	/// A class that stores an angle as number of rotations.
+	/// </summary>
+	struct angle {
+
+		h_float tau;
+
+		constexpr angle() : tau(0._hf) {}
+
+		constexpr angle(h_float _tau) : tau(_lib::wrap_f(_tau)) {}
+
+		constexpr angle(const angle& a) = default;
+
+		inline auto deg() const { return tau * DEG; }
+
+		inline auto rad() const { return tau * RAD; }
+
+		auto rotate_deg(h_float deg) {
+			tau = _lib::wrap_f(deg / DEG + tau);
+			return tau * DEG;
+		}
+
+		auto rotate_rad(h_float rad) {
+			tau = _lib::wrap_f(rad / RAD + tau);
+			return tau * RAD;
+		}
+
+		void set(h_float t) {
+			tau = _lib::wrap_f(t);
+		}
+
+		void set_deg(h_float deg) {
+			tau = _lib::wrap_f(deg / DEG);
+		}
+
+		void set_rad(h_float rad) {
+			tau = _lib::wrap_f(rad / RAD);
+		}
+
+		void spin(h_float rotations) {
+			tau = _lib::wrap_f(tau + rotations);
+		}
+
+		angle flip() const {
+			return angle(tau + 0.5_hf);
+		}
+
+		angle invert() const {
+			angle a;
+			a.tau = 1._hf - tau;
+			return a;
+		}
+
+		vector2 get_forward_vector(h_float length = 1._hf) const {
+			return vector2(std::sin(rad()) * length, std::cos(rad()) * length);
+		}
+
+		vector2 get_right_vector(h_float length = 1._hf) const {
+			return vector2(std::sin(rad() + PI * 0.5_hf) * length, std::cos(rad() + PI * 0.5_hf) * length);
+		}
+
+		vector2 rotate_vector(vector2 const& vec) const {
+			h_float a = rad();
+			h_float cs = std::cos(a);
+			h_float sn = std::sin(a);
+			return { cs * vec.x + sn * vec.y, sn * -vec.x + cs * vec.y };
+		}
+
+		vector2 unrotate_vector(vector2 const& vec) const {
+			h_float a = -rad();
+			h_float cs = std::cos(a);
+			h_float sn = std::sin(a);
+			return { cs * vec.x + sn * vec.y, sn * -vec.x + cs * vec.y };
+		}
+
+		static constexpr angle from_degrees(h_float deg) { return angle(deg / DEG); }
+
+		static constexpr angle from_radians(h_float rad) { return angle(rad / RAD); }
+
+		template <typename T>
+		static constexpr angle from_vector(i_tuple2<T> vec) {
+			h_float tau = std::atan2(vec.y, vec.x) / RAD + 0.75_hf;
+			return angle(-tau);
+		}
+
+		static constexpr angle HALF() { return angle(0.5_hf); }
+
+		static constexpr angle UP() { return angle(0._hf); }
+
+		static constexpr angle DOWN() { return angle(0.5_hf); }
+
+		static constexpr angle RIGHT() { return angle(0.25_hf); }
+
+		static constexpr angle LEFT() { return angle(0.75_hf); }
+
+	}; // struct angle
+
+
+	/// <summary>
+	/// Get the smallest rotation between two angles.
+	/// </summary>
+	inline angle difference(angle a, angle b) {
+		/*h_float phi = std::fmod(std::abs(a.tau - b.tau), 1._hf);
+		a.tau = phi > 0.5_hf ? 1._hf - phi : phi;
+		return a;*/
+		h_float phi = a.tau - b.tau + 0.5_hf;
+		return { std::abs(phi - std::floor(phi) - 0.5_hf) };
+	}
+
+	/// <summary>
+	/// Returns true if the shortest angle for A to reach B is clockwise (positive angle).
+	/// </summary>
+	inline bool direction(angle from, angle to) {
+		return std::fmod(to.tau - from.tau + 1.5_hf, 1._hf) > 0.5_hf;
+	}
+
+	/// <summary>
+	/// Compare equality of two angles using the library defined epsilon value.
+	/// </summary>
+	inline bool compare(angle a, angle b) {
+		return difference(a, b).tau < EPSILON;
+	}
+
+	/// <summary>
+	/// Compare equality of two angles using a user defined epsilon value.
+	/// </summary>
+	inline bool compare(angle a, angle b, h_float epsilon) {
+		return difference(a, b).tau < epsilon;
+	}
+
+	inline bool operator == (const angle& a, const angle& b) { return a.tau == b.tau; }
+	inline bool operator < (const angle& a, const angle& b) { return a.tau < b.tau; }
+
+	inline angle operator ~ (const angle& a) { return a.invert(); }
+	inline angle operator - (const angle& a) { return a.flip(); }
+
+	inline angle operator + (const angle& a, const angle& b) { return { a.tau + b.tau }; }
+	inline angle operator + (const angle& a, const h_float& val) { return { a.tau + val }; }
+
+	inline angle operator - (const angle& a, const angle& b) { return { a.tau - b.tau }; }
+	inline angle operator - (const angle& a, const h_float& val) { return { a.tau - val }; }
+
+	inline angle operator * (const angle& a, const angle& b) { return { a.tau * b.tau }; }
+	inline angle operator * (const angle& a, const h_float& val) { return { a.tau * val }; }
+
+	inline angle operator / (const angle& a, const angle& b) { return { a.tau / b.tau }; }
+	inline angle operator / (const angle& a, const h_float& val) { return { a.tau / val }; }
+
 
 } // namespace hrzn
 
