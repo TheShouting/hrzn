@@ -2,9 +2,7 @@
 
 ***Note:** This library is under active development and may undergo significant changes.*
 
-HRZN is a C++ header-only utility library designed for managing vectors, grids, and other 2D coordinates. Additionally, it offers various containers and functions utilizing these types. The library was initially created to support a personal project named Horizon, from which the hrzn namespace was derived.
-
-a minimum of C++17 is required to use HRZN.
+HRZN is a C++ header-only utility library designed for managing vectors, grids, and other 2D coordinates. Additionally, it offers various containers and functions utilizing these types. This is a personal project meant as a learing experience for myself. I am not a professional programmer and I created this as a hobbiest. The library was initially created to support a personal project named Horizon, from which the hrzn namespace was derived.
 
 ## Folder Structure
 
@@ -24,6 +22,8 @@ include/
 ```
 
 ## Usage
+
+A minimum of C++17 is required to use HRZN.
 
 Before including any HRZN headers, there are a few user-defined options that may be set:
 
