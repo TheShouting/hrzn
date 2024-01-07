@@ -293,7 +293,7 @@ namespace hrzn {
 	public:
 
 		MapContainer() : base(rect_i()) {}
-		MapContainer(std::size_t _w, std::size_t _h) : base(rect_i(_w, _h)), m_contents(new T[_w * _h]) {}
+		MapContainer(std::size_t _w, std::size_t _h) : base(rect_i(_w, _h)), m_contents(new T[_w * _h]) {} // TODO add exceptions for negative values.
 		MapContainer(std::size_t _w, std::size_t _h, const T& obj) : base(rect_i(_w, _h)), m_contents(new T[_w * _h]) { for (int i = 0; i < (_w * _h); ++i) m_contents[i] = obj; }
 		MapContainer(const rect_i& rect) : base(rect), m_contents(new T[rect.area()]) {}
 		MapContainer(const rect_i& rect, const T& obj) : base(rect), m_contents(new T[rect.area()]) { for (int i = 0; i < rect.area(); ++i) m_contents[i] = obj; }

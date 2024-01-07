@@ -4,7 +4,7 @@
 
 HRZN is a C++ header-only utility library designed for managing vectors, grids, and other 2D coordinates. Additionally, it offers various containers and functions utilizing these types. This is a personal project meant as a learing experience for myself. I am not a professional programmer and I created this as a hobbiest. The library was initially created to support a personal project named Horizon, from which the hrzn namespace was derived.
 
-## Folder Structure
+## Project Structure
 
 Only the header files located in the "include" folder are required for using HRZN. All headers depend on basic_types.h which is included in each of them. The Visual Studio project and main.cpp are not essential components of the library as they serve as minimal examples and for unit testing.
 
@@ -21,6 +21,8 @@ include/
             stringify.h
 ```
 
+Several methods exist within stringify.h meant to simplify displaying 2d maps to the console window.
+
 ## Usage
 
 A minimum of C++17 is required to use HRZN.
@@ -34,6 +36,7 @@ Before including any HRZN headers, there are a few user-defined options that may
 ## Example 
 
 ```
+#define HRZN_NOEXCEPTIONS
 #include <htl/basic_types.h>
 #include <htl/containers.h>
 #include <iostream>
